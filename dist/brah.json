@@ -1,0 +1,36 @@
+{
+    "sections": [
+        {
+            "name": "Brah section",
+            "questions": [
+                {
+                    "type": "qa",
+                    "q": "What is 2 + 2 brah?",
+                    "a": "The correct answer is 4 my bro"
+                },
+                {
+                    "type": "mc",
+                    "q": "Bro what is -1 + -1 my bro?",
+                    "a": "C",
+                    "choices": [
+                        { "A": "3" },
+                        { "B": "2" },
+                        { "C": "-2" },
+                        { "D": "5" }
+                    ]
+                },
+                {
+                    "type": "mc",
+                    "q": "Hello brah who has a better frontside flip, me or Andrew Reynolds?",
+                    "a": "A",
+                    "choices": [
+                        { "A": "It is me bro I can frontside flip very good" },
+                        {
+                            "B": "It is Andrew Reynold bro and we both know this is probably the better answer but go fuck yourself"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
