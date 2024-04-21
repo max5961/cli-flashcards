@@ -18,7 +18,7 @@ function QuestionAnswer({ question }: { question: QA }): React.ReactElement {
         if (input === "f") {
             setFlipped(!flipped);
         } else if (input === "n") {
-            setFlipped(!flipped);
+            setFlipped(false);
         }
     });
 
