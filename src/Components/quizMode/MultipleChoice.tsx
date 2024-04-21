@@ -1,41 +1,9 @@
 import React from "react";
 import { useState } from "react";
-import { Text, Box, useInput, useApp } from "ink";
-import { QA, MC } from "./interfaces.js";
-import useStdoutDimensions from "./useStdoutDimensions.js";
-
-function QuestionAnswer({ question }: { question: QA }): React.ReactElement {
-    const [flipped, setFlipped] = useState<boolean>(false);
-
-    useInput((input: string) => {
-        if (input === "f") {
-            setFlipped(!flipped);
-        } else if (input === "n") {
-            setFlipped(false);
-        }
-    });
-
-    return (
-        <Box flexDirection="column" alignItems="center">
-            <Box width="100%" justifyContent="center">
-                <Text color="yellow" dimColor>
-                    {flipped ? "Answer" : "Question"}
-                </Text>
-            </Box>
-            <Box
-                width="100%"
-                borderStyle="single"
-                borderTop={true}
-                borderLeft={false}
-                borderRight={false}
-                borderBottom={false}
-                justifyContent="center"
-            >
-                <Text>{flipped ? question.a : question.q}</Text>
-            </Box>
-        </Box>
-    );
-}
+import { useInput } from "ink";
+import { Box, Text } from "ink";
+import { MC } from "../../interfaces.js";
+import { HorizontalLine } from "../Lines.js";
 
 function MCList({
     choices,
@@ -90,7 +58,11 @@ function MCList({
     );
 }
 
-function MultipleChoice({ question }: { question: MC }): React.ReactElement {
+export function MultipleChoice({
+    question,
+}: {
+    question: MC;
+}): React.ReactElement {
     const [currIndex, setCurrIndex] = useState<number>(0);
     const [isFlashing, setIsFlashing] = useState<boolean>(false);
     const [highlightCorrect, setHighlightCorrect] = useState<boolean>(false);
@@ -154,87 +126,13 @@ function MultipleChoice({ question }: { question: MC }): React.ReactElement {
                     {question.q}
                 </Text>
             </Box>
-            <Box
-                width="100%"
-                borderStyle="single"
-                borderTop={true}
-                borderRight={false}
-                borderLeft={false}
-                borderBottom={false}
-            ></Box>
+            <HorizontalLine />
             <MCList
                 choices={question.choices}
                 currIndex={currIndex}
                 highlightCorrect={highlightCorrect}
                 correctAnswer={question.a}
             />
-        </Box>
-    );
-}
-
-export function Deck({
-    questions,
-}: {
-    questions: (MC | QA)[];
-}): React.ReactElement {
-    const [currIndex, setCurrIndex] = useState<number>(0);
-    const [currQuestion, setCurrQuestion] = useState<MC | QA>(questions[0]);
-    const [columns, rows] = useStdoutDimensions();
-
-    useInput((input, key) => {
-        if (input === "n" || input === "l") {
-            if (currIndex === questions.length - 1) {
-                return;
-            } else {
-                setCurrQuestion(questions[currIndex + 1]);
-                setCurrIndex(currIndex + 1);
-            }
-        }
-
-        if (input === "b" || input === "h") {
-            if (currIndex === 0) {
-                return;
-            } else {
-                setCurrQuestion(questions[currIndex - 1]);
-                setCurrIndex(currIndex - 1);
-            }
-        }
-    });
-
-    return (
-        <Box
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="space-between"
-            height={rows}
-            width={columns}
-        >
-            <Box width="100%" borderStyle="round" justifyContent="center">
-                <Text>{`Question: ${currIndex + 1}/${questions.length}`}</Text>
-            </Box>
-            <Box flexDirection="column" borderStyle="round" width={50}>
-                {currQuestion.type === "mc" ? (
-                    <MultipleChoice question={currQuestion} />
-                ) : (
-                    <QuestionAnswer question={currQuestion} />
-                )}
-            </Box>
-            <Box
-                alignSelf="center"
-                borderStyle="round"
-                width="100%"
-                justifyContent="space-between"
-                alignItems="center"
-                flexDirection={columns <= 200 ? "column" : "row"}
-            >
-                <Text>[q / Esc: quit]</Text>
-                <Text>[f: flip card]</Text>
-                <Text>[n / l: next card]</Text>
-                <Text>[b / h: previous card]</Text>
-                <Text>[Enter: choose multiple choice answer]</Text>
-                <Text>[up arrow / k: move up]</Text>
-                <Text>[down arrow / j: move down]</Text>
-            </Box>
         </Box>
     );
 }
