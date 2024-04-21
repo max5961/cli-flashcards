@@ -98,10 +98,14 @@ async function processArguments(): Promise<void> {
         let sectionsOrNull: Set<string> | null;
         if (!sections.size) {
             sectionsOrNull = null;
+            console.log("Set is empty");
         } else {
             sectionsOrNull = sections;
+            console.log("Set is NOT empty");
+            console.log(sections);
         }
 
+        console.log(questions);
         render(<App questions={questions} sections={sectionsOrNull} />);
     } catch (err) {
         console.error(err);

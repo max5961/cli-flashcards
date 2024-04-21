@@ -90,10 +90,14 @@ function processArguments() {
             let sectionsOrNull;
             if (!sections.size) {
                 sectionsOrNull = null;
+                console.log("Set is empty");
             }
             else {
                 sectionsOrNull = sections;
+                console.log("Set is NOT empty");
+                console.log(sections);
             }
+            console.log(questions);
             render(React.createElement(App, { questions: questions, sections: sectionsOrNull }));
         }
         catch (err) {

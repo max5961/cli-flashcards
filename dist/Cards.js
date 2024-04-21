@@ -1,26 +1,22 @@
 import React from "react";
 import { useState } from "react";
-import { Text, Box, useInput, useApp } from "ink";
+import { Text, Box, useInput } from "ink";
 import useStdoutDimensions from "./useStdoutDimensions.js";
 function QuestionAnswer({ question }) {
     const [flipped, setFlipped] = useState(false);
-    let textContent;
-    if (flipped) {
-        textContent = question.a;
-    }
-    else {
-        textContent = question.q;
-    }
     useInput((input) => {
         if (input === "f") {
             setFlipped(!flipped);
         }
         else if (input === "n") {
-            setFlipped(!flipped);
+            setFlipped(false);
         }
     });
-    return (React.createElement(React.Fragment, null,
-        React.createElement(Text, null, textContent)));
+    return (React.createElement(Box, { flexDirection: "column", alignItems: "center" },
+        React.createElement(Box, { width: "100%", justifyContent: "center" },
+            React.createElement(Text, { color: "yellow", dimColor: true }, flipped ? "Answer" : "Question")),
+        React.createElement(Box, { width: "100%", borderStyle: "single", borderTop: true, borderLeft: false, borderRight: false, borderBottom: false, justifyContent: "center" },
+            React.createElement(Text, null, flipped ? question.a : question.q))));
 }
 function MCList({ choices, currIndex, highlightCorrect, correctAnswer, }) {
     return (React.createElement(Box, { flexDirection: "column", flexGrow: 1 }, choices.map((choice, index) => {
@@ -96,18 +92,18 @@ function MultipleChoice({ question }) {
         }
     });
     return (React.createElement(Box, { justifyContent: "center", flexDirection: "column" },
-        React.createElement(Text, null, question.q),
+        React.createElement(Box, { alignSelf: "center" },
+            React.createElement(Text, { color: "yellow", dimColor: true }, question.q)),
+        React.createElement(Box, { width: "100%", borderStyle: "single", borderTop: true, borderRight: false, borderLeft: false, borderBottom: false }),
         React.createElement(MCList, { choices: question.choices, currIndex: currIndex, highlightCorrect: highlightCorrect, correctAnswer: question.a })));
 }
 export function Deck({ questions, }) {
     const [currIndex, setCurrIndex] = useState(0);
     const [currQuestion, setCurrQuestion] = useState(questions[0]);
     const [columns, rows] = useStdoutDimensions();
-    const { exit } = useApp();
     useInput((input, key) => {
-        if (input === "n") {
+        if (input === "n" || input === "l") {
             if (currIndex === questions.length - 1) {
-                exit();
                 return;
             }
             else {
@@ -115,8 +111,27 @@ export function Deck({ questions, }) {
                 setCurrIndex(currIndex + 1);
             }
         }
+        if (input === "b" || input === "h") {
+            if (currIndex === 0) {
+                return;
+            }
+            else {
+                setCurrQuestion(questions[currIndex - 1]);
+                setCurrIndex(currIndex - 1);
+            }
+        }
     });
-    return (React.createElement(Box, { alignItems: "center", justifyContent: "center", height: rows, width: columns },
-        React.createElement(Box, { flexDirection: "column", borderStyle: "round", width: 50 }, currQuestion.type === "mc" ? (React.createElement(MultipleChoice, { question: currQuestion })) : (React.createElement(QuestionAnswer, { question: currQuestion })))));
+    return (React.createElement(Box, { flexDirection: "column", alignItems: "center", justifyContent: "space-between", height: rows, width: columns },
+        React.createElement(Box, { width: "100%", borderStyle: "round", justifyContent: "center" },
+            React.createElement(Text, null, `Question: ${currIndex + 1}/${questions.length}`)),
+        React.createElement(Box, { flexDirection: "column", borderStyle: "round", width: 50 }, currQuestion.type === "mc" ? (React.createElement(MultipleChoice, { question: currQuestion })) : (React.createElement(QuestionAnswer, { question: currQuestion }))),
+        React.createElement(Box, { alignSelf: "center", borderStyle: "round", width: "100%", justifyContent: "space-between", alignItems: "center", flexDirection: columns <= 200 ? "column" : "row" },
+            React.createElement(Text, null, "[q / Esc: quit]"),
+            React.createElement(Text, null, "[f: flip card]"),
+            React.createElement(Text, null, "[n / l: next card]"),
+            React.createElement(Text, null, "[b / h: previous card]"),
+            React.createElement(Text, null, "[Enter: choose multiple choice answer]"),
+            React.createElement(Text, null, "[up arrow / k: move up]"),
+            React.createElement(Text, null, "[down arrow / j: move down]"))));
 }
 //# sourceMappingURL=Cards.js.map
