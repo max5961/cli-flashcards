@@ -48,13 +48,12 @@ export function MultipleChoice({
     });
 
     return (
-        <Box justifyContent="center" flexDirection="column">
+        <Box justifyContent="center" flexDirection="column" width={50}>
             <Box alignSelf="center">
                 <Text color="yellow" dimColor>
                     {question.q}
                 </Text>
             </Box>
-            <HorizontalLine />
             <MCList
                 choices={question.choices}
                 currIndex={currIndex}

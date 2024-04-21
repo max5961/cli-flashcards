@@ -21,7 +21,7 @@ export function QuestionAnswer({
     });
 
     return (
-        <Box flexDirection="column" alignItems="center">
+        <Box flexDirection="column" alignItems="center" width={50}>
             <Box width="100%" justifyContent="center">
                 <Text color="yellow" dimColor>
                     {flipped ? "Answer" : "Question"}
