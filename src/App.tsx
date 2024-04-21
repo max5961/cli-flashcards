@@ -1,5 +1,4 @@
 import React from "react";
-import { Deck } from "./Cards.js";
 import { Questions, MC, QA } from "./interfaces.js";
 import { useApp, useInput } from "ink";
 import { Quiz } from "./Components/quizMode/Quiz.js";
