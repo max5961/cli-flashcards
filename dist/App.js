@@ -1,7 +1,7 @@
 import React from "react";
 import { useState } from "react";
 import { useApp, useInput } from "ink";
-import { Quiz } from "./Components/quizMode/Quiz.js";
+import { CreateNew } from "./Components/createMode/CreateNew.js";
 function getQuestions(questions, sections) {
     const listOfQuestions = [];
     for (const section of questions.sections) {
@@ -21,7 +21,14 @@ export default function App({ questions, sections, }) {
             exit();
         }
     });
-    const questionsArray = getQuestions(questions, sections);
-    return (React.createElement(Quiz, { questions: questionsArray, normal: normal, setNormal: setNormal }));
+    // const questionsArray: (MC | QA | QI)[] = getQuestions(questions, sections);
+    // return (
+    //     <Quiz
+    //         questions={questionsArray}
+    //         normal={normal}
+    //         setNormal={setNormal}
+    //     />
+    // );
+    return React.createElement(CreateNew, null);
 }
 //# sourceMappingURL=App.js.map

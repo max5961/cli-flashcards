@@ -25,3 +25,8 @@ export interface Section {
 export interface Questions {
     sections: Section[];
 }
+
+export interface QuizFileData {
+    fileName: string;
+    quiz: Questions;
+}

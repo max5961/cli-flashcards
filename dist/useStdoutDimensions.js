@@ -18,5 +18,4 @@ export default function useStdoutDimensions() {
     }, [stdout]);
     return dimensions;
 }
-// export = useStdoutDimensions;
 //# sourceMappingURL=useStdoutDimensions.js.map

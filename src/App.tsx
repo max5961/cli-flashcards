@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Questions, MC, QA, QI } from "./interfaces.js";
 import { useApp, useInput } from "ink";
 import { Quiz } from "./Components/quizMode/Quiz.js";
+import { CreateNew } from "./Components/createMode/CreateNew.js";
 
 function getQuestions(
     questions: Questions,
@@ -37,12 +38,14 @@ export default function App({
         }
     });
 
-    const questionsArray: (MC | QA | QI)[] = getQuestions(questions, sections);
-    return (
-        <Quiz
-            questions={questionsArray}
-            normal={normal}
-            setNormal={setNormal}
-        />
-    );
+    // const questionsArray: (MC | QA | QI)[] = getQuestions(questions, sections);
+    // return (
+    //     <Quiz
+    //         questions={questionsArray}
+    //         normal={normal}
+    //         setNormal={setNormal}
+    //     />
+    // );
+
+    return <CreateNew />;
 }
