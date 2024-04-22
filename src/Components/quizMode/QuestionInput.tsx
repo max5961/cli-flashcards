@@ -20,6 +20,9 @@ export function QuestionInput({
 
     function handleNormalText(): React.ReactElement {
         let color: string = "white";
+
+        // If you exit insert mode with Esc, maybe you don't want to see if the
+        // answer is correct?  Only check answers when you press Enter
         if (checkingAnswer) {
             color =
                 input.toLowerCase() === question.a.toLowerCase()
