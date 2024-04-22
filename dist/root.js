@@ -11,40 +11,48 @@ import React from "react";
 import { render } from "ink";
 import App from "./App.js";
 import fs from "node:fs/promises";
-function validateQuestionsObject(questions) {
-    if (!questions.sections) {
+function validateQuizObject(quiz) {
+    if (!quiz.sections) {
+        console.log("1");
         console.log("JSON object must include 'sections' array.");
         return false;
     }
-    for (const section of questions.sections) {
+    for (const section of quiz.sections) {
         if (!section.name || !section.questions) {
+            console.log("2");
             return false;
         }
         for (const question of section.questions) {
             if (question.type !== "qa" &&
                 question.type !== "mc" &&
                 question.type !== "qi") {
+                console.log("3");
                 return false;
             }
             if (question.type === "qa" || question.type === "qi") {
                 if (!question.q || !question.a) {
+                    console.log("4");
                     return false;
                 }
             }
             if (question.type === "mc") {
                 if (!question.q || !question.a || !question.choices) {
+                    console.log("5");
                     return false;
                 }
                 if (!Array.isArray(question.choices)) {
+                    console.log("6");
                     return false;
                 }
                 let hasValidAnswer = false;
                 for (const obj of question.choices) {
                     for (const key in obj) {
                         if (typeof key !== "string") {
+                            console.log("7");
                             return false;
                         }
                         if (typeof obj[key] !== "string") {
+                            console.log("8");
                             return false;
                         }
                         if (key === question.a) {
@@ -53,6 +61,7 @@ function validateQuestionsObject(questions) {
                     }
                 }
                 if (!hasValidAnswer) {
+                    console.log("9");
                     return false;
                 }
             }
@@ -85,9 +94,9 @@ function processArguments() {
             if (!jsonFile) {
                 throw new Error("Must include json file as an argument");
             }
-            const questionsJson = yield fs.readFile(jsonFile, "utf-8");
-            const questions = JSON.parse(questionsJson);
-            if (!validateQuestionsObject(questions)) {
+            const quizJson = yield fs.readFile(jsonFile, "utf-8");
+            const quiz = JSON.parse(quizJson);
+            if (!validateQuizObject(quiz)) {
                 throw new Error("Invalid json format bro");
             }
             let sectionsOrNull;
@@ -100,8 +109,8 @@ function processArguments() {
                 console.log("Set is NOT empty");
                 console.log(sections);
             }
-            console.log(questions);
-            render(React.createElement(App, { questions: questions, sections: sectionsOrNull }));
+            console.log(quiz);
+            render(React.createElement(App, { quiz: quiz, sections: sectionsOrNull }));
         }
         catch (err) {
             console.error(err);

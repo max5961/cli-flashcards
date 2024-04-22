@@ -3,14 +3,14 @@ import { Box, Text } from "ink";
 
 export function Header({
     currIndex,
-    questionsLength,
+    QuizLength,
 }: {
     currIndex: number;
-    questionsLength: number;
+    QuizLength: number;
 }): React.ReactElement {
     return (
         <Box width="100%" borderStyle="round" justifyContent="center">
-            <Text>{`Question: ${currIndex + 1}/${questionsLength}`}</Text>
+            <Text>{`Question: ${currIndex + 1}/${QuizLength}`}</Text>
         </Box>
     );
 }

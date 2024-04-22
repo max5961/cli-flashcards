@@ -10,32 +10,30 @@ import { QuestionAnswer } from "./QuestionAnswer.js";
 import { FooterKeybinds } from "./FooterKeybinds.js";
 import { QuestionInput } from "./QuestionInput.js";
 
-export function Quiz({
-    questions,
+export function QuizMode({
+    Quiz,
     normal,
     setNormal,
 }: {
-    questions: (QA | MC | QI)[];
+    Quiz: (QA | MC | QI)[];
     normal: boolean;
     setNormal: (b: boolean) => void;
 }): React.ReactElement {
     const [currIndex, setCurrIndex] = useState<number>(0);
-    const [currQuestion, setCurrQuestion] = useState<MC | QA | QI>(
-        questions[0],
-    );
+    const [currQuestion, setCurrQuestion] = useState<MC | QA | QI>(Quiz[0]);
     const [columns, rows] = useStdoutDimensions();
 
     useInput((input, key) => {
-        // relevant to Question/Input questions
+        // relevant to Question/Input Quiz
         if (!normal) {
             return;
         }
 
         if (input === "n" || input === "l" || key.rightArrow) {
-            if (currIndex === questions.length - 1) {
+            if (currIndex === Quiz.length - 1) {
                 return;
             } else {
-                setCurrQuestion(questions[currIndex + 1]);
+                setCurrQuestion(Quiz[currIndex + 1]);
                 setCurrIndex(currIndex + 1);
             }
         }
@@ -44,7 +42,7 @@ export function Quiz({
             if (currIndex === 0) {
                 return;
             } else {
-                setCurrQuestion(questions[currIndex - 1]);
+                setCurrQuestion(Quiz[currIndex - 1]);
                 setCurrIndex(currIndex - 1);
             }
         }
@@ -77,7 +75,7 @@ export function Quiz({
             height={rows}
             width={columns}
         >
-            <Header currIndex={currIndex} questionsLength={questions.length} />
+            <Header currIndex={currIndex} QuizLength={Quiz.length} />
             {currentCard()}
             <FooterKeybinds columns={columns} />
         </Box>

@@ -2,18 +2,18 @@ import React from "react";
 import { useState } from "react";
 import { useApp, useInput } from "ink";
 import { CreateNew } from "./Components/createMode/CreateNew.js";
-function getQuestions(questions, sections) {
-    const listOfQuestions = [];
-    for (const section of questions.sections) {
+function getQuiz(quiz, sections) {
+    const listOfQuiz = [];
+    for (const section of quiz.sections) {
         if (!sections || sections.has(section.name)) {
             for (const question of section.questions) {
-                listOfQuestions.push(question);
+                listOfQuiz.push(question);
             }
         }
     }
-    return listOfQuestions;
+    return listOfQuiz;
 }
-export default function App({ questions, sections, }) {
+export default function App({ quiz, sections, }) {
     const { exit } = useApp();
     const [normal, setNormal] = useState(true);
     useInput((input) => {
@@ -21,10 +21,10 @@ export default function App({ questions, sections, }) {
             exit();
         }
     });
-    // const questionsArray: (MC | QA | QI)[] = getQuestions(questions, sections);
+    // const QuizArray: (MC | QA | QI)[] = getQuiz(Quiz, sections);
     // return (
-    //     <Quiz
-    //         questions={questionsArray}
+    //     <QuizMode
+    //         Quiz={QuizArray}
     //         normal={normal}
     //         setNormal={setNormal}
     //     />

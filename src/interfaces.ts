@@ -17,16 +17,18 @@ export interface MC {
     choices: { [key: string]: string }[];
 }
 
+export type Question = QA | QI | MC;
+
 export interface Section {
     name: string;
-    questions: (QA | QI | MC)[];
+    questions: Question[];
 }
 
-export interface Questions {
+export interface Quiz {
     sections: Section[];
 }
 
 export interface QuizFileData {
     fileName: string;
-    quiz: Questions;
+    quiz: Quiz;
 }

@@ -1,32 +1,29 @@
 import React from "react";
 import { useState } from "react";
-import { Questions, MC, QA, QI } from "./interfaces.js";
+import { Quiz, MC, QA, QI } from "./interfaces.js";
 import { useApp, useInput } from "ink";
-import { Quiz } from "./Components/quizMode/Quiz.js";
+import { QuizMode } from "./Components/quizMode/QuizMode.js";
 import { CreateNew } from "./Components/createMode/CreateNew.js";
 
-function getQuestions(
-    questions: Questions,
-    sections: Set<string> | null,
-): (MC | QA | QI)[] {
-    const listOfQuestions: (MC | QA | QI)[] = [];
+function getQuiz(quiz: Quiz, sections: Set<string> | null): (MC | QA | QI)[] {
+    const listOfQuiz: (MC | QA | QI)[] = [];
 
-    for (const section of questions.sections) {
+    for (const section of quiz.sections) {
         if (!sections || sections.has(section.name)) {
             for (const question of section.questions) {
-                listOfQuestions.push(question);
+                listOfQuiz.push(question);
             }
         }
     }
 
-    return listOfQuestions;
+    return listOfQuiz;
 }
 
 export default function App({
-    questions,
+    quiz,
     sections,
 }: {
-    questions: Questions;
+    quiz: Quiz;
     sections: Set<string> | null;
 }): React.ReactElement {
     const { exit } = useApp();
@@ -38,10 +35,10 @@ export default function App({
         }
     });
 
-    // const questionsArray: (MC | QA | QI)[] = getQuestions(questions, sections);
+    // const QuizArray: (MC | QA | QI)[] = getQuiz(Quiz, sections);
     // return (
-    //     <Quiz
-    //         questions={questionsArray}
+    //     <QuizMode
+    //         Quiz={QuizArray}
     //         normal={normal}
     //         setNormal={setNormal}
     //     />
