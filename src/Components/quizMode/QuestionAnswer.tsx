@@ -15,6 +15,8 @@ export function QuestionAnswer({
     useInput((input: string) => {
         if (input === "f") {
             setFlipped(!flipped);
+        } else if (input === "a") {
+            setFlipped(true);
         } else if (input === "n") {
             setFlipped(false);
         }

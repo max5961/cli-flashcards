@@ -4,6 +4,12 @@ export interface QA {
     a: string;
 }
 
+export interface QI {
+    type: "qi";
+    q: string;
+    a: string;
+}
+
 export interface MC {
     type: "mc";
     q: string;
@@ -13,7 +19,7 @@ export interface MC {
 
 export interface Section {
     name: string;
-    questions: (QA | MC)[];
+    questions: (QA | QI | MC)[];
 }
 
 export interface Questions {

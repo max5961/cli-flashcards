@@ -13,6 +13,7 @@ import App from "./App.js";
 import fs from "node:fs/promises";
 function validateQuestionsObject(questions) {
     if (!questions.sections) {
+        console.log("JSON object must include 'sections' array.");
         return false;
     }
     for (const section of questions.sections) {
@@ -20,10 +21,12 @@ function validateQuestionsObject(questions) {
             return false;
         }
         for (const question of section.questions) {
-            if (question.type !== "qa" && question.type !== "mc") {
+            if (question.type !== "qa" &&
+                question.type !== "mc" &&
+                question.type !== "qi") {
                 return false;
             }
-            if (question.type === "qa") {
+            if (question.type === "qa" || question.type === "qi") {
                 if (!question.q || !question.a) {
                     return false;
                 }

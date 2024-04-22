@@ -6,6 +6,7 @@ import { Questions } from "./interfaces.js";
 
 function validateQuestionsObject(questions: Questions): boolean {
     if (!questions.sections) {
+        console.log("JSON object must include 'sections' array.");
         return false;
     }
 
@@ -15,11 +16,15 @@ function validateQuestionsObject(questions: Questions): boolean {
         }
 
         for (const question of section.questions) {
-            if (question.type !== "qa" && question.type !== "mc") {
+            if (
+                question.type !== "qa" &&
+                question.type !== "mc" &&
+                question.type !== "qi"
+            ) {
                 return false;
             }
 
-            if (question.type === "qa") {
+            if (question.type === "qa" || question.type === "qi") {
                 if (!question.q || !question.a) {
                     return false;
                 }
