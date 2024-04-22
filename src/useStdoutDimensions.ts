@@ -21,5 +21,3 @@ export default function useStdoutDimensions(): [number, number] {
 
     return dimensions;
 }
-
-// export = useStdoutDimensions;
