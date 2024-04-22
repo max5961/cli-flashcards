@@ -62,6 +62,7 @@ export function QuestionInput({
 
         if (normal && input === "c") {
             setInput("");
+            setNormal(false);
         }
 
         if (normal && (input === "a" || input === "f")) {
