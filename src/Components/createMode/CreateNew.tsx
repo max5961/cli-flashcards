@@ -420,6 +420,14 @@ function ListQuestions({ section }: { section: Section }): React.ReactElement {
     );
 }
 
+interface EditContextProps {
+    question: Question;
+    questionCopy: Question;
+    currIndex: number;
+}
+
+const EditContext = createContext<EditContextProps | null>(null);
+
 function EditQuestion({
     question,
 }: {
@@ -591,42 +599,10 @@ function Edit({
         })(),
     );
 
-    // onChange is just a state object
-    // create one state object that is a reflection of the questionCopy
-    // the handleChange function will curry a function that curries a function
-    // that sets the correct key of the questionCopy
-    // *** this by itself doesn't necessarily handle the issue of the useState
-    // needing to be of template type string (that is how the input gets it value)
-    //
-    // Another solution is to create a Choice component that is created when the
-    // MC options are mapped.  That way it uses its own privately scoped state
-    // we don't need to create it ourselves. It will then use the handleChange
-    // function to subscribe its changes to the questionCopy object as well as
-    // its privately scoped state
-    //
-    // Matter of fact, we could possibly wrap all components into an array and
-    // map them for the purpose of handling privately scoped state
     const [questionInput, setQuestionInput] = useState<string>(questionCopy.q);
     const [answerInput, setAnswerInput] = useState<string>(questionCopy.a);
 
     const { normal } = useContext(NormalContext)!;
-
-    type ToChange = "q" | "a" | "mc";
-    function handleChange(toChange: ToChange): (newValue: any) => void {
-        return (newValue: any) => {
-            const copy: Question = cloneDeep(questionCopy);
-
-            if (toChange === "q") {
-                copy.q = newValue;
-                setQuestionInput(newValue);
-            } else if (toChange === "a") {
-                copy.a = newValue;
-                setAnswerInput(newValue);
-            }
-
-            setQuestionCopy(copy);
-        };
-    }
 
     return (
         <>
@@ -641,14 +617,11 @@ function Edit({
                     <Text dimColor>Question: </Text>
                 </Box>
                 <HorizontalLine />
-                {!normal && currIndex === -2 ? (
-                    <TextInput
-                        value={questionInput}
-                        onChange={handleChange("q")}
-                    ></TextInput>
-                ) : (
-                    <Text>{questionCopy.q}</Text>
-                )}
+                <TextInput
+                    value={questionInput}
+                    onChange={setQuestionInput}
+                    focus={!normal && currIndex === -2}
+                ></TextInput>
             </Box>
             <Box
                 width="50%"
@@ -661,14 +634,11 @@ function Edit({
                     <Text dimColor>Answer: </Text>
                 </Box>
                 <HorizontalLine />
-                {!normal && currIndex === -1 ? (
-                    <TextInput
-                        value={answerInput}
-                        onChange={handleChange("a")}
-                    ></TextInput>
-                ) : (
-                    <Text>{questionCopy.a}</Text>
-                )}
+                <TextInput
+                    value={answerInput}
+                    onChange={setAnswerInput}
+                    focus={!normal && currIndex === -1}
+                ></TextInput>
             </Box>
         </>
     );
@@ -701,6 +671,8 @@ function EditMC({
     question: MC;
     currIndex: number;
 }): React.ReactElement {
+    const { normal } = useContext(NormalContext)!;
+
     return (
         <>
             <Edit question={question} currIndex={currIndex} />
@@ -722,7 +694,10 @@ function EditMC({
                                 }
                                 flexGrow={1}
                             >
-                                <Text>{desc}</Text>
+                                <MCText
+                                    desc={desc}
+                                    isFocused={index === currIndex && !normal}
+                                />
                             </Box>
                         </Box>
                     </>
@@ -735,5 +710,22 @@ function EditMC({
                 </Box>
             </Box>
         </>
+    );
+}
+
+function MCText({
+    desc,
+    isFocused,
+}: {
+    desc: string;
+    isFocused: boolean;
+}): React.ReactElement {
+    const [mcInput, setMcInput] = useState<string>(desc);
+    return (
+        <TextInput
+            value={mcInput}
+            onChange={setMcInput}
+            focus={isFocused}
+        ></TextInput>
     );
 }
