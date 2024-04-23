@@ -1,5 +1,5 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useContext, createContext } from "react";
 import { Quiz, MC, QA, QI } from "./interfaces.js";
 import { useApp, useInput } from "ink";
 import { QuizMode } from "./Components/quizMode/QuizMode.js";
@@ -18,6 +18,12 @@ function getQuiz(quiz: Quiz, sections: Set<string> | null): (MC | QA | QI)[] {
 
     return listOfQuiz;
 }
+
+interface NormalContext {
+    normal: boolean;
+    setNormal: (b: boolean) => void;
+}
+export const NormalContext = createContext<NormalContext | null>(null);
 
 export default function App({
     quiz,
@@ -44,5 +50,9 @@ export default function App({
     //     />
     // );
 
-    return <CreateNew />;
+    return (
+        <NormalContext.Provider value={{ normal, setNormal }}>
+            <CreateNew />
+        </NormalContext.Provider>
+    );
 }

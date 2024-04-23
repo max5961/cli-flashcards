@@ -1,5 +1,5 @@
 import React from "react";
-import { useState } from "react";
+import { useState, createContext } from "react";
 import { useApp, useInput } from "ink";
 import { CreateNew } from "./Components/createMode/CreateNew.js";
 function getQuiz(quiz, sections) {
@@ -13,6 +13,7 @@ function getQuiz(quiz, sections) {
     }
     return listOfQuiz;
 }
+export const NormalContext = createContext(null);
 export default function App({ quiz, sections, }) {
     const { exit } = useApp();
     const [normal, setNormal] = useState(true);
@@ -29,6 +30,7 @@ export default function App({ quiz, sections, }) {
     //         setNormal={setNormal}
     //     />
     // );
-    return React.createElement(CreateNew, null);
+    return (React.createElement(NormalContext.Provider, { value: { normal, setNormal } },
+        React.createElement(CreateNew, null)));
 }
 //# sourceMappingURL=App.js.map

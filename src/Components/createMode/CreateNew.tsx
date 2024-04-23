@@ -1,6 +1,7 @@
 import React, { useState, useReducer, createContext, useContext } from "react";
 import { Box, Text, useInput } from "ink";
 import { HorizontalLine } from "../Lines.js";
+import { NormalContext } from "../../App.js";
 import TextInput from "ink-text-input";
 import useStdoutDimensions from "../../useStdoutDimensions.js";
 import {
@@ -413,7 +414,7 @@ function EditQuestion({
 }: {
     question: Question;
 }): React.ReactElement {
-    const [currIndex, setCurrIndex] = useState<number>(0);
+    const [currIndex, setCurrIndex] = useState<number>(-2);
     const {
         pageState,
         pageDispatch,
@@ -423,27 +424,56 @@ function EditQuestion({
         setAllQuizzes,
     } = useContext(Context)!;
 
+    const { normal, setNormal } = useContext(NormalContext)!;
+
     useInput((input, key) => {
-        if (pageState.currPage !== "QUESTIONS") {
+        if (!normal && key.escape) {
+            setNormal(true);
+        }
+
+        if (pageState.currPage !== "EDIT_QUESTION" || !normal) {
             return;
         }
 
+        if (input === "i" && currIndex >= -2) {
+            setNormal(false);
+        }
+
+        if (key.escape) {
+            setNormal(true);
+        }
+
         if (input === "j" || key.downArrow) {
-            if (currIndex >= 3) {
+            if (currIndex === -2) {
+                setCurrIndex(0);
                 return;
             }
+
             setCurrIndex(currIndex + 1);
         }
 
         if (input === "k" || key.upArrow) {
-            if (currIndex <= 0) {
+            if (currIndex === -1) {
+                setCurrIndex(-3);
                 return;
             }
+            if (currIndex <= -5) {
+                return;
+            }
+
             setCurrIndex(currIndex - 1);
         }
 
-        if (key.delete || input === "h") {
-            pageDispatch({ type: "LOAD_SECTIONS" });
+        if (key.delete || (input === "h" && currIndex !== -1)) {
+            pageDispatch({ type: "LOAD_QUESTIONS" });
+            return;
+        }
+
+        if (currIndex === -1 && (input === "h" || key.leftArrow)) {
+            setCurrIndex(-2);
+        }
+        if (currIndex === -2 && (input === "l" || key.rightArrow)) {
+            setCurrIndex(-1);
         }
     });
     return (
@@ -455,22 +485,28 @@ function EditQuestion({
             </Box>
             <HorizontalLine />
             <Box flexWrap="wrap">
-                <QuestionOptions />
+                <QuestionOptions question={question} currIndex={currIndex} />
                 {(() => {
                     if (question.type === "qa") {
-                        return <EditQA question={question} />;
+                        return (
+                            <EditQA question={question} currIndex={currIndex} />
+                        );
                     }
                     if (question.type === "qi") {
-                        return <EditQI question={question} />;
+                        return (
+                            <EditQI question={question} currIndex={currIndex} />
+                        );
                     }
                     if (question.type === "mc") {
-                        return <EditMC question={question} />;
+                        return (
+                            <EditMC question={question} currIndex={currIndex} />
+                        );
                     }
                 })()}
             </Box>
             <Box width="100%" justifyContent="space-between" marginTop={1}>
                 <Box borderStyle="round">
-                    <Text>{"--NORMAL--"}</Text>
+                    <Text>{`${normal ? "--NORMAL--" : "--INSERT--"}`}</Text>
                 </Box>
                 <Box>
                     <Box borderStyle="round">
@@ -485,26 +521,84 @@ function EditQuestion({
     );
 }
 
-function QuestionOptions(): React.ReactElement {
+function QuestionOptions({
+    question,
+    currIndex,
+}: {
+    question: Question;
+    currIndex: number;
+}): React.ReactElement {
+    type QuestionType = "mc" | "qa" | "qi";
+    function isType(type: QuestionType): boolean {
+        return question.type === type;
+    }
+
+    function isChecked(type: QuestionType): string {
+        return isType(type) ? "[ x ] " : "[   ] ";
+    }
+
     return (
         <Box flexDirection="column" borderStyle="round" width="100%">
             <Box alignItems="center">
-                <Text>{"[   ] "}</Text>
-                <Text>Question Answer</Text>
+                <Text color={isType("qa") ? "green" : ""}>
+                    {isChecked("qa")}
+                </Text>
+                <Text color={currIndex === -5 ? "blue" : ""}>
+                    Question Answer
+                </Text>
             </Box>
             <Box alignItems="center">
-                <Text>{"[   ] "}</Text>
-                <Text>Question Input</Text>
+                <Text color={isType("qi") ? "green" : ""}>
+                    {isChecked("qi")}
+                </Text>
+                <Text color={currIndex === -4 ? "blue" : ""}>
+                    Question Input
+                </Text>
             </Box>
             <Box alignItems="center">
-                <Text color="green">{"[ x ] "}</Text>
-                <Text>Multiple Choice</Text>
+                <Text color={isType("mc") ? "green" : ""}>
+                    {isChecked("mc")}
+                </Text>
+                <Text color={currIndex === -3 ? "blue" : ""}>
+                    Multiple Choice
+                </Text>
             </Box>
         </Box>
     );
 }
 
-function Edit({ question }: { question: Question }): React.ReactElement {
+function Edit({
+    question,
+    currIndex,
+}: {
+    question: Question;
+    currIndex: number;
+}): React.ReactElement {
+    const [questionCopy, setQuestionCopy] = useState<Question>(() => {
+        return cloneDeep(question);
+    });
+    const [questionInput, setQuestionInput] = useState<string>(questionCopy.q);
+    const [answerInput, setAnswerInput] = useState<string>(questionCopy.a);
+
+    const { normal } = useContext(NormalContext)!;
+
+    type ToChange = "q" | "a" | "mc";
+    function handleChange(toChange: ToChange): (newValue: any) => void {
+        return (newValue: any) => {
+            const copy: Question = cloneDeep(questionCopy);
+
+            if (toChange === "q") {
+                copy.q = newValue;
+                setQuestionInput(newValue);
+            } else if (toChange === "a") {
+                copy.a = newValue;
+                setAnswerInput(newValue);
+            }
+
+            setQuestionCopy(copy);
+        };
+    }
+
     return (
         <>
             <Box
@@ -512,51 +606,91 @@ function Edit({ question }: { question: Question }): React.ReactElement {
                 borderStyle="round"
                 flexDirection="column"
                 alignItems="center"
+                borderColor={currIndex === -2 ? "blue" : ""}
             >
                 <Box>
                     <Text dimColor>Question: </Text>
                 </Box>
                 <HorizontalLine />
-                <Text>{question.q}</Text>
+                {!normal && currIndex === -2 ? (
+                    <TextInput
+                        value={questionInput}
+                        onChange={handleChange("q")}
+                    ></TextInput>
+                ) : (
+                    <Text>{questionCopy.q}</Text>
+                )}
             </Box>
             <Box
                 width="50%"
                 borderStyle="round"
                 flexDirection="column"
                 alignItems="center"
+                borderColor={currIndex === -1 ? "blue" : ""}
             >
                 <Box>
                     <Text dimColor>Answer: </Text>
                 </Box>
                 <HorizontalLine />
-                <Text>{question.a}</Text>
+                {!normal && currIndex === -1 ? (
+                    <TextInput
+                        value={answerInput}
+                        onChange={handleChange("a")}
+                    ></TextInput>
+                ) : (
+                    <Text>{questionCopy.a}</Text>
+                )}
             </Box>
         </>
     );
 }
 
-function EditQA({ question }: { question: QA }): React.ReactElement {
-    return <Edit question={question} />;
+function EditQA({
+    question,
+    currIndex,
+}: {
+    question: QA;
+    currIndex: number;
+}): React.ReactElement {
+    return <Edit question={question} currIndex={currIndex} />;
 }
-function EditQI({ question }: { question: QI }): React.ReactElement {
-    return <Edit question={question} />;
+
+function EditQI({
+    question,
+    currIndex,
+}: {
+    question: QI;
+    currIndex: number;
+}): React.ReactElement {
+    return <Edit question={question} currIndex={currIndex} />;
 }
-function EditMC({ question }: { question: MC }): React.ReactElement {
+
+function EditMC({
+    question,
+    currIndex,
+}: {
+    question: MC;
+    currIndex: number;
+}): React.ReactElement {
     return (
         <>
-            <Edit question={question} />
+            <Edit question={question} currIndex={currIndex} />
             {question.choices.map((choice, index) => {
                 const label: string = Object.keys(choice)[0];
                 const desc: string = choice[label];
                 return (
                     <>
-                        <Box width="100%" alignItems="center">
+                        <Box width="100%" alignItems="center" key={index}>
                             <Box>
                                 <Text
                                     bold
                                 >{`${String.fromCharCode(index + 65)}: `}</Text>
                             </Box>
-                            <Box borderStyle="round" flexGrow={1} key={index}>
+                            <Box
+                                borderColor={index === currIndex ? "blue" : ""}
+                                borderStyle="round"
+                                flexGrow={1}
+                            >
                                 <Text>{desc}</Text>
                             </Box>
                         </Box>

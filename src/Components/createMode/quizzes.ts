@@ -10,7 +10,7 @@ export const quizzes: QuizFileData[] = [
                         {
                             type: "qi",
                             q: "What is my first name?",
-                            a: "Ma",
+                            a: "Max",
                         },
                         {
                             type: "qa",
