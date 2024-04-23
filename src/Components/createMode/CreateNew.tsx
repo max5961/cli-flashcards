@@ -413,6 +413,39 @@ function EditQuestion({
 }: {
     question: Question;
 }): React.ReactElement {
+    const [currIndex, setCurrIndex] = useState<number>(0);
+    const {
+        pageState,
+        pageDispatch,
+        currItems,
+        setCurrItems,
+        allQuizzes,
+        setAllQuizzes,
+    } = useContext(Context)!;
+
+    useInput((input, key) => {
+        if (pageState.currPage !== "QUESTIONS") {
+            return;
+        }
+
+        if (input === "j" || key.downArrow) {
+            if (currIndex >= 3) {
+                return;
+            }
+            setCurrIndex(currIndex + 1);
+        }
+
+        if (input === "k" || key.upArrow) {
+            if (currIndex <= 0) {
+                return;
+            }
+            setCurrIndex(currIndex - 1);
+        }
+
+        if (key.delete || input === "h") {
+            pageDispatch({ type: "LOAD_SECTIONS" });
+        }
+    });
     return (
         <>
             <Box alignSelf="center">
@@ -421,27 +454,121 @@ function EditQuestion({
                 </Text>
             </Box>
             <HorizontalLine />
-            {(() => {
-                if (question.type === "qa") {
-                    return <EditQA question={question} />;
-                }
-                if (question.type === "qi") {
-                    return <EditQI question={question} />;
-                }
-                if (question.type === "mc") {
-                    return <EditMC question={question} />;
-                }
-            })()}
+            <Box flexWrap="wrap">
+                <QuestionOptions />
+                {(() => {
+                    if (question.type === "qa") {
+                        return <EditQA question={question} />;
+                    }
+                    if (question.type === "qi") {
+                        return <EditQI question={question} />;
+                    }
+                    if (question.type === "mc") {
+                        return <EditMC question={question} />;
+                    }
+                })()}
+            </Box>
+            <Box width="100%" justifyContent="space-between" marginTop={1}>
+                <Box borderStyle="round">
+                    <Text>{"--NORMAL--"}</Text>
+                </Box>
+                <Box>
+                    <Box borderStyle="round">
+                        <Text>Save</Text>
+                    </Box>
+                    <Box borderStyle="round">
+                        <Text>Cancel</Text>
+                    </Box>
+                </Box>
+            </Box>
         </>
     );
 }
 
-function EditQA({ question }: { question: Question }): React.ReactElement {
-    return <></>;
+function QuestionOptions(): React.ReactElement {
+    return (
+        <Box flexDirection="column" borderStyle="round" width="100%">
+            <Box alignItems="center">
+                <Text>{"[   ] "}</Text>
+                <Text>Question Answer</Text>
+            </Box>
+            <Box alignItems="center">
+                <Text>{"[   ] "}</Text>
+                <Text>Question Input</Text>
+            </Box>
+            <Box alignItems="center">
+                <Text color="green">{"[ x ] "}</Text>
+                <Text>Multiple Choice</Text>
+            </Box>
+        </Box>
+    );
 }
-function EditQI({ question }: { question: Question }): React.ReactElement {
-    return <></>;
+
+function Edit({ question }: { question: Question }): React.ReactElement {
+    return (
+        <>
+            <Box
+                width="50%"
+                borderStyle="round"
+                flexDirection="column"
+                alignItems="center"
+            >
+                <Box>
+                    <Text dimColor>Question: </Text>
+                </Box>
+                <HorizontalLine />
+                <Text>{question.q}</Text>
+            </Box>
+            <Box
+                width="50%"
+                borderStyle="round"
+                flexDirection="column"
+                alignItems="center"
+            >
+                <Box>
+                    <Text dimColor>Answer: </Text>
+                </Box>
+                <HorizontalLine />
+                <Text>{question.a}</Text>
+            </Box>
+        </>
+    );
 }
-function EditMC({ question }: { question: Question }): React.ReactElement {
-    return <></>;
+
+function EditQA({ question }: { question: QA }): React.ReactElement {
+    return <Edit question={question} />;
+}
+function EditQI({ question }: { question: QI }): React.ReactElement {
+    return <Edit question={question} />;
+}
+function EditMC({ question }: { question: MC }): React.ReactElement {
+    return (
+        <>
+            <Edit question={question} />
+            {question.choices.map((choice, index) => {
+                const label: string = Object.keys(choice)[0];
+                const desc: string = choice[label];
+                return (
+                    <>
+                        <Box width="100%" alignItems="center">
+                            <Box>
+                                <Text
+                                    bold
+                                >{`${String.fromCharCode(index + 65)}: `}</Text>
+                            </Box>
+                            <Box borderStyle="round" flexGrow={1} key={index}>
+                                <Text>{desc}</Text>
+                            </Box>
+                        </Box>
+                    </>
+                );
+            })}
+            <Box width="100%">
+                <Text>{"   "}</Text>
+                <Box borderStyle="round" flexGrow={1}>
+                    <Text color="green">{"+ Add Option"}</Text>
+                </Box>
+            </Box>
+        </>
+    );
 }
