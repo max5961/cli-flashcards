@@ -15,6 +15,11 @@ import {
 import { quizzes } from "./quizzes.js";
 import cloneDeep from "lodash/cloneDeep.js";
 
+enum Icons {
+    edit = "  ",
+    add = "  ",
+}
+
 interface PageState {
     currPage: "QUIZZES" | "SECTIONS" | "QUESTIONS" | "EDIT_QUESTION";
 }
@@ -183,11 +188,12 @@ function ListQuizzes({
                 </Text>
             </Box>
             <HorizontalLine />
-            <Box borderStyle={currIndex === 0 ? "classic" : "round"}>
-                <Text inverse={currIndex === 0}>
-                    <Text color="green" inverse={currIndex === 0}>
-                        {" [+] "}
-                    </Text>
+            <Box
+                borderStyle={currIndex === 0 ? "bold" : "round"}
+                borderColor={currIndex === 0 ? "blue" : ""}
+            >
+                <Text>
+                    <Text color="green">{"  "}</Text>
                     Add Quiz
                 </Text>
             </Box>
@@ -198,13 +204,14 @@ function ListQuizzes({
                             <Box
                                 key={index}
                                 borderStyle={
-                                    index + 1 === currIndex
-                                        ? "classic"
-                                        : "round"
+                                    index + 1 === currIndex ? "bold" : "round"
+                                }
+                                borderColor={
+                                    index + 1 === currIndex ? "blue" : ""
                                 }
                             >
-                                <Text inverse={index + 1 === currIndex}>
-                                    <Text color="yellow">{" [E] "}</Text>
+                                <Text>
+                                    <Text color="yellow">{"  "}</Text>
                                     {quiz.fileName}
                                 </Text>
                             </Box>
@@ -280,11 +287,12 @@ function ListSections({
                 </Text>
             </Box>
             <HorizontalLine />
-            <Box borderStyle={currIndex === 0 ? "classic" : "round"}>
-                <Text inverse={currIndex === 0}>
-                    <Text color="green" inverse={currIndex === 0}>
-                        {" [+] "}
-                    </Text>
+            <Box
+                borderStyle={currIndex === 0 ? "bold" : "round"}
+                borderColor={currIndex === 0 ? "blue" : ""}
+            >
+                <Text>
+                    <Text color="green">{Icons.add}</Text>
                     Add Section
                 </Text>
             </Box>
@@ -295,13 +303,14 @@ function ListSections({
                             <Box
                                 key={index}
                                 borderStyle={
-                                    index + 1 === currIndex
-                                        ? "classic"
-                                        : "round"
+                                    index + 1 === currIndex ? "bold" : "round"
+                                }
+                                borderColor={
+                                    index + 1 === currIndex ? "blue" : ""
                                 }
                             >
-                                <Text inverse={index + 1 === currIndex}>
-                                    <Text color="yellow">{" [E] "}</Text>
+                                <Text>
+                                    <Text color="yellow">{Icons.edit}</Text>
                                     {section.name}
                                 </Text>
                             </Box>
@@ -377,11 +386,12 @@ function ListQuestions({ section }: { section: Section }): React.ReactElement {
                 </Text>
             </Box>
             <HorizontalLine />
-            <Box borderStyle={currIndex === 0 ? "classic" : "round"}>
-                <Text inverse={currIndex === 0}>
-                    <Text color="green" inverse={currIndex === 0}>
-                        {" [+] "}
-                    </Text>
+            <Box
+                borderStyle={currIndex === 0 ? "bold" : "round"}
+                borderColor={currIndex === 0 ? "blue" : ""}
+            >
+                <Text>
+                    <Text color="green">{Icons.add}</Text>
                     Add Question
                 </Text>
             </Box>
@@ -392,13 +402,14 @@ function ListQuestions({ section }: { section: Section }): React.ReactElement {
                             <Box
                                 key={index}
                                 borderStyle={
-                                    index + 1 === currIndex
-                                        ? "classic"
-                                        : "round"
+                                    index + 1 === currIndex ? "bold" : "round"
+                                }
+                                borderColor={
+                                    index + 1 === currIndex ? "blue" : ""
                                 }
                             >
-                                <Text inverse={index + 1 === currIndex}>
-                                    <Text color="yellow">{" [E] "}</Text>
+                                <Text>
+                                    <Text color="yellow">{Icons.edit}</Text>
                                     {q.q}
                                 </Text>
                             </Box>
@@ -574,9 +585,27 @@ function Edit({
     question: Question;
     currIndex: number;
 }): React.ReactElement {
-    const [questionCopy, setQuestionCopy] = useState<Question>(() => {
-        return cloneDeep(question);
-    });
+    const [questionCopy, setQuestionCopy] = useState<Question>(
+        (() => {
+            return cloneDeep(question);
+        })(),
+    );
+
+    // onChange is just a state object
+    // create one state object that is a reflection of the questionCopy
+    // the handleChange function will curry a function that curries a function
+    // that sets the correct key of the questionCopy
+    // *** this by itself doesn't necessarily handle the issue of the useState
+    // needing to be of template type string (that is how the input gets it value)
+    //
+    // Another solution is to create a Choice component that is created when the
+    // MC options are mapped.  That way it uses its own privately scoped state
+    // we don't need to create it ourselves. It will then use the handleChange
+    // function to subscribe its changes to the questionCopy object as well as
+    // its privately scoped state
+    //
+    // Matter of fact, we could possibly wrap all components into an array and
+    // map them for the purpose of handling privately scoped state
     const [questionInput, setQuestionInput] = useState<string>(questionCopy.q);
     const [answerInput, setAnswerInput] = useState<string>(questionCopy.a);
 
@@ -603,10 +632,10 @@ function Edit({
         <>
             <Box
                 width="50%"
-                borderStyle="round"
                 flexDirection="column"
                 alignItems="center"
                 borderColor={currIndex === -2 ? "blue" : ""}
+                borderStyle={currIndex === -2 ? "bold" : "round"}
             >
                 <Box>
                     <Text dimColor>Question: </Text>
@@ -623,10 +652,10 @@ function Edit({
             </Box>
             <Box
                 width="50%"
-                borderStyle="round"
                 flexDirection="column"
                 alignItems="center"
                 borderColor={currIndex === -1 ? "blue" : ""}
+                borderStyle={currIndex === -1 ? "bold" : "round"}
             >
                 <Box>
                     <Text dimColor>Answer: </Text>
@@ -688,7 +717,9 @@ function EditMC({
                             </Box>
                             <Box
                                 borderColor={index === currIndex ? "blue" : ""}
-                                borderStyle="round"
+                                borderStyle={
+                                    index === currIndex ? "bold" : "round"
+                                }
                                 flexGrow={1}
                             >
                                 <Text>{desc}</Text>
@@ -700,7 +731,7 @@ function EditMC({
             <Box width="100%">
                 <Text>{"   "}</Text>
                 <Box borderStyle="round" flexGrow={1}>
-                    <Text color="green">{"+ Add Option"}</Text>
+                    <Text color="green">{" + Add Option"}</Text>
                 </Box>
             </Box>
         </>
