@@ -5,23 +5,37 @@ import { NormalContext } from "../../App.js";
 import TextInput from "ink-text-input";
 import useStdoutDimensions from "../../useStdoutDimensions.js";
 import {
-    Question,
+    QuizData,
     QuizFileData,
+    Quiz,
     Section,
+    Question,
     MC,
     QA,
     QI,
 } from "../../interfaces.js";
-import { quizzes } from "./quizzes.js";
 import cloneDeep from "lodash/cloneDeep.js";
+import { quizData as initialQuizData } from "./quizData.js";
 
 enum Icons {
     edit = "  ",
     add = "  ",
 }
 
+// All Pages are arrays that are part of some parent Object
+enum Pages {
+    quizzes = "QUIZZES",
+    sections = "SECTIONS",
+    questions = "QUESTIONS",
+    editQuestion = "EDIT_QUESTION",
+}
+
 interface PageState {
-    currPage: "QUIZZES" | "SECTIONS" | "QUESTIONS" | "EDIT_QUESTION";
+    currPage:
+        | Pages.quizzes
+        | Pages.sections
+        | Pages.questions
+        | Pages.editQuestion;
 }
 interface PageStateActions {
     type:
@@ -40,16 +54,16 @@ function pageReducer(
 
     switch (action.type) {
         case "LOAD_QUIZZES":
-            copy.currPage = "QUIZZES";
+            copy.currPage = Pages.quizzes;
             break;
         case "LOAD_SECTIONS":
-            copy.currPage = "SECTIONS";
+            copy.currPage = Pages.sections;
             break;
         case "LOAD_QUESTIONS":
-            copy.currPage = "QUESTIONS";
+            copy.currPage = Pages.questions;
             break;
         case "LOAD_EDIT_QUESTION":
-            copy.currPage = "EDIT_QUESTION";
+            copy.currPage = Pages.editQuestion;
             break;
         default:
             throw new Error("Unhandled action type");
@@ -59,56 +73,56 @@ function pageReducer(
 }
 
 interface CurrItems {
-    quizFileData: QuizFileData | null;
+    quizData: QuizData | null;
     section: Section | null;
-    question: (MC | QA | QI) | null;
+    question: Question | null;
 }
 
-interface State {
+interface TraverseContextProps {
     pageState: PageState;
     pageDispatch: (action: PageStateActions) => void;
-    allQuizzes: QuizFileData[];
-    setAllQuizzes: (q: QuizFileData[]) => void;
+    quizData: QuizData;
+    setQuizData: (q: QuizData) => void;
     currItems: CurrItems;
     setCurrItems: (ci: CurrItems) => void;
 }
 
-export const Context = createContext<State | null>(null);
+export const TraverseContext = createContext<TraverseContextProps | null>(null);
 
 export function CreateNew(): React.ReactElement {
     const [cols, rows] = useStdoutDimensions();
-    const [allQuizzes, setAllQuizzes] = useState<QuizFileData[]>(quizzes);
+    const [quizData, setQuizData] = useState<QuizData>(initialQuizData);
 
     const [currItems, setCurrItems] = useState<CurrItems>({
-        quizFileData: null,
+        quizData: null,
         section: null,
         question: null,
     });
 
     const [pageState, pageDispatch] = useReducer(pageReducer, {
-        currPage: "QUIZZES",
+        currPage: Pages.quizzes,
     });
 
-    let pageContent: React.ReactElement;
-    if (pageState.currPage === "QUIZZES") {
-        pageContent = <ListQuizzes quizzes={allQuizzes} />;
-    } else if (pageState.currPage === "SECTIONS") {
-        pageContent = <ListSections quizFileData={currItems.quizFileData!} />;
-    } else if (pageState.currPage === "QUESTIONS") {
-        pageContent = <ListQuestions section={currItems.section!} />;
-    } else if (pageState.currPage === "EDIT_QUESTION") {
-        pageContent = <EditQuestion question={currItems.question!} />;
+    let pageContent: React.ReactElement = <></>;
+    if (pageState.currPage === Pages.quizzes) {
+        // pageContent = <List />;
+    } else if (pageState.currPage === Pages.sections) {
+        // pageContent = <List />;
+    } else if (pageState.currPage === Pages.questions) {
+        // pageContent = <List />;
+    } else if (pageState.currPage === Pages.editQuestion) {
+        // pageContent = <List />;
     } else {
         throw new Error("Invalid pageState");
     }
 
     return (
-        <Context.Provider
+        <TraverseContext.Provider
             value={{
                 pageState,
                 pageDispatch,
-                allQuizzes,
-                setAllQuizzes,
+                quizData,
+                setQuizData,
                 currItems,
                 setCurrItems,
             }}
@@ -123,68 +137,48 @@ export function CreateNew(): React.ReactElement {
                     {pageContent}
                 </Box>
             </Box>
-        </Context.Provider>
+        </TraverseContext.Provider>
     );
 }
 
-function ListQuizzes({
-    quizzes,
+function List({
+    data,
+    dataType,
 }: {
-    quizzes: QuizFileData[];
+    data: QuizData | Quiz | Section;
+    dataType: Pages;
 }): React.ReactElement {
-    const [currIndex, setCurrIndex] = useState<number>(0);
+    const { currItems, setCurrItems, currIndex } = useContext(TraverseContext);
 
-    const {
-        pageState,
-        pageDispatch,
-        currItems,
-        setCurrItems,
-        allQuizzes,
-        setAllQuizzes,
-    } = useContext(Context)!;
+    let title: string;
+    let addText: string;
+    let items: QuizFileData[] | Section[] | Question[];
+    let getDesc: (index: number) => string;
 
-    function handleEnter(): void {
-        // ---- set currItems ----
-        // this will work to enter into the next page, but when changes are
-        // made, you must make sure the the quizzes object is cloned with the
-        // changes made to the copy
-        const currItemsCopy = cloneDeep(currItems);
-        currItemsCopy.quizFileData = quizzes[currIndex - 1];
-        setCurrItems(currItemsCopy);
-
-        // Enter the Sections page, which is the Quiz listing different Sections
-        pageDispatch({ type: "LOAD_SECTIONS" });
+    if (dataType === Pages.quizzes) {
+        items = (data as QuizData).quizzes;
+        title = "All Quizzes";
+        addText = "Add Quiz";
+        getDesc = (index: number) => (data as QuizData).quizzes[index].fileName;
+    } else if (dataType === Pages.sections) {
+        items = (data as Quiz).sections;
+        title = "Sections";
+        addText = "Add Section";
+        getDesc = (index: number) => (data as Quiz).sections[index].name;
+    } else if (dataType === Pages.questions) {
+        items = (data as Section).questions;
+        title = "Questions";
+        addText = "Add Question";
+        getDesc = (index: number) => (data as Section).questions[index].q;
+    } else {
+        throw new Error("Invalid dataType");
     }
-
-    useInput((input, key) => {
-        if (pageState.currPage !== "QUIZZES") {
-            return;
-        }
-
-        if (input === "j" || key.downArrow) {
-            if (currIndex >= quizzes.length) {
-                return;
-            }
-            setCurrIndex(currIndex + 1);
-        }
-
-        if (input === "k" || key.upArrow) {
-            if (currIndex <= 0) {
-                return;
-            }
-            setCurrIndex(currIndex - 1);
-        }
-
-        if (key.return || input === "l") {
-            handleEnter();
-        }
-    });
 
     return (
         <>
             <Box alignSelf="center">
-                <Text color="yellow" dimColor>
-                    All Quizzes
+                <Text color="yellow" dimColor bold>
+                    {title}
                 </Text>
             </Box>
             <HorizontalLine />
@@ -194,11 +188,11 @@ function ListQuizzes({
             >
                 <Text>
                     <Text color="green">{"  "}</Text>
-                    Add Quiz
+                    {addText}
                 </Text>
             </Box>
-            {quizzes &&
-                quizzes.map((quiz, index) => {
+            {items &&
+                items.map((item, index) => {
                     return (
                         <>
                             <Box
@@ -212,7 +206,7 @@ function ListQuizzes({
                             >
                                 <Text>
                                     <Text color="yellow">{"  "}</Text>
-                                    {quiz.fileName}
+                                    {getDesc(index)}
                                 </Text>
                             </Box>
                         </>
@@ -222,203 +216,100 @@ function ListQuizzes({
     );
 }
 
-function ListSections({
-    quizFileData,
-}: {
-    quizFileData: QuizFileData;
-}): React.ReactElement {
-    const [currIndex, setCurrIndex] = useState<number>(0);
-
-    const {
-        pageState,
-        pageDispatch,
-        currItems,
-        setCurrItems,
-        allQuizzes,
-        setAllQuizzes,
-    } = useContext(Context)!;
-
-    function handleEnter(): void {
-        // ---- set currItems ----
-        // this will work to enter into the next page, but when changes are
-        // made, you must make sure the the quizzes object is cloned with the
-        // changes made to the copy
-        const copyCurrItems = cloneDeep(currItems);
-        copyCurrItems.section = quizFileData.quiz.sections[currIndex - 1];
-        setCurrItems(copyCurrItems);
-
-        // Enter the Sections page, which is the Quiz listing different Sections
-        pageDispatch({ type: "LOAD_QUESTIONS" });
-    }
-
-    useInput((input, key) => {
-        if (pageState.currPage !== "SECTIONS") {
-            return;
-        }
-
-        if (input === "j" || key.downArrow) {
-            if (currIndex >= quizFileData.quiz.sections.length) {
-                return;
-            }
-            setCurrIndex(currIndex + 1);
-        }
-
-        if (input === "k" || key.upArrow) {
-            if (currIndex <= 0) {
-                return;
-            }
-            setCurrIndex(currIndex - 1);
-        }
-
-        if (key.return || input === "l") {
-            handleEnter();
-        }
-
-        if (key.delete || input === "h") {
-            pageDispatch({ type: "LOAD_QUIZZES" });
-        }
-    });
-
-    return (
-        <>
-            <Box alignSelf="center">
-                <Text color="yellow" dimColor>
-                    {currItems.quizFileData!.fileName}
-                </Text>
-            </Box>
-            <HorizontalLine />
-            <Box
-                borderStyle={currIndex === 0 ? "bold" : "round"}
-                borderColor={currIndex === 0 ? "blue" : ""}
-            >
-                <Text>
-                    <Text color="green">{Icons.add}</Text>
-                    Add Section
-                </Text>
-            </Box>
-            {quizFileData.quiz.sections &&
-                quizFileData.quiz.sections.map((section, index) => {
-                    return (
-                        <>
-                            <Box
-                                key={index}
-                                borderStyle={
-                                    index + 1 === currIndex ? "bold" : "round"
-                                }
-                                borderColor={
-                                    index + 1 === currIndex ? "blue" : ""
-                                }
-                            >
-                                <Text>
-                                    <Text color="yellow">{Icons.edit}</Text>
-                                    {section.name}
-                                </Text>
-                            </Box>
-                        </>
-                    );
-                })}
-        </>
-    );
-}
-
-function ListQuestions({ section }: { section: Section }): React.ReactElement {
-    const [currIndex, setCurrIndex] = useState<number>(0);
-
-    const {
-        pageState,
-        pageDispatch,
-        currItems,
-        setCurrItems,
-        allQuizzes,
-        setAllQuizzes,
-    } = useContext(Context)!;
-
-    function handleEnter(): void {
-        // ---- set currItems ----
-        // this will work to enter into the next page, but when changes are
-        // made, you must make sure the the quizzes object is cloned with the
-        // changes made to the copy
-        const copyCurrItems = cloneDeep(currItems);
-        copyCurrItems.question = section.questions[currIndex - 1];
-        setCurrItems(copyCurrItems);
-
-        // Enter the Sections page, which is the Quiz listing different Sections
-        pageDispatch({ type: "LOAD_EDIT_QUESTION" });
-    }
-
-    function handleBackspace(): void {
-        pageDispatch({ type: "LOAD_SECTIONS" });
-    }
-
-    useInput((input, key) => {
-        if (pageState.currPage !== "QUESTIONS") {
-            return;
-        }
-
-        if (input === "j" || key.downArrow) {
-            if (currIndex >= section.questions.length) {
-                return;
-            }
-            setCurrIndex(currIndex + 1);
-        }
-
-        if (input === "k" || key.upArrow) {
-            if (currIndex <= 0) {
-                return;
-            }
-            setCurrIndex(currIndex - 1);
-        }
-
-        if (key.return || input === "l") {
-            handleEnter();
-        }
-
-        if (key.delete || input === "h") {
-            pageDispatch({ type: "LOAD_SECTIONS" });
-        }
-    });
-
-    return (
-        <>
-            <Box alignSelf="center">
-                <Text color="yellow" dimColor>
-                    {`${currItems.quizFileData!.fileName} -> ${currItems.section!.name}`}
-                </Text>
-            </Box>
-            <HorizontalLine />
-            <Box
-                borderStyle={currIndex === 0 ? "bold" : "round"}
-                borderColor={currIndex === 0 ? "blue" : ""}
-            >
-                <Text>
-                    <Text color="green">{Icons.add}</Text>
-                    Add Question
-                </Text>
-            </Box>
-            {section &&
-                section.questions.map((q, index) => {
-                    return (
-                        <>
-                            <Box
-                                key={index}
-                                borderStyle={
-                                    index + 1 === currIndex ? "bold" : "round"
-                                }
-                                borderColor={
-                                    index + 1 === currIndex ? "blue" : ""
-                                }
-                            >
-                                <Text>
-                                    <Text color="yellow">{Icons.edit}</Text>
-                                    {q.q}
-                                </Text>
-                            </Box>
-                        </>
-                    );
-                })}
-        </>
-    );
-}
+// function ListQuizzes({
+//     quizzes,
+// }: {
+//     quizzes: QuizFileData[];
+// }): React.ReactElement {
+//     const [currIndex, setCurrIndex] = useState<number>(0);
+//
+//     const {
+//         pageState,
+//         pageDispatch,
+//         currItems,
+//         setCurrItems,
+//         quizData,
+//         setQuizData,
+//     } = useContext(TraverseContext)!;
+//
+//     function handleEnter(): void {
+//         // ---- set currItems ----
+//         // this will work to enter into the next page, but when changes are
+//         // made, you must make sure the the quizzes object is cloned with the
+//         // changes made to the copy
+//         const currItemsCopy = cloneDeep(currItems);
+//         currItemsCopy.quizFileData = quizzes[currIndex - 1];
+//         setCurrItems(currItemsCopy);
+//
+//         // Enter the Sections page, which is the Quiz listing different Sections
+//         pageDispatch({ type: "LOAD_SECTIONS" });
+//     }
+//
+//     useInput((input, key) => {
+//         if (pageState.currPage !== "QUIZZES") {
+//             return;
+//         }
+//
+//         if (input === "j" || key.downArrow) {
+//             if (currIndex >= quizzes.length) {
+//                 return;
+//             }
+//             setCurrIndex(currIndex + 1);
+//         }
+//
+//         if (input === "k" || key.upArrow) {
+//             if (currIndex <= 0) {
+//                 return;
+//             }
+//             setCurrIndex(currIndex - 1);
+//         }
+//
+//         if (key.return || input === "l") {
+//             handleEnter();
+//         }
+//     });
+//
+//     return (
+//         <>
+//             <Box alignSelf="center">
+//                 <Text color="yellow" dimColor>
+//                     All Quizzes
+//                 </Text>
+//             </Box>
+//             <HorizontalLine />
+//             <Box
+//                 borderStyle={currIndex === 0 ? "bold" : "round"}
+//                 borderColor={currIndex === 0 ? "blue" : ""}
+//             >
+//                 <Text>
+//                     <Text color="green">{"  "}</Text>
+//                     Add Quiz
+//                 </Text>
+//             </Box>
+//             {quizzes &&
+//                 quizzes.map((quiz, index) => {
+//                     return (
+//                         <>
+//                             <Box
+//                                 key={index}
+//                                 borderStyle={
+//                                     index + 1 === currIndex ? "bold" : "round"
+//                                 }
+//                                 borderColor={
+//                                     index + 1 === currIndex ? "blue" : ""
+//                                 }
+//                             >
+//                                 <Text>
+//                                     <Text color="yellow">{"  "}</Text>
+//                                     {quiz.fileName}
+//                                 </Text>
+//                             </Box>
+//                         </>
+//                     );
+//                 })}
+//         </>
+//     );
+// }
 
 interface EditContextProps {
     question: Question;
@@ -439,9 +330,9 @@ function EditQuestion({
         pageDispatch,
         currItems,
         setCurrItems,
-        allQuizzes,
-        setAllQuizzes,
-    } = useContext(Context)!;
+        quizData,
+        setQuizData,
+    } = useContext(TraverseContext)!;
 
     const { normal, setNormal } = useContext(NormalContext)!;
 
