@@ -291,7 +291,7 @@ function List({
 }): React.ReactElement {
     const { pageState } = useContext(TraverseContext)!;
     const [currIndex, setCurrIndex] = useState<number>(0);
-    const window = useWindow(5);
+    const window = useWindow(3);
 
     let title: string;
     let addText: string;
