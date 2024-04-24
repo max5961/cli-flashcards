@@ -41,14 +41,8 @@ export default function App({
         }
     });
 
-    // const QuizArray: (MC | QA | QI)[] = getQuiz(Quiz, sections);
-    // return (
-    //     <QuizMode
-    //         Quiz={QuizArray}
-    //         normal={normal}
-    //         setNormal={setNormal}
-    //     />
-    // );
+    // const QuizArray: (MC | QA | QI)[] = getQuiz(quiz, sections);
+    // return <QuizMode Quiz={QuizArray} normal={normal} setNormal={setNormal} />;
 
     return (
         <NormalContext.Provider value={{ normal, setNormal }}>

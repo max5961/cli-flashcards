@@ -22,14 +22,8 @@ export default function App({ quiz, sections, }) {
             exit();
         }
     });
-    // const QuizArray: (MC | QA | QI)[] = getQuiz(Quiz, sections);
-    // return (
-    //     <QuizMode
-    //         Quiz={QuizArray}
-    //         normal={normal}
-    //         setNormal={setNormal}
-    //     />
-    // );
+    // const QuizArray: (MC | QA | QI)[] = getQuiz(quiz, sections);
+    // return <QuizMode Quiz={QuizArray} normal={normal} setNormal={setNormal} />;
     return (React.createElement(NormalContext.Provider, { value: { normal, setNormal } },
         React.createElement(CreateNew, null)));
 }

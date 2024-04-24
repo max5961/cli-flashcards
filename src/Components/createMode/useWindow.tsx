@@ -12,7 +12,7 @@ export interface WindowState {
 
 export function useWindow(windowSize: number): WindowState {
     const [start, setStart] = useState<number>(0);
-    const [end, setEnd] = useState<number>(start + (windowSize - 1));
+    const [end, setEnd] = useState<number>(start + windowSize);
     const [mid, setMid] = useState<number>(Math.floor((start + end) / 2));
 
     return {
@@ -52,7 +52,7 @@ export function Window({
             modified = true;
         }
     } else if (currIndex > mid) {
-        while (end < items.length - 1 && currIndex !== midCopy) {
+        while (end < items.length && currIndex !== midCopy) {
             ++startCopy;
             ++endCopy;
             midCopy = getMid(startCopy, endCopy);
@@ -67,5 +67,5 @@ export function Window({
         setMid(midCopy);
     }
 
-    return items.slice(startCopy, endCopy + 1);
+    return items.slice(startCopy, endCopy);
 }
