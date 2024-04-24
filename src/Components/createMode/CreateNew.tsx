@@ -16,6 +16,7 @@ import {
 } from "../../interfaces.js";
 import cloneDeep from "lodash/cloneDeep.js";
 import { quizData as initialQuizData } from "./quizData.js";
+import { WindowState, Window, WindowProps, useWindow } from "./useWindow.js";
 
 enum Icons {
     edit = "  ",
@@ -80,16 +81,19 @@ function pageReducer(
             copy.page = Pages.quiz;
             copy.quizFileData = copy.allQuizzes!.quizzes[action.index - 1];
             copy.lastIndex.push(action.index);
+            action.setCurrIndex(0);
             break;
         case "LOAD_SECTION":
             copy.page = Pages.section;
             copy.section = copy.quizFileData!.quiz.sections[action.index - 1];
             copy.lastIndex.push(action.index);
+            action.setCurrIndex(0);
             break;
         case "LOAD_QUESTION":
             copy.page = Pages.question;
             copy.question = copy.section![action.index - 1];
             copy.lastIndex.push(action.index);
+            action.setCurrIndex(0);
             break;
         case "BACK_TO_QUIZ_DATA":
             copy.page = Pages.quizData;
@@ -136,9 +140,9 @@ export function CreateNew(): React.ReactElement {
         (size: number, page: Pages) =>
         (currIndex: number, setCurrIndex: (n: number) => void) =>
         (input: string, key: any) => {
-            // if (key.escape) {
-            //     setNormal(true);
-            // }
+            if (key.escape) {
+                setNormal(true);
+            }
 
             if (pageState.page !== page || !normal) {
                 return;
@@ -234,7 +238,6 @@ export function CreateNew(): React.ReactElement {
             />
         );
     } else if (pageState.page === Pages.section) {
-        console.log(pageState.section);
         pageContent = (
             <List
                 data={pageState.section!}
@@ -286,8 +289,9 @@ function List({
         setCurrIndex: (n: number) => void,
     ) => (input: string, key: any) => void;
 }): React.ReactElement {
-    const {} = useContext(TraverseContext)!;
+    const { pageState } = useContext(TraverseContext)!;
     const [currIndex, setCurrIndex] = useState<number>(0);
+    const window = useWindow(5);
 
     let title: string;
     let addText: string;
@@ -301,13 +305,13 @@ function List({
         getDesc = (index: number) => (data as QuizData).quizzes[index].fileName;
     } else if (dataType === Pages.quiz) {
         items = (data as QuizFileData).quiz.sections;
-        title = "Sections";
+        title = `Sections in: ${pageState.quizFileData?.fileName}`;
         addText = "Add Section";
         getDesc = (index: number) =>
             (data as QuizFileData).quiz.sections[index].name;
     } else if (dataType === Pages.section) {
         items = (data as Section).questions;
-        title = "Questions";
+        title = `Questions in: ${pageState.quizFileData?.fileName} -> ${pageState.section?.name}`;
         addText = "Add Question";
         getDesc = (index: number) => (data as Section).questions[index].q;
     } else {
@@ -317,6 +321,38 @@ function List({
     const useInputCb = handleInput(currIndex, setCurrIndex);
     useInput(useInputCb);
 
+    function mapItems(items: any[]): React.ReactElement[] {
+        const components: React.ReactElement[] = [];
+        for (let i = -1; i < items.length; ++i) {
+            if (i === -1) {
+                components.push(
+                    <Box
+                        borderStyle={currIndex === 0 ? "bold" : "round"}
+                        borderColor={currIndex === 0 ? "blue" : ""}
+                    >
+                        <Text>
+                            <Text color="green">{Icons.add}</Text>
+                            {addText}
+                        </Text>
+                    </Box>,
+                );
+            } else {
+                components.push(
+                    <Box
+                        borderStyle={i + 1 === currIndex ? "bold" : "round"}
+                        borderColor={i + 1 === currIndex ? "blue" : ""}
+                    >
+                        <Text>
+                            <Text color="yellow">{Icons.edit}</Text>
+                            {getDesc(i)}
+                        </Text>
+                    </Box>,
+                );
+            }
+        }
+        return components;
+    }
+
     return (
         <>
             <Box alignSelf="center">
@@ -325,36 +361,11 @@ function List({
                 </Text>
             </Box>
             <HorizontalLine />
-            <Box
-                borderStyle={currIndex === 0 ? "bold" : "round"}
-                borderColor={currIndex === 0 ? "blue" : ""}
-            >
-                <Text>
-                    <Text color="green">{Icons.add}</Text>
-                    {addText}
-                </Text>
-            </Box>
-            {items &&
-                items.map((item: any, index: number) => {
-                    return (
-                        <>
-                            <Box
-                                key={index}
-                                borderStyle={
-                                    index + 1 === currIndex ? "bold" : "round"
-                                }
-                                borderColor={
-                                    index + 1 === currIndex ? "blue" : ""
-                                }
-                            >
-                                <Text>
-                                    <Text color="yellow">{Icons.edit}</Text>
-                                    {getDesc(index)}
-                                </Text>
-                            </Box>
-                        </>
-                    );
-                })}
+            <Window
+                items={mapItems(items)}
+                window={window}
+                currIndex={currIndex}
+            />
         </>
     );
 }
