@@ -329,7 +329,6 @@ function List({
                     <Box
                         borderStyle={currIndex === 0 ? "bold" : "round"}
                         borderColor={currIndex === 0 ? "blue" : ""}
-                        flexGrow={1}
                     >
                         <Text>
                             <Text color="green">{Icons.add}</Text>
@@ -342,7 +341,6 @@ function List({
                     <Box
                         borderStyle={i + 1 === currIndex ? "bold" : "round"}
                         borderColor={i + 1 === currIndex ? "blue" : ""}
-                        flexGrow={1}
                     >
                         <Text>
                             <Text color="yellow">{Icons.edit}</Text>
@@ -363,58 +361,13 @@ function List({
                 </Text>
             </Box>
             <HorizontalLine />
-            <Box flexDirection="row">
-                <Box flexDirection="column">
-                    <Window
-                        items={mapItems(items)}
-                        window={window}
-                        currIndex={currIndex}
-                    />
-                </Box>
-                <Scroller window={window} length={items.length + 1} />
-            </Box>
-        </>
-    );
-}
-
-function Scroller({
-    window,
-    length,
-}: {
-    window: WindowControl;
-    length: number;
-}): React.ReactElement {
-    const { windowState, setWindowState } = window;
-    const { start, end, mid } = windowState;
-
-    const sGap = start;
-    const mGap = end - start - 1;
-    const eGap = length - end;
-
-    let sPercent = sGap / length > 0 ? sGap / length : 0;
-    let mPercent = mGap / length > 0 ? mGap / length : 0;
-    let ePercent = eGap / length > 0 ? eGap / length : 0;
-
-    if (sPercent === 0) {
-        ePercent = 1 - mPercent;
-    }
-
-    if (ePercent === 0) {
-        sPercent = 1 - mPercent;
-    }
-    <Text>{`${sPercent}, ${mPercent}, ${ePercent}`}</Text>;
-
-    return (
-        <>
-            <Box flexDirection="column" height="100%">
-                <Box flexGrow={sPercent} margin={0}></Box>
-                <Box
-                    flexGrow={mPercent}
-                    borderStyle="round"
-                    borderColor="blue"
-                ></Box>
-                <Box flexGrow={ePercent} margin={0}></Box>
-            </Box>
+            <Window
+                items={mapItems(items)}
+                window={window}
+                currIndex={currIndex}
+                scrollColor="green"
+                scrollBorder="single"
+            />
         </>
     );
 }
