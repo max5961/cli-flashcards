@@ -205,8 +205,6 @@ export function CreateNew(): React.ReactElement {
                         return;
                 }
 
-                console.log(dispatchType);
-
                 pageDispatch({
                     type: dispatchType,
                     index: currIndex,
@@ -270,7 +268,7 @@ export function CreateNew(): React.ReactElement {
                 alignItems="center"
                 justifyContent="center"
             >
-                <Box width={50} flexDirection="column" borderStyle="round">
+                <Box width={75} flexDirection="column" borderStyle="round">
                     {pageContent}
                 </Box>
             </Box>
@@ -291,7 +289,7 @@ function List({
     ) => (input: string, key: any) => void;
 }): React.ReactElement {
     const { pageState } = useContext(TraverseContext)!;
-    const windowSize: number = 2;
+    const windowSize: number = 5;
     const [window, currIndex, setCurrIndex, setWindowState] =
         useWindow(windowSize);
 

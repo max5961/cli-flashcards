@@ -216,7 +216,12 @@ function Scroller({
 
     return (
         <>
-            <Box flexDirection={flexDirection} height={height} width={width}>
+            <Box
+                flexDirection={flexDirection}
+                height={height}
+                width={width}
+                padding={0}
+            >
                 <Box flexGrow={sPercent} margin={0}></Box>
                 <Box
                     flexGrow={mPercent}

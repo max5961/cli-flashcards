@@ -14,6 +14,61 @@ export const quizData: QuizData = {
                                 a: "Max",
                             },
                             {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
+                                type: "qi",
+                                q: "What is my first name?",
+                                a: "Max",
+                            },
+                            {
                                 type: "qa",
                                 q: "How many Promise static methods are there?",
                                 a: "6",
