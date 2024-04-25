@@ -291,7 +291,7 @@ function List({
     ) => (input: string, key: any) => void;
 }): React.ReactElement {
     const { pageState } = useContext(TraverseContext)!;
-    const [window, currIndex, setCurrIndex] = useWindow(3);
+    const [window, currIndex, setCurrIndex] = useWindow(4);
 
     let title: string;
     let addText: string;
@@ -367,6 +367,9 @@ function List({
                 currIndex={currIndex}
                 scrollColor="green"
                 scrollBorder="single"
+                scrollMiddle={false}
+                scrollPosition="right"
+                flexDirection="column"
             />
         </>
     );

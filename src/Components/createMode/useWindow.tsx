@@ -1,7 +1,6 @@
 import React from "react";
 import { useState } from "react";
 import { Box } from "ink";
-import cliBoxes from "cli-boxes/index.js";
 
 export interface WindowState {
     start: number;
@@ -42,44 +41,72 @@ type BorderStyle =
     | "single"
     | "arrow"
     | "doubleSingle";
+type FlexDirection = "column" | "row";
+type ScrollPosition = "left" | "right" | "top" | "bottom";
 
 export interface WindowProps {
-    items: any[];
+    items: React.ReactElement[];
     currIndex: number;
     window: WindowControl;
+    scrollMiddle?: boolean;
     scrollBar?: boolean;
     scrollColor?: string;
     scrollBorder?: BorderStyle;
+    flexDirection?: FlexDirection;
+    scrollPosition?: ScrollPosition;
 }
 export function Window({
     items,
     currIndex,
     window,
+    scrollMiddle = false,
     scrollBar = true,
     scrollColor = "white",
     scrollBorder = "single",
+    scrollPosition = "right",
+    flexDirection = "column",
 }: WindowProps): React.ReactElement {
     const { windowState, setWindowState } = window;
     let { start, end, mid } = windowState;
 
     // get the start / end indexes of the window
     let modified: boolean = false;
-    const getMid = (s: number, e: number) => Math.floor((s + e) / 2);
-    if (currIndex < windowState.mid) {
-        while (start > 0 && currIndex !== mid) {
-            --start;
-            --end;
-            mid = getMid(start, end);
 
-            modified = true;
+    // keep current list item in middle
+    if (scrollMiddle) {
+        const getMid = (s: number, e: number) => Math.floor((s + e) / 2);
+        if (currIndex < windowState.mid) {
+            while (start > 0 && currIndex !== mid) {
+                --start;
+                --end;
+                mid = getMid(start, end);
+
+                modified = true;
+            }
+        } else if (currIndex > windowState.mid) {
+            while (end < items.length && currIndex !== mid) {
+                ++start;
+                ++end;
+                mid = getMid(start, end);
+
+                modified = true;
+            }
         }
-    } else if (currIndex > windowState.mid) {
-        while (end < items.length && currIndex !== mid) {
-            ++start;
-            ++end;
-            mid = getMid(start, end);
 
-            modified = true;
+        // current list item is on either end of the list
+    } else {
+        if (currIndex === end) {
+            if (end < items.length) {
+                ++start;
+                ++end;
+                modified = true;
+            }
+        } else if (currIndex === start - 1) {
+            if (start > 0) {
+                --start;
+                --end;
+                modified = true;
+            }
         }
     }
 
@@ -107,18 +134,41 @@ export function Window({
                 length={items.length}
                 scrollColor={scrollColor}
                 scrollBorder={scrollBorder}
+                flexDirection={flexDirection}
             />
         );
     } else {
         scroll = <></>;
     }
 
+    let outerFlex: FlexDirection;
+    let innerFlex: FlexDirection;
+    switch (flexDirection) {
+        case "column":
+            outerFlex = "row";
+            innerFlex = "column";
+            break;
+        case "row":
+            outerFlex = "column";
+            innerFlex = "row";
+            break;
+    }
+
     return (
-        <Box flexDirection="row">
-            <Box flexDirection="column" flexGrow={1}>
+        <Box flexDirection={outerFlex}>
+            {scrollPosition === "left" || scrollPosition === "top" ? (
+                scroll
+            ) : (
+                <></>
+            )}
+            <Box flexDirection={innerFlex} flexGrow={1}>
                 {slicedItems}
             </Box>
-            {scroll}
+            {scrollPosition === "right" || scrollPosition === "bottom" ? (
+                scroll
+            ) : (
+                <></>
+            )}
         </Box>
     );
 }
@@ -128,11 +178,13 @@ function Scroller({
     length,
     scrollColor,
     scrollBorder,
+    flexDirection,
 }: {
     window: WindowControl;
     length: number;
     scrollColor: string;
     scrollBorder: BorderStyle;
+    flexDirection: FlexDirection;
 }): React.ReactElement {
     const { windowState } = window;
     const { start, end } = windowState;
@@ -152,11 +204,13 @@ function Scroller({
     if (ePercent === 0) {
         sPercent = 1 - mPercent;
     }
-    // <Text>{`${sPercent}, ${mPercent}, ${ePercent}`}</Text>;
+
+    const height: string = flexDirection === "column" ? "100%" : "";
+    const width: string = flexDirection === "row" ? "100%" : "";
 
     return (
         <>
-            <Box flexDirection="column" height="100%">
+            <Box flexDirection={flexDirection} height={height} width={width}>
                 <Box flexGrow={sPercent} margin={0}></Box>
                 <Box
                     flexGrow={mPercent}
