@@ -329,6 +329,7 @@ function List({
                     <Box
                         borderStyle={currIndex === 0 ? "bold" : "round"}
                         borderColor={currIndex === 0 ? "blue" : ""}
+                        flexGrow={1}
                     >
                         <Text>
                             <Text color="green">{Icons.add}</Text>
@@ -341,6 +342,7 @@ function List({
                     <Box
                         borderStyle={i + 1 === currIndex ? "bold" : "round"}
                         borderColor={i + 1 === currIndex ? "blue" : ""}
+                        flexGrow={1}
                     >
                         <Text>
                             <Text color="yellow">{Icons.edit}</Text>
@@ -369,7 +371,7 @@ function List({
                         currIndex={currIndex}
                     />
                 </Box>
-                <Scroller window={window} length={items.length} />
+                <Scroller window={window} length={items.length + 1} />
             </Box>
         </>
     );
@@ -387,42 +389,31 @@ function Scroller({
 
     const sGap = start;
     const mGap = end - start - 1;
-    const eGap = length - end - 2;
+    const eGap = length - end;
 
-    let sPercent = sGap / length;
-    let mPercent = mGap / length;
-    let ePercent = eGap / length;
+    let sPercent = sGap / length > 0 ? sGap / length : 0;
+    let mPercent = mGap / length > 0 ? mGap / length : 0;
+    let ePercent = eGap / length > 0 ? eGap / length : 0;
 
-    if (sPercent < 1) {
-        sPercent *= 100;
-    }
-    if (mPercent < 1) {
-        mPercent *= 100;
-    }
-    if (ePercent < 1) {
-        ePercent *= 100;
+    if (sPercent === 0) {
+        ePercent = 1 - mPercent;
     }
 
-    if (sPercent < 0) {
-        sPercent = 0;
+    if (ePercent === 0) {
+        sPercent = 1 - mPercent;
     }
-    if (mPercent < 0) {
-        mPercent = 0;
-    }
-    if (ePercent < 0) {
-        ePercent = 0;
-    }
+    <Text>{`${sPercent}, ${mPercent}, ${ePercent}`}</Text>;
+
     return (
         <>
-            <Text>{`${sPercent}, ${mPercent}, ${ePercent}`}</Text>
-            <Box flexDirection="column" height="100%" borderStyle="round">
-                <Box flexGrow={sPercent / 100}></Box>
+            <Box flexDirection="column" height="100%">
+                <Box flexGrow={sPercent} margin={0}></Box>
                 <Box
-                    flexGrow={mPercent / 100}
+                    flexGrow={mPercent}
                     borderStyle="round"
                     borderColor="blue"
                 ></Box>
-                <Box flexGrow={ePercent / 100}></Box>
+                <Box flexGrow={ePercent} margin={0}></Box>
             </Box>
         </>
     );
