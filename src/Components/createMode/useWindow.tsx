@@ -222,14 +222,15 @@ function Scroller({
                 width={width}
                 padding={0}
             >
-                <Box flexGrow={sPercent} margin={0}></Box>
+                <Box flexGrow={sPercent} margin={0} padding={0}></Box>
                 <Box
                     flexGrow={mPercent}
                     borderStyle={scrollBorder}
                     borderColor={scrollColor}
                     margin={0}
+                    padding={0}
                 ></Box>
-                <Box flexGrow={ePercent} margin={0}></Box>
+                <Box flexGrow={ePercent} margin={0} padding={0}></Box>
             </Box>
         </>
     );

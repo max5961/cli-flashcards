@@ -268,7 +268,7 @@ export function CreateNew(): React.ReactElement {
                 alignItems="center"
                 justifyContent="center"
             >
-                <Box width={75} flexDirection="column" borderStyle="round">
+                <Box width={50} flexDirection="column" borderStyle="round">
                     {pageContent}
                 </Box>
             </Box>
@@ -381,7 +381,7 @@ function List({
                 items={mapItems(items)}
                 window={window}
                 currIndex={currIndex}
-                scrollColor="green"
+                scrollColor="white"
                 scrollBorder="single"
                 scrollMiddle={false}
                 scrollPosition="right"
