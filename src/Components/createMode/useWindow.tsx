@@ -14,7 +14,12 @@ export interface WindowControl {
     setWindowState: (ws: WindowState) => void;
 }
 
-type WindowDestructure = [WindowControl, number, (n: number) => void];
+type WindowDestructure = [
+    WindowControl,
+    number,
+    (n: number) => void,
+    (ws: WindowState) => void,
+];
 
 export function useWindow(windowSize: number): WindowDestructure {
     const [currIndex, setCurrIndex] = useState<number>(0);
@@ -29,6 +34,7 @@ export function useWindow(windowSize: number): WindowDestructure {
         { windowState: windowState, setWindowState: setWindowState },
         currIndex,
         setCurrIndex,
+        setWindowState,
     ];
 }
 

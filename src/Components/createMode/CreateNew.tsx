@@ -291,7 +291,9 @@ function List({
     ) => (input: string, key: any) => void;
 }): React.ReactElement {
     const { pageState } = useContext(TraverseContext)!;
-    const [window, currIndex, setCurrIndex] = useWindow(4);
+    const windowSize: number = 2;
+    const [window, currIndex, setCurrIndex, setWindowState] =
+        useWindow(windowSize);
 
     let title: string;
     let addText: string;
@@ -318,8 +320,24 @@ function List({
         throw new Error("Invalid dataType");
     }
 
-    const useInputCb = handleInput(currIndex, setCurrIndex);
-    useInput(useInputCb);
+    useInput((input, key) => {
+        handleInput(currIndex, setCurrIndex)(input, key);
+
+        // resets the window when moving backwards so that an invalid window
+        // cannot be set
+        // not the best solution but it works
+        // This issue is because of trying to reuse the same component to build
+        // each page while also keeping track of each page with an object.  A
+        // better approach would be a stack data structure
+        if (key.delete) {
+            setWindowState({
+                start: 0,
+                end: windowSize,
+                mid: Math.floor(windowSize / 2),
+                windowSize: windowSize,
+            });
+        }
+    });
 
     function mapItems(items: any[]): React.ReactElement[] {
         const components: React.ReactElement[] = [];
