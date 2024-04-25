@@ -17,6 +17,7 @@ import {
 import cloneDeep from "lodash/cloneDeep.js";
 import { quizData as initialQuizData } from "./quizData.js";
 import { WindowState, Window, WindowProps, useWindow } from "./useWindow.js";
+import { WindowControl } from "./useWindow.js";
 
 enum Icons {
     edit = "  ",
@@ -290,8 +291,7 @@ function List({
     ) => (input: string, key: any) => void;
 }): React.ReactElement {
     const { pageState } = useContext(TraverseContext)!;
-    const [currIndex, setCurrIndex] = useState<number>(0);
-    const window = useWindow(3);
+    const [window, currIndex, setCurrIndex] = useWindow(3);
 
     let title: string;
     let addText: string;
@@ -361,11 +361,69 @@ function List({
                 </Text>
             </Box>
             <HorizontalLine />
-            <Window
-                items={mapItems(items)}
-                window={window}
-                currIndex={currIndex}
-            />
+            <Box flexDirection="row">
+                <Box flexDirection="column">
+                    <Window
+                        items={mapItems(items)}
+                        window={window}
+                        currIndex={currIndex}
+                    />
+                </Box>
+                <Scroller window={window} length={items.length} />
+            </Box>
+        </>
+    );
+}
+
+function Scroller({
+    window,
+    length,
+}: {
+    window: WindowControl;
+    length: number;
+}): React.ReactElement {
+    const { windowState, setWindowState } = window;
+    const { start, end, mid } = windowState;
+
+    const sGap = start;
+    const mGap = end - start - 1;
+    const eGap = length - end - 2;
+
+    let sPercent = sGap / length;
+    let mPercent = mGap / length;
+    let ePercent = eGap / length;
+
+    if (sPercent < 1) {
+        sPercent *= 100;
+    }
+    if (mPercent < 1) {
+        mPercent *= 100;
+    }
+    if (ePercent < 1) {
+        ePercent *= 100;
+    }
+
+    if (sPercent < 0) {
+        sPercent = 0;
+    }
+    if (mPercent < 0) {
+        mPercent = 0;
+    }
+    if (ePercent < 0) {
+        ePercent = 0;
+    }
+    return (
+        <>
+            <Text>{`${sPercent}, ${mPercent}, ${ePercent}`}</Text>
+            <Box flexDirection="column" height="100%" borderStyle="round">
+                <Box flexGrow={sPercent / 100}></Box>
+                <Box
+                    flexGrow={mPercent / 100}
+                    borderStyle="round"
+                    borderColor="blue"
+                ></Box>
+                <Box flexGrow={ePercent / 100}></Box>
+            </Box>
         </>
     );
 }

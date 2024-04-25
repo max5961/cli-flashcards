@@ -5,6 +5,7 @@ export interface WindowState {
     start: number;
     end: number;
     mid: number;
+    windowSize: number;
 }
 
 export interface WindowControl {
@@ -12,14 +13,22 @@ export interface WindowControl {
     setWindowState: (ws: WindowState) => void;
 }
 
-export function useWindow(windowSize: number): WindowControl {
+type WindowDestructure = [WindowControl, number, (n: number) => void];
+
+export function useWindow(windowSize: number): WindowDestructure {
+    const [currIndex, setCurrIndex] = useState<number>(0);
     const [windowState, setWindowState] = useState<WindowState>({
         start: 0,
         end: windowSize,
         mid: Math.floor(windowSize / 2),
+        windowSize: windowSize,
     });
 
-    return { windowState: windowState, setWindowState: setWindowState };
+    return [
+        { windowState: windowState, setWindowState: setWindowState },
+        currIndex,
+        setCurrIndex,
+    ];
 }
 
 export interface WindowProps {
@@ -34,25 +43,27 @@ export function Window({
 }: WindowProps): React.ReactElement[] {
     const { windowState, setWindowState } = window;
 
-    let startCopy = windowState.start;
-    let endCopy = windowState.end;
-    let midCopy = windowState.mid;
+    // let startCopy = windowState.start;
+    // let endCopy = windowState.end;
+    // let midCopy = windowState.mid;
+
+    let { start, end, mid } = windowState;
 
     let modified: boolean = false;
     const getMid = (s: number, e: number) => Math.floor((s + e) / 2);
     if (currIndex < windowState.mid) {
-        while (startCopy > 0 && currIndex !== midCopy) {
-            --startCopy;
-            --endCopy;
-            midCopy = getMid(startCopy, endCopy);
+        while (start > 0 && currIndex !== mid) {
+            --start;
+            --end;
+            mid = getMid(start, end);
 
             modified = true;
         }
     } else if (currIndex > windowState.mid) {
-        while (endCopy < items.length && currIndex !== midCopy) {
-            ++startCopy;
-            ++endCopy;
-            midCopy = getMid(startCopy, endCopy);
+        while (end < items.length && currIndex !== mid) {
+            ++start;
+            ++end;
+            mid = getMid(start, end);
 
             modified = true;
         }
@@ -60,11 +71,12 @@ export function Window({
 
     if (modified) {
         setWindowState({
-            start: startCopy,
-            end: endCopy,
-            mid: midCopy,
+            start: start,
+            end: end,
+            mid: mid,
+            windowSize: windowState.windowSize,
         });
     }
 
-    return items.slice(startCopy, endCopy);
+    return items.slice(start, end);
 }
