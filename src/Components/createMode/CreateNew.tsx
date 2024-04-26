@@ -4,7 +4,13 @@ import { HorizontalLine } from "../Lines.js";
 import { NormalContext } from "../../App.js";
 import TextInput from "ink-text-input";
 import useStdoutDimensions from "../../useStdoutDimensions.js";
-import { QuizData, QuizFileData, Section, Question } from "../../interfaces.js";
+import {
+    QuizData,
+    QuizFileData,
+    Section,
+    Question,
+    Quiz,
+} from "../../interfaces.js";
 import cloneDeep from "lodash/cloneDeep.js";
 import { quizData as initialQuizData } from "./quizData.js";
 import { WindowState, Window, WindowProps, useWindow } from "./useWindow.js";
@@ -19,7 +25,11 @@ enum Icons {
     add = "  ",
 }
 
-export function CreateMenu(): React.ReactElement {
+export function CreateMenu({
+    initialQuizData,
+}: {
+    initialQuizData: QuizData;
+}): React.ReactElement {
     // this should be in its own component in App
     const [cols, rows] = useStdoutDimensions();
     return (
@@ -30,7 +40,7 @@ export function CreateMenu(): React.ReactElement {
             justifyContent="center"
         >
             <Box width={75} flexDirection="column" borderStyle="round">
-                <Page />
+                <Page initialQuizData={initialQuizData} />
             </Box>
         </Box>
     );
@@ -54,8 +64,12 @@ interface PageContextProps {
 
 const PageContext = createContext<PageContextProps | null>(null);
 
-function Page(): React.ReactNode {
-    // never ended up using this which I should have
+function Page({
+    initialQuizData,
+}: {
+    initialQuizData: QuizData;
+}): React.ReactNode {
+    // never ended up using setQuizData
     const [quizData, setQuizData] = useState<QuizData>(initialQuizData);
 
     const [pageStack, setPageStack] = useState<PageStack>([
@@ -146,7 +160,11 @@ function List(): React.ReactNode {
     }, [currIndex]);
 
     useEffect(() => {
-        setCurrIndex(pageStack![pageStack!.length - 1].lastIndex);
+        const lastIndex = pageStack![pageStack!.length - 1].lastIndex;
+        setCurrIndex(lastIndex);
+        if (lastIndex > 0) {
+            setEdit(getDesc!(lastIndex - 1));
+        }
     }, [pageStack]);
 
     async function handleChanges(): Promise<void> {
@@ -208,10 +226,8 @@ function List(): React.ReactNode {
     }
 
     useInput((input, key) => {
-        if (key.escape) {
-            if (normal) {
-                return;
-            }
+        if (!normal && (key.return || key.escape)) {
+            setNormal(true);
             handleChanges();
         }
 
@@ -234,6 +250,11 @@ function List(): React.ReactNode {
             if (currIndex > 0) {
                 setCurrIndex(currIndex - 1);
             }
+        }
+
+        if (input === "c") {
+            setNormal(false);
+            setEdit("");
         }
 
         if (key.return) {
@@ -302,10 +323,13 @@ function List(): React.ReactNode {
 
     return (
         <>
-            <Box alignSelf="center">
+            <Box justifyContent="space-around" alignItems="center">
                 <Text color="yellow" dimColor bold>
                     {title}
                 </Text>
+                <Box borderStyle="round" flexShrink={1}>
+                    <Text dimColor>{normal ? "--NORMAL--" : "--INSERT--"}</Text>
+                </Box>
             </Box>
             <HorizontalLine />
             <Window

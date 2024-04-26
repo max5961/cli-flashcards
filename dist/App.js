@@ -2,6 +2,7 @@ import React from "react";
 import { useState, createContext } from "react";
 import { useApp, useInput } from "ink";
 import { CreateMenu } from "./Components/createMode/CreateNew.js";
+import { getData } from "./readDir.js";
 function getQuiz(quiz, sections) {
     const listOfQuiz = [];
     for (const section of quiz.sections) {
@@ -13,6 +14,7 @@ function getQuiz(quiz, sections) {
     }
     return listOfQuiz;
 }
+const initialQuizData = getData();
 export const NormalContext = createContext(null);
 export default function App({ quiz, sections, }) {
     const { exit } = useApp();
@@ -25,6 +27,6 @@ export default function App({ quiz, sections, }) {
     // const QuizArray: (MC | QA | QI)[] = getQuiz(quiz, sections);
     // return <QuizMode Quiz={QuizArray} normal={normal} setNormal={setNormal} />;
     return (React.createElement(NormalContext.Provider, { value: { normal, setNormal } },
-        React.createElement(CreateMenu, null)));
+        React.createElement(CreateMenu, { initialQuizData: initialQuizData })));
 }
 //# sourceMappingURL=App.js.map

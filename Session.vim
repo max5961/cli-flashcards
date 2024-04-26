@@ -13,13 +13,14 @@ if &shortmess =~ 'A'
 else
   set shortmess=aoO
 endif
-badd +120 src/root.tsx
-badd +48 src/App.tsx
-badd +150 src/Components/createMode/CreateNew.tsx
+badd +1 src/root.tsx
+badd +35 src/App.tsx
+badd +205 src/Components/createMode/CreateNew.tsx
 badd +22 src/Components/quizMode/QuestionInput.tsx
-badd +43 src/interfaces.ts
+badd +9 src/interfaces.ts
 badd +1 src/Components/createMode/quizData.ts
-badd +241 src/Components/createMode/useWindow.tsx
+badd +232 src/Components/createMode/useWindow.tsx
+badd +20 ~/repos/flashcards/src/readDir.ts
 argglobal
 %argdel
 $argadd src/root.tsx
@@ -40,10 +41,9 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe '1resize ' . ((&lines * 41 + 27) / 54)
-exe '2resize ' . ((&lines * 10 + 27) / 54)
+wincmd =
 argglobal
-balt src/Components/createMode/quizData.ts
+balt src/App.tsx
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -54,12 +54,12 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 11 - ((10 * winheight(0) + 20) / 41)
+let s:l = 205 - ((28 * winheight(0) + 20) / 41)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 11
-normal! 0
+keepjumps 205
+normal! 021|
 wincmd w
 argglobal
 if bufexists(fnamemodify("term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1", ":p")) | buffer term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1 | else | edit term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1 | endif
@@ -75,16 +75,15 @@ setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 47 - ((9 * winheight(0) + 5) / 10)
+let s:l = 1 - ((0 * winheight(0) + 5) / 10)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 47
-normal! 047|
+keepjumps 1
+normal! 0
 wincmd w
 2wincmd w
-exe '1resize ' . ((&lines * 41 + 27) / 54)
-exe '2resize ' . ((&lines * 10 + 27) / 54)
+wincmd =
 tabnext 1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf

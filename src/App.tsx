@@ -1,9 +1,10 @@
 import React from "react";
 import { useState, useContext, createContext } from "react";
-import { Quiz, MC, QA, QI } from "./interfaces.js";
+import { Quiz, QuizData, MC, QA, QI } from "./interfaces.js";
 import { useApp, useInput } from "ink";
 import { QuizMode } from "./Components/quizMode/QuizMode.js";
 import { CreateMenu } from "./Components/createMode/CreateNew.js";
+import { getData } from "./readDir.js";
 
 function getQuiz(quiz: Quiz, sections: Set<string> | null): (MC | QA | QI)[] {
     const listOfQuiz: (MC | QA | QI)[] = [];
@@ -18,6 +19,8 @@ function getQuiz(quiz: Quiz, sections: Set<string> | null): (MC | QA | QI)[] {
 
     return listOfQuiz;
 }
+
+const initialQuizData: QuizData = getData();
 
 interface NormalContext {
     normal: boolean;
@@ -46,7 +49,7 @@ export default function App({
 
     return (
         <NormalContext.Provider value={{ normal, setNormal }}>
-            <CreateMenu />
+            <CreateMenu initialQuizData={initialQuizData} />
         </NormalContext.Provider>
     );
 }

@@ -111,19 +111,19 @@ export function Window({
                 --end;
                 modified = true;
             }
-        }
-
-        // handle edge cases where the currIndex starts outside the bounds of
-        // the window
-        while (start > currIndex) {
-            --start;
-            --end;
-            modified = true;
-        }
-        while (end < currIndex) {
-            ++start;
-            ++end;
-            modified = true;
+        } else if (end < currIndex || start > currIndex) {
+            // handle edge cases where the currIndex starts outside the bounds of
+            // the window
+            while (end > currIndex && start > 0) {
+                --start;
+                --end;
+                modified = true;
+            }
+            while (start < currIndex && end < items.length - 1) {
+                ++start;
+                ++end;
+                modified = true;
+            }
         }
     }
 
