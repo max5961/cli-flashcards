@@ -1,344 +1,267 @@
-import React, { useState, useReducer, createContext, useContext } from "react";
+import React, { useState, useContext, createContext, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import { HorizontalLine } from "../Lines.js";
 import { NormalContext } from "../../App.js";
 import TextInput from "ink-text-input";
 import useStdoutDimensions from "../../useStdoutDimensions.js";
-import {
-    QuizData,
-    QuizFileData,
-    Quiz,
-    Section,
-    Question,
-    MC,
-    QA,
-    QI,
-} from "../../interfaces.js";
+import { QuizData, QuizFileData, Section, Question } from "../../interfaces.js";
 import cloneDeep from "lodash/cloneDeep.js";
 import { quizData as initialQuizData } from "./quizData.js";
 import { WindowState, Window, WindowProps, useWindow } from "./useWindow.js";
 import { WindowControl } from "./useWindow.js";
+import { writeFile } from "fs/promises";
+import { readdirSync, unlinkSync } from "fs";
+import path from "path";
+import os from "os";
 
 enum Icons {
     edit = "  ",
     add = "  ",
 }
 
-enum Pages {
-    quizData = "QUIZ_DATA",
-    quiz = "QUIZ",
-    section = "SECTION",
-    question = "QUESTION",
-}
-
-interface PageState {
-    page: Pages.quizData | Pages.quiz | Pages.section | Pages.question;
-    lastIndex: number[]; // stack of indexes
-    allQuizzes: QuizData | null;
-    quizFileData: QuizFileData | null;
-    section: Section | null;
-    question: Question | null;
-}
-
-type PageStateActionTypes =
-    | "LOAD_QUIZ_DATA"
-    | "LOAD_QUIZ"
-    | "LOAD_SECTION"
-    | "LOAD_QUESTION"
-    | "BACK_TO_QUIZ_DATA"
-    | "BACK_TO_QUIZ"
-    | "BACK_TO_SECTION";
-
-interface PageStateActions {
-    type: PageStateActionTypes;
-    index: number;
-    setCurrIndex: (n: number) => void;
-}
-function pageReducer(
-    pageState: PageState,
-    action: PageStateActions,
-): PageState {
-    const copy: PageState = {
-        page: pageState.page,
-        lastIndex: pageState.lastIndex,
-        allQuizzes: pageState.allQuizzes,
-        quizFileData: pageState.quizFileData,
-        section: pageState.section,
-        question: pageState.question,
-    };
-
-    // Right now we are just cloning pointers which is okay, but for changes to
-    // be made permanent when making edits parts of the object will need to be
-    // deep cloned.  Cloning the entire object is of course of a possiblity, but
-    // ideally it would be better to selectively choose which pointers need to be
-    // deep cloned
-    // const copy: PageState = cloneDeep(pageState);
-
-    switch (action.type) {
-        case "LOAD_QUIZ_DATA":
-            copy.page = Pages.quizData;
-            break;
-        case "LOAD_QUIZ":
-            copy.page = Pages.quiz;
-            copy.quizFileData = copy.allQuizzes!.quizzes[action.index - 1];
-            copy.lastIndex.push(action.index);
-            action.setCurrIndex(0);
-            break;
-        case "LOAD_SECTION":
-            copy.page = Pages.section;
-            copy.section = copy.quizFileData!.quiz.sections[action.index - 1];
-            copy.lastIndex.push(action.index);
-            action.setCurrIndex(0);
-            break;
-        case "LOAD_QUESTION":
-            copy.page = Pages.question;
-            copy.question = copy.section![action.index - 1];
-            copy.lastIndex.push(action.index);
-            action.setCurrIndex(0);
-            break;
-        case "BACK_TO_QUIZ_DATA":
-            copy.page = Pages.quizData;
-            action.setCurrIndex(pageState.lastIndex.pop()!);
-            break;
-        case "BACK_TO_QUIZ":
-            copy.page = Pages.quiz;
-            action.setCurrIndex(pageState.lastIndex.pop()!);
-            break;
-        case "BACK_TO_SECTION":
-            copy.page = Pages.section;
-            action.setCurrIndex(pageState.lastIndex.pop()!);
-            break;
-        default:
-            throw new Error("Unhandled action type");
-    }
-
-    return copy;
-}
-
-interface TraverseContextProps {
-    pageState: PageState;
-    pageDispatch: (action: PageStateActions) => void;
-    quizData: QuizData;
-    setQuizData: (q: QuizData) => void;
-}
-
-export const TraverseContext = createContext<TraverseContextProps | null>(null);
-
-export function CreateNew(): React.ReactElement {
+export function CreateMenu(): React.ReactElement {
+    // this should be in its own component in App
     const [cols, rows] = useStdoutDimensions();
-    const [quizData, setQuizData] = useState<QuizData>(initialQuizData);
-    const [pageState, pageDispatch] = useReducer(pageReducer, {
-        page: Pages.quizData,
-        lastIndex: [0],
-        allQuizzes: initialQuizData,
-        quizFileData: null,
-        section: null,
-        question: null,
-    });
-    const { normal, setNormal } = useContext(NormalContext)!;
-
-    const handleInput =
-        (size: number, page: Pages) =>
-        (currIndex: number, setCurrIndex: (n: number) => void) =>
-        (input: string, key: any) => {
-            if (key.escape) {
-                setNormal(true);
-            }
-
-            if (pageState.page !== page || !normal) {
-                return;
-            }
-
-            if (input === "i") {
-                setNormal(false);
-            }
-
-            if (input === "j" || key.downArrow) {
-                if (currIndex >= size) {
-                    return;
-                }
-                setCurrIndex(currIndex + 1);
-            }
-
-            if (input === "k" || key.upArrow) {
-                if (currIndex > 0) {
-                    setCurrIndex(currIndex - 1);
-                }
-            }
-
-            if (key.return) {
-                let dispatchType: PageStateActionTypes;
-                switch (pageState.page) {
-                    case Pages.quizData:
-                        dispatchType = "LOAD_QUIZ";
-                        break;
-                    case Pages.quiz:
-                        dispatchType = "LOAD_SECTION";
-                        break;
-                    case Pages.section:
-                        dispatchType = "LOAD_QUESTION";
-                        break;
-                    default:
-                        return;
-                }
-
-                pageDispatch({
-                    type: dispatchType,
-                    index: currIndex,
-                    setCurrIndex: setCurrIndex,
-                });
-            }
-
-            if (key.delete) {
-                let dispatchType: PageStateActionTypes;
-                switch (pageState.page) {
-                    case Pages.question:
-                        dispatchType = "BACK_TO_SECTION";
-                        break;
-                    case Pages.section:
-                        dispatchType = "BACK_TO_QUIZ";
-                        break;
-                    case Pages.quiz:
-                        dispatchType = "BACK_TO_QUIZ_DATA";
-                        break;
-                    default:
-                        return;
-                }
-
-                pageDispatch({
-                    type: dispatchType,
-                    index: currIndex,
-                    setCurrIndex: setCurrIndex,
-                });
-            }
-        };
-
-    let pageContent: React.ReactElement = <></>;
-    if (pageState.page === Pages.quizData) {
-        pageContent = (
-            <List
-                data={pageState.allQuizzes!}
-                dataType={Pages.quizData}
-                handleInput={handleInput(
-                    pageState.allQuizzes!.quizzes.length,
-                    pageState.page,
-                )}
-            />
-        );
-    } else if (pageState.page === Pages.quiz) {
-        pageContent = (
-            <List
-                data={pageState.quizFileData!}
-                dataType={Pages.quiz}
-                handleInput={handleInput(
-                    pageState.quizFileData!.quiz.sections.length,
-                    pageState.page,
-                )}
-            />
-        );
-    } else if (pageState.page === Pages.section) {
-        pageContent = (
-            <List
-                data={pageState.section!}
-                dataType={Pages.section}
-                handleInput={handleInput(
-                    pageState.section!.questions.length,
-                    pageState.page,
-                )}
-            />
-        );
-    } else if (pageState.page === Pages.question) {
-        pageContent = <></>;
-    } else {
-        throw new Error("Invalid pageState");
-    }
-
     return (
-        <TraverseContext.Provider
-            value={{
-                pageState,
-                pageDispatch,
-                quizData,
-                setQuizData,
-            }}
+        <Box
+            height={rows}
+            width={cols}
+            alignItems="center"
+            justifyContent="center"
         >
-            <Box
-                height={rows}
-                width={cols}
-                alignItems="center"
-                justifyContent="center"
-            >
-                <Box width={50} flexDirection="column" borderStyle="round">
-                    {pageContent}
-                </Box>
+            <Box width={75} flexDirection="column" borderStyle="round">
+                <Page />
             </Box>
-        </TraverseContext.Provider>
+        </Box>
     );
 }
 
-function List({
-    data,
-    dataType,
-    handleInput,
-}: {
-    data: QuizData | QuizFileData | Section;
-    dataType: Pages;
-    handleInput: (
-        currIndex: number,
-        setCurrIndex: (n: number) => void,
-    ) => (input: string, key: any) => void;
-}): React.ReactElement {
-    const { pageState } = useContext(TraverseContext)!;
-    const windowSize: number = 5;
-    const [window, currIndex, setCurrIndex, setWindowState] =
-        useWindow(windowSize);
+type Page = QuizData | QuizFileData | Section | Question;
+type PageStack = { page: Page; lastIndex: number }[];
+type ListItems = QuizFileData[] | Section[] | Question[];
+interface PageContextProps {
+    // for building list
+    listItems: ListItems | null;
+    title: string | null;
+    addItemText: string | null;
+    getDesc: ((index: number) => string) | null;
 
-    let title: string;
-    let addText: string;
-    let items: QuizFileData[] | Section[] | Question[];
-    let getDesc: (index: number) => string;
+    // for traversing pages
+    pageStack: PageStack | null;
+    setPageStack: ((ps: PageStack) => void) | null;
+    getNextPages: ((n: number) => Page)[];
+}
 
-    if (dataType === Pages.quizData) {
-        items = (data as QuizData).quizzes;
+const PageContext = createContext<PageContextProps | null>(null);
+
+function Page(): React.ReactNode {
+    // never ended up using this which I should have
+    const [quizData, setQuizData] = useState<QuizData>(initialQuizData);
+
+    const [pageStack, setPageStack] = useState<PageStack>([
+        { page: quizData, lastIndex: 0 },
+    ]);
+
+    const getNextPages: ((n: number) => Page)[] = [
+        (currIndex: number) =>
+            (pageStack[0]!.page as QuizData).quizzes[currIndex - 1],
+        (currIndex: number) =>
+            (pageStack[1]!.page as QuizFileData).quiz.sections[currIndex - 1],
+        (currIndex: number) =>
+            (pageStack[2]!.page as Section).questions[currIndex - 1],
+    ];
+
+    let listItems: ListItems | null = null;
+    let title: string | null = null;
+    let addItemText: string | null = null;
+    let getDesc: ((index: number) => string) | null = null;
+
+    // All Quizzes
+    if (pageStack.length === 1) {
+        const quizzes = (pageStack[0].page as QuizData).quizzes;
+        listItems = quizzes;
         title = "All Quizzes";
-        addText = "Add Quiz";
-        getDesc = (index: number) => (data as QuizData).quizzes[index].fileName;
-    } else if (dataType === Pages.quiz) {
-        items = (data as QuizFileData).quiz.sections;
-        title = `Sections in: ${pageState.quizFileData?.fileName}`;
-        addText = "Add Section";
-        getDesc = (index: number) =>
-            (data as QuizFileData).quiz.sections[index].name;
-    } else if (dataType === Pages.section) {
-        items = (data as Section).questions;
-        title = `Questions in: ${pageState.quizFileData?.fileName} -> ${pageState.section?.name}`;
-        addText = "Add Question";
-        getDesc = (index: number) => (data as Section).questions[index].q;
-    } else {
-        throw new Error("Invalid dataType");
+        addItemText = "Add Quiz";
+        getDesc = (index: number) => quizzes[index].fileName;
+
+        // Sections in chosen Quiz
+    } else if (pageStack.length === 2) {
+        const quizFileData = pageStack[1].page as QuizFileData;
+        listItems = quizFileData.quiz.sections;
+        title = `Sections in: ${quizFileData.fileName}`;
+        addItemText = "Add Section";
+        getDesc = (index: number) => quizFileData.quiz.sections[index].name;
+
+        // Questions in chosen Section
+    } else if (pageStack.length === 3) {
+        const section = pageStack[2].page as Section;
+        listItems = section.questions;
+        addItemText = "Add Question";
+        title = `Questions in: ${(pageStack[1].page as QuizFileData).fileName} -> ${section.name}`;
+        getDesc = (index: number) => section.questions[index].q;
+
+        // Don't need to set any values for the Question page
+    } else if (pageStack.length !== 4) {
+        throw new Error("Invalid pageStack index");
+    }
+
+    return (
+        <PageContext.Provider
+            value={{
+                listItems: listItems,
+                title: title,
+                addItemText: addItemText,
+                getDesc: getDesc,
+                pageStack: pageStack,
+                setPageStack: setPageStack,
+                getNextPages: getNextPages,
+            }}
+        >
+            {pageStack.length === 4 ? <QuestionPage /> : <List />}
+        </PageContext.Provider>
+    );
+}
+
+function List(): React.ReactNode {
+    const {
+        listItems,
+        title,
+        addItemText,
+        getDesc,
+        pageStack,
+        setPageStack,
+        getNextPages,
+    } = useContext(PageContext)!;
+
+    const { normal, setNormal } = useContext(NormalContext)!;
+
+    const windowSize = 6;
+    const [window, currIndex, setCurrIndex] = useWindow(windowSize);
+    const [edit, setEdit] = useState<string>("");
+
+    useEffect(() => {
+        if (currIndex > 0) {
+            setEdit(getDesc!(currIndex - 1));
+        }
+    }, [currIndex]);
+
+    useEffect(() => {
+        setCurrIndex(pageStack![pageStack!.length - 1].lastIndex);
+    }, [pageStack]);
+
+    async function handleChanges(): Promise<void> {
+        // get file info
+        const pageStackCopy = cloneDeep(pageStack!);
+        let itemsCopy: ListItems;
+        if (pageStack!.length === 1) {
+            itemsCopy = (pageStack![0].page as QuizData).quizzes.slice();
+            itemsCopy[currIndex - 1].fileName = edit;
+            (pageStackCopy![0].page as QuizData).quizzes = cloneDeep(itemsCopy);
+        } else if (pageStack!.length === 2) {
+            itemsCopy = (
+                pageStack![1].page as QuizFileData
+            ).quiz.sections.slice();
+            itemsCopy[currIndex - 1].name = edit;
+            (pageStackCopy![1].page as QuizFileData).quiz.sections =
+                cloneDeep(itemsCopy);
+        } else if (pageStack!.length === 3) {
+            itemsCopy = (pageStack![2].page as Section).questions.slice();
+            itemsCopy[currIndex - 1].q = edit;
+            (pageStackCopy[2].page as Section).questions = cloneDeep(itemsCopy);
+        } else {
+            throw new Error("Unhandled page");
+        }
+
+        try {
+            const dir = path.join(
+                os.homedir(),
+                ".local",
+                "share",
+                "flashcards",
+            );
+            const files: string[] = readdirSync(dir);
+            for (const file of files) {
+                const filePath = path.join(dir, file);
+                unlinkSync(filePath);
+            }
+        } catch (err: any) {
+            console.error(err.message);
+        }
+
+        for (const quiz of (pageStackCopy[0].page as QuizData).quizzes) {
+            const json = JSON.stringify(quiz, null, 4);
+            const fileName = quiz.fileName;
+            const filePath = path.join(
+                os.homedir(),
+                ".local",
+                "share",
+                "flashcards",
+                fileName,
+            );
+            await writeFile(filePath, json, "utf-8");
+        }
+
+        // cleanup
+        pageStackCopy[pageStackCopy.length - 1].lastIndex = currIndex;
+        setNormal(true);
+        setPageStack!(pageStackCopy);
     }
 
     useInput((input, key) => {
-        handleInput(currIndex, setCurrIndex)(input, key);
+        if (key.escape) {
+            if (normal) {
+                return;
+            }
+            handleChanges();
+        }
 
-        // resets the window when moving backwards so that an invalid window
-        // cannot be set
-        // not the best solution but it works
-        // This issue is because of trying to reuse the same component to build
-        // each page while also keeping track of each page with an object.  A
-        // better approach would be a stack data structure
+        if (!normal) {
+            return;
+        }
+
+        if (input === "i") {
+            setNormal(false);
+        }
+
+        if (key.downArrow || input === "j") {
+            if (currIndex >= listItems!.length) {
+                return;
+            }
+            setCurrIndex(currIndex + 1);
+        }
+
+        if (key.downArrow || input === "k") {
+            if (currIndex > 0) {
+                setCurrIndex(currIndex - 1);
+            }
+        }
+
+        if (key.return) {
+            // copy pageStack and modify lastIndex of current page to be currIndex
+            const pageStackCopy = pageStack!.slice();
+            pageStackCopy[pageStackCopy.length - 1].lastIndex = currIndex;
+
+            // push next page and update state
+            const getNextPage = getNextPages[pageStack!.length - 1];
+            const nextPage = getNextPage(currIndex);
+            pageStackCopy.push({ page: nextPage, lastIndex: 0 });
+            setPageStack!(pageStackCopy);
+        }
+
         if (key.delete) {
-            setWindowState({
-                start: 0,
-                end: windowSize,
-                mid: Math.floor(windowSize / 2),
-                windowSize: windowSize,
-            });
+            // we are at the start page already
+            if (pageStack!.length === 1) {
+                return;
+            }
+
+            const pageStackCopy = pageStack!.slice();
+            pageStackCopy.pop();
+            setPageStack!(pageStackCopy);
         }
     });
 
-    function mapItems(items: any[]): React.ReactElement[] {
-        const components: React.ReactElement[] = [];
+    function mapItems(items: any[]): React.ReactNode[] {
+        const components: React.ReactNode[] = [];
         for (let i = -1; i < items.length; ++i) {
             if (i === -1) {
                 components.push(
@@ -348,7 +271,7 @@ function List({
                     >
                         <Text>
                             <Text color="green">{Icons.add}</Text>
-                            {addText}
+                            {addItemText}
                         </Text>
                     </Box>,
                 );
@@ -358,10 +281,18 @@ function List({
                         borderStyle={i + 1 === currIndex ? "bold" : "round"}
                         borderColor={i + 1 === currIndex ? "blue" : ""}
                     >
-                        <Text>
+                        <Box>
                             <Text color="yellow">{Icons.edit}</Text>
-                            {getDesc(i)}
-                        </Text>
+                            {!normal && i + 1 === currIndex ? (
+                                <TextInput
+                                    value={edit}
+                                    onChange={setEdit}
+                                    focus={!normal && i + 1 === currIndex}
+                                ></TextInput>
+                            ) : (
+                                <Text>{getDesc!(i)}</Text>
+                            )}
+                        </Box>
                     </Box>,
                 );
             }
@@ -378,7 +309,7 @@ function List({
             </Box>
             <HorizontalLine />
             <Window
-                items={mapItems(items)}
+                items={mapItems(listItems!)}
                 window={window}
                 currIndex={currIndex}
                 scrollColor="white"
@@ -389,6 +320,10 @@ function List({
             />
         </>
     );
+}
+
+function QuestionPage(): React.ReactNode {
+    return <></>;
 }
 
 // interface EditContextProps {

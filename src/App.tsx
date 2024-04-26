@@ -3,7 +3,7 @@ import { useState, useContext, createContext } from "react";
 import { Quiz, MC, QA, QI } from "./interfaces.js";
 import { useApp, useInput } from "ink";
 import { QuizMode } from "./Components/quizMode/QuizMode.js";
-import { CreateNew } from "./Components/createMode/CreateNew.js";
+import { CreateMenu } from "./Components/createMode/CreateNew.js";
 
 function getQuiz(quiz: Quiz, sections: Set<string> | null): (MC | QA | QI)[] {
     const listOfQuiz: (MC | QA | QI)[] = [];
@@ -46,7 +46,7 @@ export default function App({
 
     return (
         <NormalContext.Provider value={{ normal, setNormal }}>
-            <CreateNew />
+            <CreateMenu />
         </NormalContext.Provider>
     );
 }

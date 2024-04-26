@@ -1,6 +1,6 @@
 import React from "react";
 import { useState } from "react";
-import { Box } from "ink";
+import { Box, Text } from "ink";
 
 export interface WindowState {
     start: number;
@@ -51,7 +51,7 @@ type FlexDirection = "column" | "row";
 type ScrollPosition = "left" | "right" | "top" | "bottom";
 
 export interface WindowProps {
-    items: React.ReactElement[];
+    items: React.ReactNode[] | React.ReactElement[];
     currIndex: number;
     window: WindowControl;
     scrollMiddle?: boolean;
@@ -98,8 +98,6 @@ export function Window({
                 modified = true;
             }
         }
-
-        // current list item is on either end of the list
     } else {
         if (currIndex === end) {
             if (end < items.length) {
@@ -114,6 +112,19 @@ export function Window({
                 modified = true;
             }
         }
+
+        // handle edge cases where the currIndex starts outside the bounds of
+        // the window
+        while (start > currIndex) {
+            --start;
+            --end;
+            modified = true;
+        }
+        while (end < currIndex) {
+            ++start;
+            ++end;
+            modified = true;
+        }
     }
 
     // update the state of the Window if changes were made
@@ -127,7 +138,7 @@ export function Window({
     }
 
     // use the start and end indexes to slice the input array
-    const slicedItems: React.ReactElement[] = items.slice(start, end);
+    const slicedComponents = items.slice(start, end);
 
     // Build the scroll component
     let scroll: React.ReactElement;
@@ -168,7 +179,7 @@ export function Window({
                 <></>
             )}
             <Box flexDirection={innerFlex} flexGrow={1}>
-                {slicedItems}
+                {slicedComponents}
             </Box>
             {scrollPosition === "right" || scrollPosition === "bottom" ? (
                 scroll

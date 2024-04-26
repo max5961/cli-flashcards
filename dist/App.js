@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, createContext } from "react";
 import { useApp, useInput } from "ink";
-import { CreateNew } from "./Components/createMode/CreateNew.js";
+import { CreateMenu } from "./Components/createMode/CreateNew.js";
 function getQuiz(quiz, sections) {
     const listOfQuiz = [];
     for (const section of quiz.sections) {
@@ -25,6 +25,6 @@ export default function App({ quiz, sections, }) {
     // const QuizArray: (MC | QA | QI)[] = getQuiz(quiz, sections);
     // return <QuizMode Quiz={QuizArray} normal={normal} setNormal={setNormal} />;
     return (React.createElement(NormalContext.Provider, { value: { normal, setNormal } },
-        React.createElement(CreateNew, null)));
+        React.createElement(CreateMenu, null)));
 }
 //# sourceMappingURL=App.js.map
