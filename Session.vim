@@ -15,12 +15,12 @@ else
 endif
 badd +1 src/root.tsx
 badd +35 src/App.tsx
-badd +205 src/Components/createMode/CreateNew.tsx
+badd +74 src/Components/createMode/CreateNew.tsx
 badd +22 src/Components/quizMode/QuestionInput.tsx
 badd +9 src/interfaces.ts
-badd +1 src/Components/createMode/quizData.ts
-badd +232 src/Components/createMode/useWindow.tsx
-badd +20 ~/repos/flashcards/src/readDir.ts
+badd +4 src/Components/createMode/quizData.ts
+badd +1 src/Components/createMode/useWindow.tsx
+badd +14 ~/repos/flashcards/src/readDir.ts
 argglobal
 %argdel
 $argadd src/root.tsx
@@ -43,7 +43,7 @@ set winminwidth=0
 set winwidth=1
 wincmd =
 argglobal
-balt src/App.tsx
+balt src/Components/createMode/useWindow.tsx
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -54,12 +54,12 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 205 - ((28 * winheight(0) + 20) / 41)
+let s:l = 74 - ((29 * winheight(0) + 19) / 39)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 205
-normal! 021|
+keepjumps 74
+normal! 0
 wincmd w
 argglobal
 if bufexists(fnamemodify("term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1", ":p")) | buffer term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1 | else | edit term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1 | endif
@@ -75,7 +75,7 @@ setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 1 - ((0 * winheight(0) + 5) / 10)
+let s:l = 1 - ((0 * winheight(0) + 6) / 12)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt

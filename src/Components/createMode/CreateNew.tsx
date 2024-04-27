@@ -221,14 +221,78 @@ function List(): React.ReactNode {
 
         // cleanup
         pageStackCopy[pageStackCopy.length - 1].lastIndex = currIndex;
-        setNormal(true);
+        setPageStack!(pageStackCopy);
+    }
+
+    async function handleAdd(): Promise<void> {
+        const pageStackCopy = cloneDeep(pageStack!);
+        if (pageStackCopy.length === 1) {
+            const newQuiz: QuizFileData = {
+                fileName: edit,
+                quiz: {
+                    sections: [],
+                },
+            };
+            (pageStackCopy[0].page as QuizData).quizzes.unshift(newQuiz);
+        } else if (pageStackCopy.length === 2) {
+            const newSection: Section = {
+                name: edit,
+                questions: [],
+            };
+            (pageStackCopy[1].page as QuizFileData).quiz.sections.unshift(
+                newSection,
+            );
+        } else if (pageStackCopy.length === 3) {
+            const newQuestion: Question = {
+                q: edit,
+                a: "",
+                type: "qa",
+            };
+            (pageStackCopy[2].page as Section).questions.unshift(newQuestion);
+        }
+
+        try {
+            const dir = path.join(
+                os.homedir(),
+                ".local",
+                "share",
+                "flashcards",
+            );
+            const files: string[] = readdirSync(dir);
+            for (const file of files) {
+                const filePath = path.join(dir, file);
+                unlinkSync(filePath);
+            }
+        } catch (err: any) {
+            console.error(err.message);
+        }
+
+        for (const quiz of (pageStackCopy[0].page as QuizData).quizzes) {
+            const json = JSON.stringify(quiz, null, 4);
+            const fileName = quiz.fileName;
+            const filePath = path.join(
+                os.homedir(),
+                ".local",
+                "share",
+                "flashcards",
+                fileName,
+            );
+            await writeFile(filePath, json, "utf-8");
+        }
+
+        // cleanup
+        pageStackCopy[pageStackCopy.length - 1].lastIndex = currIndex;
         setPageStack!(pageStackCopy);
     }
 
     useInput((input, key) => {
         if (!normal && (key.return || key.escape)) {
             setNormal(true);
-            handleChanges();
+            if (currIndex === 0) {
+                handleAdd();
+            } else {
+                handleChanges();
+            }
         }
 
         if (!normal) {
@@ -237,6 +301,10 @@ function List(): React.ReactNode {
 
         if (input === "i") {
             setNormal(false);
+
+            if (currIndex === 0) {
+                setEdit("");
+            }
         }
 
         if (key.downArrow || input === "j") {
@@ -258,6 +326,12 @@ function List(): React.ReactNode {
         }
 
         if (key.return) {
+            // if adding an item
+            if (currIndex === 0) {
+                setNormal(false);
+                setEdit("");
+                return;
+            }
             // copy pageStack and modify lastIndex of current page to be currIndex
             const pageStackCopy = pageStack!.slice();
             pageStackCopy[pageStackCopy.length - 1].lastIndex = currIndex;
@@ -290,10 +364,16 @@ function List(): React.ReactNode {
                         borderStyle={currIndex === 0 ? "bold" : "round"}
                         borderColor={currIndex === 0 ? "blue" : ""}
                     >
-                        <Text>
-                            <Text color="green">{Icons.add}</Text>
-                            {addItemText}
-                        </Text>
+                        <Text color="green">{Icons.add}</Text>
+                        {!normal && i + 1 === currIndex ? (
+                            <TextInput
+                                value={edit}
+                                onChange={setEdit}
+                                focus={!normal && i + 1 === currIndex}
+                            ></TextInput>
+                        ) : (
+                            <Text>{addItemText}</Text>
+                        )}
                     </Box>,
                 );
             } else {
