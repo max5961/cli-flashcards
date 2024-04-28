@@ -225,6 +225,11 @@ function Scroller({
     const height: string = flexDirection === "column" ? "100%" : "";
     const width: string = flexDirection === "row" ? "100%" : "";
 
+    // <Box flexDirection="column">
+    //     <Text>{sPercent}</Text>
+    //     <Text>{mPercent}</Text>
+    //     <Text>{ePercent}</Text>
+    // </Box>
     return (
         <>
             <Box

@@ -15,12 +15,20 @@ else
 endif
 badd +1 src/root.tsx
 badd +35 src/App.tsx
-badd +74 src/Components/createMode/CreateNew.tsx
+badd +70 src/Components/createMode/CreateNew.tsx
 badd +22 src/Components/quizMode/QuestionInput.tsx
 badd +9 src/interfaces.ts
-badd +4 src/Components/createMode/quizData.ts
-badd +1 src/Components/createMode/useWindow.tsx
+badd +152 src/Components/createMode/useWindow.tsx
 badd +14 ~/repos/flashcards/src/readDir.ts
+badd +1 ~/repos/flashcards/src/Components/quizMode/MultipleChoice.tsx
+badd +1 ~/repos/flashcards/src/Components/quizMode/QuestionAnswer.tsx
+badd +1 ~/repos/flashcards/src/Components/quizMode/QuizMode.tsx
+badd +1 ~/repos/flashcards/src/Components/quizMode/FooterKeybinds.tsx
+badd +7 ~/repos/flashcards/src/Components/quizMode/Header.tsx
+badd +1 ~/repos/flashcards/src/Components/Lines.tsx
+badd +7 ~/repos/flashcards/src/Components/createMode/usePageStack.tsx
+badd +2 ~/repos/flashcards/src/Components/createMode/classes.ts
+badd +1 src/Components/createMode/pageStack.ts
 argglobal
 %argdel
 $argadd src/root.tsx
@@ -43,7 +51,7 @@ set winminwidth=0
 set winwidth=1
 wincmd =
 argglobal
-balt src/Components/createMode/useWindow.tsx
+balt ~/repos/flashcards/src/Components/createMode/classes.ts
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -54,12 +62,12 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 74 - ((29 * winheight(0) + 19) / 39)
+let s:l = 70 - ((9 * winheight(0) + 20) / 41)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 74
-normal! 0
+keepjumps 70
+normal! 019|
 wincmd w
 argglobal
 if bufexists(fnamemodify("term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1", ":p")) | buffer term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1 | else | edit term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1 | endif
@@ -75,7 +83,7 @@ setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 1 - ((0 * winheight(0) + 6) / 12)
+let s:l = 1 - ((0 * winheight(0) + 5) / 10)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt

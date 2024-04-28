@@ -12,7 +12,6 @@ import {
     Quiz,
 } from "../../interfaces.js";
 import cloneDeep from "lodash/cloneDeep.js";
-import { quizData as initialQuizData } from "./quizData.js";
 import { WindowState, Window, WindowProps, useWindow } from "./useWindow.js";
 import { WindowControl } from "./useWindow.js";
 import { writeFile } from "fs/promises";
@@ -416,8 +415,8 @@ function List(): React.ReactNode {
                 items={mapItems(listItems!)}
                 window={window}
                 currIndex={currIndex}
-                scrollColor="white"
-                scrollBorder="single"
+                scrollColor="#009293"
+                scrollBorder="round"
                 scrollMiddle={false}
                 scrollPosition="right"
                 flexDirection="column"
