@@ -17,8 +17,11 @@ export function getData(): QuizData {
     for (const file of files) {
         const filePath = path.join(dir, file);
         const json = readFileSync(filePath, "utf-8");
-        const quizFileData: QuizFileData = JSON.parse(json);
-        quizData.quizzes.push(quizFileData);
+        const quiz = JSON.parse(json);
+        quizData.quizzes.push({
+            fileName: file,
+            quiz: quiz,
+        });
     }
 
     return quizData;

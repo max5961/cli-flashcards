@@ -1,402 +1,185 @@
-import React, { useState, useContext, createContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { Box, Text, useInput } from "ink";
 import { HorizontalLine } from "../Lines.js";
 import { NormalContext } from "../../App.js";
 import TextInput from "ink-text-input";
-import useStdoutDimensions from "../../useStdoutDimensions.js";
-import {
-    QuizData,
-    QuizFileData,
-    Section,
-    Question,
-    Quiz,
-} from "../../interfaces.js";
-import cloneDeep from "lodash/cloneDeep.js";
-import { WindowState, Window, WindowProps, useWindow } from "./useWindow.js";
-import { WindowControl } from "./useWindow.js";
-import { writeFile } from "fs/promises";
-import { readdirSync, unlinkSync } from "fs";
-import path from "path";
-import os from "os";
+import { QuizData, Question, QA, MC, QI } from "../../interfaces.js";
+import { Window, useWindow } from "./useWindow.js";
+import { PageStack, Page, QuestionNav } from "./classes.js";
+import { Update } from "./classes.js";
 
 enum Icons {
     edit = "  ",
     add = "  ",
 }
 
-export function CreateMenu({
-    initialQuizData,
-}: {
-    initialQuizData: QuizData;
-}): React.ReactElement {
-    // this should be in its own component in App
-    const [cols, rows] = useStdoutDimensions();
-    return (
-        <Box
-            height={rows}
-            width={cols}
-            alignItems="center"
-            justifyContent="center"
-        >
-            <Box width={75} flexDirection="column" borderStyle="round">
-                <Page initialQuizData={initialQuizData} />
-            </Box>
-        </Box>
-    );
-}
-
-type Page = QuizData | QuizFileData | Section | Question;
-type PageStack = { page: Page; lastIndex: number }[];
-type ListItems = QuizFileData[] | Section[] | Question[];
-interface PageContextProps {
-    // for building list
-    listItems: ListItems | null;
-    title: string | null;
-    addItemText: string | null;
-    getDesc: ((index: number) => string) | null;
-
-    // for traversing pages
-    pageStack: PageStack | null;
-    setPageStack: ((ps: PageStack) => void) | null;
-    getNextPages: ((n: number) => Page)[];
-}
-
-const PageContext = createContext<PageContextProps | null>(null);
-
-function Page({
+export function CurrentPage({
     initialQuizData,
 }: {
     initialQuizData: QuizData;
 }): React.ReactNode {
-    // never ended up using setQuizData
-    const [quizData, setQuizData] = useState<QuizData>(initialQuizData);
+    const initialPageStack: PageStack = new PageStack();
+    initialPageStack.append(initialQuizData.quizzes, "QUIZZES");
 
-    const [pageStack, setPageStack] = useState<PageStack>([
-        { page: quizData, lastIndex: 0 },
-    ]);
+    const [pageStack, setPageStack] = useState<PageStack>(initialPageStack);
 
-    const getNextPages: ((n: number) => Page)[] = [
-        (currIndex: number) =>
-            (pageStack[0]!.page as QuizData).quizzes[currIndex - 1],
-        (currIndex: number) =>
-            (pageStack[1]!.page as QuizFileData).quiz.sections[currIndex - 1],
-        (currIndex: number) =>
-            (pageStack[2]!.page as Section).questions[currIndex - 1],
-    ];
-
-    let listItems: ListItems | null = null;
-    let title: string | null = null;
-    let addItemText: string | null = null;
-    let getDesc: ((index: number) => string) | null = null;
-
-    // All Quizzes
-    if (pageStack.length === 1) {
-        const quizzes = (pageStack[0].page as QuizData).quizzes;
-        listItems = quizzes;
-        title = "All Quizzes";
-        addItemText = "Add Quiz";
-        getDesc = (index: number) => quizzes[index].fileName;
-
-        // Sections in chosen Quiz
-    } else if (pageStack.length === 2) {
-        const quizFileData = pageStack[1].page as QuizFileData;
-        listItems = quizFileData.quiz.sections;
-        title = `Sections in: ${quizFileData.fileName}`;
-        addItemText = "Add Section";
-        getDesc = (index: number) => quizFileData.quiz.sections[index].name;
-
-        // Questions in chosen Section
-    } else if (pageStack.length === 3) {
-        const section = pageStack[2].page as Section;
-        listItems = section.questions;
-        addItemText = "Add Question";
-        title = `Questions in: ${(pageStack[1].page as QuizFileData).fileName} -> ${section.name}`;
-        getDesc = (index: number) => section.questions[index].q;
-
-        // Don't need to set any values for the Question page
-    } else if (pageStack.length !== 4) {
-        throw new Error("Invalid pageStack index");
+    if (pageStack.top()!.pageType === "QUESTION") {
+        return (
+            <QuestionPage pageStack={pageStack} setPageStack={setPageStack} />
+        );
+    } else {
+        return <List pageStack={pageStack} setPageStack={setPageStack} />;
     }
-
-    return (
-        <PageContext.Provider
-            value={{
-                listItems: listItems,
-                title: title,
-                addItemText: addItemText,
-                getDesc: getDesc,
-                pageStack: pageStack,
-                setPageStack: setPageStack,
-                getNextPages: getNextPages,
-            }}
-        >
-            {pageStack.length === 4 ? <QuestionPage /> : <List />}
-        </PageContext.Provider>
-    );
 }
 
-function List(): React.ReactNode {
-    const {
-        listItems,
-        title,
-        addItemText,
-        getDesc,
-        pageStack,
-        setPageStack,
-        getNextPages,
-    } = useContext(PageContext)!;
-
+interface ListProps {
+    pageStack: PageStack;
+    setPageStack: (ps: PageStack) => void;
+}
+function List({ pageStack, setPageStack }: ListProps): React.ReactNode {
     const { normal, setNormal } = useContext(NormalContext)!;
-
-    const windowSize = 6;
-    const [window, currIndex, setCurrIndex] = useWindow(windowSize);
     const [edit, setEdit] = useState<string>("");
+    const { window, currIndex, setCurrIndex } = useWindow(5);
+    const [dCount, setDCount] = useState<number>(1);
 
-    useEffect(() => {
-        if (currIndex > 0) {
-            setEdit(getDesc!(currIndex - 1));
-        }
-    }, [currIndex]);
+    const page = pageStack.top()!;
 
+    // update the currIndex to last index on first render
     useEffect(() => {
-        const lastIndex = pageStack![pageStack!.length - 1].lastIndex;
-        setCurrIndex(lastIndex);
-        if (lastIndex > 0) {
-            setEdit(getDesc!(lastIndex - 1));
-        }
+        setCurrIndex(page.lastIndex);
     }, [pageStack]);
 
-    async function handleChanges(): Promise<void> {
-        // get file info
-        const pageStackCopy = cloneDeep(pageStack!);
-        let itemsCopy: ListItems;
-        if (pageStack!.length === 1) {
-            itemsCopy = (pageStack![0].page as QuizData).quizzes.slice();
-            itemsCopy[currIndex - 1].fileName = edit;
-            (pageStackCopy![0].page as QuizData).quizzes = cloneDeep(itemsCopy);
-        } else if (pageStack!.length === 2) {
-            itemsCopy = (
-                pageStack![1].page as QuizFileData
-            ).quiz.sections.slice();
-            itemsCopy[currIndex - 1].name = edit;
-            (pageStackCopy![1].page as QuizFileData).quiz.sections =
-                cloneDeep(itemsCopy);
-        } else if (pageStack!.length === 3) {
-            itemsCopy = (pageStack![2].page as Section).questions.slice();
-            itemsCopy[currIndex - 1].q = edit;
-            (pageStackCopy[2].page as Section).questions = cloneDeep(itemsCopy);
-        } else {
-            throw new Error("Unhandled page");
-        }
-
-        try {
-            const dir = path.join(
-                os.homedir(),
-                ".local",
-                "share",
-                "flashcards",
-            );
-            const files: string[] = readdirSync(dir);
-            for (const file of files) {
-                const filePath = path.join(dir, file);
-                unlinkSync(filePath);
-            }
-        } catch (err: any) {
-            console.error(err.message);
-        }
-
-        for (const quiz of (pageStackCopy[0].page as QuizData).quizzes) {
-            const json = JSON.stringify(quiz, null, 4);
-            const fileName = quiz.fileName;
-            const filePath = path.join(
-                os.homedir(),
-                ".local",
-                "share",
-                "flashcards",
-                fileName,
-            );
-            await writeFile(filePath, json, "utf-8");
-        }
-
-        // cleanup
-        pageStackCopy[pageStackCopy.length - 1].lastIndex = currIndex;
-        setPageStack!(pageStackCopy);
-    }
-
-    async function handleAdd(): Promise<void> {
-        const pageStackCopy = cloneDeep(pageStack!);
-        if (pageStackCopy.length === 1) {
-            const newQuiz: QuizFileData = {
-                fileName: edit,
-                quiz: {
-                    sections: [],
-                },
-            };
-            (pageStackCopy[0].page as QuizData).quizzes.unshift(newQuiz);
-        } else if (pageStackCopy.length === 2) {
-            const newSection: Section = {
-                name: edit,
-                questions: [],
-            };
-            (pageStackCopy[1].page as QuizFileData).quiz.sections.unshift(
-                newSection,
-            );
-        } else if (pageStackCopy.length === 3) {
-            const newQuestion: Question = {
-                q: edit,
-                a: "",
-                type: "qa",
-            };
-            (pageStackCopy[2].page as Section).questions.unshift(newQuestion);
-        }
-
-        try {
-            const dir = path.join(
-                os.homedir(),
-                ".local",
-                "share",
-                "flashcards",
-            );
-            const files: string[] = readdirSync(dir);
-            for (const file of files) {
-                const filePath = path.join(dir, file);
-                unlinkSync(filePath);
-            }
-        } catch (err: any) {
-            console.error(err.message);
-        }
-
-        for (const quiz of (pageStackCopy[0].page as QuizData).quizzes) {
-            const json = JSON.stringify(quiz, null, 4);
-            const fileName = quiz.fileName;
-            const filePath = path.join(
-                os.homedir(),
-                ".local",
-                "share",
-                "flashcards",
-                fileName,
-            );
-            await writeFile(filePath, json, "utf-8");
-        }
-
-        // cleanup
-        pageStackCopy[pageStackCopy.length - 1].lastIndex = currIndex;
-        setPageStack!(pageStackCopy);
-    }
-
     useInput((input, key) => {
-        if (!normal && (key.return || key.escape)) {
-            setNormal(true);
-            if (currIndex === 0) {
-                handleAdd();
-            } else {
-                handleChanges();
-            }
-        }
-
+        // !normal
         if (!normal) {
+            if (key.return) {
+                const update: Update = new Update(
+                    currIndex,
+                    pageStack,
+                    setPageStack,
+                );
+
+                if (currIndex === page.listItems!.length) {
+                    update.handleAdd(edit);
+                } else {
+                    update.handleEdit(edit);
+                }
+
+                setNormal(true);
+            }
+
             return;
         }
 
         if (input === "i") {
-            setNormal(false);
-
-            if (currIndex === 0) {
+            if (currIndex < page.listItems!.length) {
+                setEdit(page.getDesc!(currIndex));
+            } else {
                 setEdit("");
             }
+            setNormal(false);
         }
 
         if (key.downArrow || input === "j") {
-            if (currIndex >= listItems!.length) {
-                return;
+            if (currIndex < page.listItems!.length) {
+                setCurrIndex(currIndex + 1);
             }
-            setCurrIndex(currIndex + 1);
         }
 
-        if (key.downArrow || input === "k") {
+        if (key.upArrow || input === "k") {
             if (currIndex > 0) {
                 setCurrIndex(currIndex - 1);
             }
         }
 
-        if (input === "c") {
-            setNormal(false);
-            setEdit("");
+        if (input === "d") {
+            setDCount(dCount + 1);
+            setTimeout(() => {
+                setDCount(1);
+            }, 500);
+
+            if (dCount === 2) {
+                setDCount(0);
+                if (currIndex < page.listItems!.length) {
+                    const update: Update = new Update(
+                        currIndex,
+                        pageStack,
+                        setPageStack,
+                    );
+                    update.handleRemove(currIndex);
+                }
+            }
         }
 
         if (key.return) {
-            // if adding an item
-            if (currIndex === 0) {
+            // adding new item
+            if (currIndex === page.listItems!.length) {
                 setNormal(false);
                 setEdit("");
                 return;
             }
-            // copy pageStack and modify lastIndex of current page to be currIndex
-            const pageStackCopy = pageStack!.slice();
-            pageStackCopy[pageStackCopy.length - 1].lastIndex = currIndex;
 
-            // push next page and update state
-            const getNextPage = getNextPages[pageStack!.length - 1];
-            const nextPage = getNextPage(currIndex);
-            pageStackCopy.push({ page: nextPage, lastIndex: 0 });
-            setPageStack!(pageStackCopy);
+            // enter an already created menu option
+            const pageStackCopy = pageStack.shallowClone();
+            pageStackCopy.top()!.lastIndex = currIndex;
+            pageStackCopy.appendNextPage(currIndex);
+            setPageStack(pageStackCopy);
         }
 
         if (key.delete) {
-            // we are at the start page already
-            if (pageStack!.length === 1) {
-                return;
-            }
-
-            const pageStackCopy = pageStack!.slice();
+            const pageStackCopy = pageStack.shallowClone();
             pageStackCopy.pop();
-            setPageStack!(pageStackCopy);
+            setPageStack(pageStackCopy);
         }
     });
 
     function mapItems(items: any[]): React.ReactNode[] {
         const components: React.ReactNode[] = [];
-        for (let i = -1; i < items.length; ++i) {
-            if (i === -1) {
-                components.push(
-                    <Box
-                        borderStyle={currIndex === 0 ? "bold" : "round"}
-                        borderColor={currIndex === 0 ? "blue" : ""}
-                    >
-                        <Text color="green">{Icons.add}</Text>
-                        {!normal && i + 1 === currIndex ? (
+
+        for (let i = 0; i < items.length; ++i) {
+            components.push(
+                <Box
+                    borderStyle={i === currIndex ? "bold" : "round"}
+                    borderColor={i === currIndex ? "blue" : ""}
+                    key={i}
+                >
+                    <Box>
+                        <Text color="yellow">{Icons.edit}</Text>
+                        {!normal && i === currIndex ? (
                             <TextInput
                                 value={edit}
                                 onChange={setEdit}
-                                focus={!normal && i + 1 === currIndex}
+                                focus={!normal && i === currIndex}
                             ></TextInput>
                         ) : (
-                            <Text>{addItemText}</Text>
+                            <Text>{page.getDesc!(i)}</Text>
                         )}
-                    </Box>,
-                );
-            } else {
-                components.push(
-                    <Box
-                        borderStyle={i + 1 === currIndex ? "bold" : "round"}
-                        borderColor={i + 1 === currIndex ? "blue" : ""}
-                    >
-                        <Box>
-                            <Text color="yellow">{Icons.edit}</Text>
-                            {!normal && i + 1 === currIndex ? (
-                                <TextInput
-                                    value={edit}
-                                    onChange={setEdit}
-                                    focus={!normal && i + 1 === currIndex}
-                                ></TextInput>
-                            ) : (
-                                <Text>{getDesc!(i)}</Text>
-                            )}
-                        </Box>
-                    </Box>,
-                );
-            }
+                    </Box>
+                </Box>,
+            );
         }
+
+        // add items
+        const i = items.length;
+        components.push(
+            <Box
+                borderStyle={currIndex === i ? "bold" : "round"}
+                borderColor={currIndex === i ? "blue" : ""}
+                key={i}
+            >
+                <Text color="green">{Icons.add}</Text>
+                {!normal && i === currIndex ? (
+                    <TextInput
+                        value={edit}
+                        onChange={setEdit}
+                        focus={!normal && i === currIndex}
+                    ></TextInput>
+                ) : (
+                    <Text>{page.addItemText}</Text>
+                )}
+            </Box>,
+        );
+
         return components;
     }
 
@@ -404,7 +187,7 @@ function List(): React.ReactNode {
         <>
             <Box justifyContent="space-around" alignItems="center">
                 <Text color="yellow" dimColor bold>
-                    {title}
+                    {page.title}
                 </Text>
                 <Box borderStyle="round" flexShrink={1}>
                     <Text dimColor>{normal ? "--NORMAL--" : "--INSERT--"}</Text>
@@ -412,7 +195,7 @@ function List(): React.ReactNode {
             </Box>
             <HorizontalLine />
             <Window
-                items={mapItems(listItems!)}
+                items={mapItems(page.listItems!)}
                 window={window}
                 currIndex={currIndex}
                 scrollColor="#009293"
@@ -425,316 +208,329 @@ function List(): React.ReactNode {
     );
 }
 
-function QuestionPage(): React.ReactNode {
-    return <></>;
+enum Indexes {
+    questionTypeQA = -5,
+    questionTypeQI = -4,
+    questionTypeMC = -3,
+    question = -2,
+    answer = -1,
 }
 
-// interface EditContextProps {
-//     question: Question;
-//     questionCopy: Question;
-//     currIndex: number;
-// }
+interface QuestionPageProps {
+    pageStack: PageStack;
+    setPageStack: (ps: PageStack) => void;
+}
+function QuestionPage({
+    pageStack,
+    setPageStack,
+}: QuestionPageProps): React.ReactNode {
+    const { normal, setNormal } = useContext(NormalContext)!;
 
-// const EditContext = createContext<EditContextProps | null>(null);
+    // set questionCopy state
+    const lastPage: Page = pageStack.top()!.prev!;
+    const lastIndex = lastPage.lastIndex;
+    const question = lastPage.listItems![lastIndex] as Question;
+    // Update class doesn't fit very well here but it is needed.  The cloneQuestion
+    // function should just be in its own class or separate function
+    const update: Update = new Update(0, pageStack, setPageStack);
+    const [questionCopy, setQuestionCopy] = useState<Question>(
+        update.cloneQuestion(question),
+    );
 
-// function EditQuestion({
-//     question,
-// }: {
-//     question: Question;
-// }): React.ReactElement {
-//     const [currIndex, setCurrIndex] = useState<number>(-2);
-//     const {
-//         pageState,
-//         pageDispatch,
-//         currItems,
-//         setCurrItems,
-//         quizData,
-//         setQuizData,
-//     } = useContext(TraverseContext)!;
-//
-//     const { normal, setNormal } = useContext(NormalContext)!;
-//
-//     useInput((input, key) => {
-//         if (!normal && key.escape) {
-//             setNormal(true);
-//         }
-//
-//         if (pageState.currPage !== "EDIT_QUESTION" || !normal) {
-//             return;
-//         }
-//
-//         if (input === "i" && currIndex >= -2) {
-//             setNormal(false);
-//         }
-//
-//         if (key.escape) {
-//             setNormal(true);
-//         }
-//
-//         if (input === "j" || key.downArrow) {
-//             if (currIndex === -2) {
-//                 setCurrIndex(0);
-//                 return;
-//             }
-//
-//             setCurrIndex(currIndex + 1);
-//         }
-//
-//         if (input === "k" || key.upArrow) {
-//             if (currIndex === -1) {
-//                 setCurrIndex(-3);
-//                 return;
-//             }
-//             if (currIndex <= -5) {
-//                 return;
-//             }
-//
-//             setCurrIndex(currIndex - 1);
-//         }
-//
-//         if (key.delete || (input === "h" && currIndex !== -1)) {
-//             pageDispatch({ type: "LOAD_QUESTIONS" });
-//             return;
-//         }
-//
-//         if (currIndex === -1 && (input === "h" || key.leftArrow)) {
-//             setCurrIndex(-2);
-//         }
-//         if (currIndex === -2 && (input === "l" || key.rightArrow)) {
-//             setCurrIndex(-1);
-//         }
-//     });
-//     return (
-//         <>
-//             <Box alignSelf="center">
-//                 <Text color="yellow" dimColor>
-//                     Edit Question
-//                 </Text>
-//             </Box>
-//             <HorizontalLine />
-//             <Box flexWrap="wrap">
-//                 <QuestionOptions question={question} currIndex={currIndex} />
-//                 {(() => {
-//                     if (question.type === "qa") {
-//                         return (
-//                             <EditQA question={question} currIndex={currIndex} />
-//                         );
-//                     }
-//                     if (question.type === "qi") {
-//                         return (
-//                             <EditQI question={question} currIndex={currIndex} />
-//                         );
-//                     }
-//                     if (question.type === "mc") {
-//                         return (
-//                             <EditMC question={question} currIndex={currIndex} />
-//                         );
-//                     }
-//                 })()}
-//             </Box>
-//             <Box width="100%" justifyContent="space-between" marginTop={1}>
-//                 <Box borderStyle="round">
-//                     <Text>{`${normal ? "--NORMAL--" : "--INSERT--"}`}</Text>
-//                 </Box>
-//                 <Box>
-//                     <Box borderStyle="round">
-//                         <Text>Save</Text>
-//                     </Box>
-//                     <Box borderStyle="round">
-//                         <Text>Cancel</Text>
-//                     </Box>
-//                 </Box>
-//             </Box>
-//         </>
-//     );
-// }
-//
-// function QuestionOptions({
-//     question,
-//     currIndex,
-// }: {
-//     question: Question;
-//     currIndex: number;
-// }): React.ReactElement {
-//     type QuestionType = "mc" | "qa" | "qi";
-//     function isType(type: QuestionType): boolean {
-//         return question.type === type;
-//     }
-//
-//     function isChecked(type: QuestionType): string {
-//         return isType(type) ? "[ x ] " : "[   ] ";
-//     }
-//
-//     return (
-//         <Box flexDirection="column" borderStyle="round" width="100%">
-//             <Box alignItems="center">
-//                 <Text color={isType("qa") ? "green" : ""}>
-//                     {isChecked("qa")}
-//                 </Text>
-//                 <Text color={currIndex === -5 ? "blue" : ""}>
-//                     Question Answer
-//                 </Text>
-//             </Box>
-//             <Box alignItems="center">
-//                 <Text color={isType("qi") ? "green" : ""}>
-//                     {isChecked("qi")}
-//                 </Text>
-//                 <Text color={currIndex === -4 ? "blue" : ""}>
-//                     Question Input
-//                 </Text>
-//             </Box>
-//             <Box alignItems="center">
-//                 <Text color={isType("mc") ? "green" : ""}>
-//                     {isChecked("mc")}
-//                 </Text>
-//                 <Text color={currIndex === -3 ? "blue" : ""}>
-//                     Multiple Choice
-//                 </Text>
-//             </Box>
-//         </Box>
-//     );
-// }
-//
-// function Edit({
-//     question,
-//     currIndex,
-// }: {
-//     question: Question;
-//     currIndex: number;
-// }): React.ReactElement {
-//     const [questionCopy, setQuestionCopy] = useState<Question>(
-//         (() => {
-//             return cloneDeep(question);
-//         })(),
-//     );
-//
-//     const [questionInput, setQuestionInput] = useState<string>(questionCopy.q);
-//     const [answerInput, setAnswerInput] = useState<string>(questionCopy.a);
-//
-//     const { normal } = useContext(NormalContext)!;
-//
-//     return (
-//         <>
-//             <Box
-//                 width="50%"
-//                 flexDirection="column"
-//                 alignItems="center"
-//                 borderColor={currIndex === -2 ? "blue" : ""}
-//                 borderStyle={currIndex === -2 ? "bold" : "round"}
-//             >
-//                 <Box>
-//                     <Text dimColor>Question: </Text>
-//                 </Box>
-//                 <HorizontalLine />
-//                 <TextInput
-//                     value={questionInput}
-//                     onChange={setQuestionInput}
-//                     focus={!normal && currIndex === -2}
-//                 ></TextInput>
-//             </Box>
-//             <Box
-//                 width="50%"
-//                 flexDirection="column"
-//                 alignItems="center"
-//                 borderColor={currIndex === -1 ? "blue" : ""}
-//                 borderStyle={currIndex === -1 ? "bold" : "round"}
-//             >
-//                 <Box>
-//                     <Text dimColor>Answer: </Text>
-//                 </Box>
-//                 <HorizontalLine />
-//                 <TextInput
-//                     value={answerInput}
-//                     onChange={setAnswerInput}
-//                     focus={!normal && currIndex === -1}
-//                 ></TextInput>
-//             </Box>
-//         </>
-//     );
-// }
-//
-// function EditQA({
-//     question,
-//     currIndex,
-// }: {
-//     question: QA;
-//     currIndex: number;
-// }): React.ReactElement {
-//     return <Edit question={question} currIndex={currIndex} />;
-// }
-//
-// function EditQI({
-//     question,
-//     currIndex,
-// }: {
-//     question: QI;
-//     currIndex: number;
-// }): React.ReactElement {
-//     return <Edit question={question} currIndex={currIndex} />;
-// }
-//
-// function EditMC({
-//     question,
-//     currIndex,
-// }: {
-//     question: MC;
-//     currIndex: number;
-// }): React.ReactElement {
-//     const { normal } = useContext(NormalContext)!;
-//
-//     return (
-//         <>
-//             <Edit question={question} currIndex={currIndex} />
-//             {question.choices.map((choice, index) => {
-//                 const label: string = Object.keys(choice)[0];
-//                 const desc: string = choice[label];
-//                 return (
-//                     <>
-//                         <Box width="100%" alignItems="center" key={index}>
-//                             <Box>
-//                                 <Text
-//                                     bold
-//                                 >{`${String.fromCharCode(index + 65)}: `}</Text>
-//                             </Box>
-//                             <Box
-//                                 borderColor={index === currIndex ? "blue" : ""}
-//                                 borderStyle={
-//                                     index === currIndex ? "bold" : "round"
-//                                 }
-//                                 flexGrow={1}
-//                             >
-//                                 <MCText
-//                                     desc={desc}
-//                                     isFocused={index === currIndex && !normal}
-//                                 />
-//                             </Box>
-//                         </Box>
-//                     </>
-//                 );
-//             })}
-//             <Box width="100%">
-//                 <Text>{"   "}</Text>
-//                 <Box borderStyle="round" flexGrow={1}>
-//                     <Text color="green">{" + Add Option"}</Text>
-//                 </Box>
-//             </Box>
-//         </>
-//     );
-// }
-//
-// function MCText({
-//     desc,
-//     isFocused,
-// }: {
-//     desc: string;
-//     isFocused: boolean;
-// }): React.ReactElement {
-//     const [mcInput, setMcInput] = useState<string>(desc);
-//     return (
-//         <TextInput
-//             value={mcInput}
-//             onChange={setMcInput}
-//             focus={isFocused}
-//         ></TextInput>
-//     );
-// }
+    // set mc choies state
+    const initialMcList: any[] =
+        questionCopy.type === "mc" ? questionCopy.choices : [];
+    const [mcList, setMcList] = useState<any[]>(initialMcList);
+    const navRef = useRef<QuestionNav>(new QuestionNav(mcList));
+    const [curr, setCurr] = useState<string>(navRef.current.getCurr());
+    const [resetNav, setResetNav] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (resetNav) {
+            navRef.current = new QuestionNav(mcList);
+            setResetNav(false);
+        }
+    }, [resetNav]);
+
+    let questionContent: React.ReactNode;
+    if (questionCopy.type === "qa") {
+        questionContent = <EditQA question={questionCopy} curr={curr} />;
+    } else if (questionCopy.type === "qi") {
+        questionContent = <EditQI question={questionCopy} curr={curr} />;
+    } else if (questionCopy.type === "mc") {
+        questionContent = (
+            <EditMC question={questionCopy} curr={curr} mcList={mcList} />
+        );
+    }
+
+    useInput((input, key) => {
+        if (key.return) {
+            const curr = navRef.current.getCurr();
+
+            // NOT WORKING
+            // reset the question
+            const newQuestion = update.cloneQuestion(questionCopy);
+            newQuestion.type = curr as "qa" | "qi" | "mc";
+            setQuestionCopy(newQuestion);
+
+            // reset the nav
+            if (
+                (curr === "mc" && question.type !== "mc") ||
+                (curr !== "mc" && question.type === "mc")
+            ) {
+                setResetNav(true);
+            }
+        }
+
+        if (key.downArrow || input === "j") {
+            navRef.current.moveDown();
+            setCurr(navRef.current.getCurr());
+        }
+
+        if (key.upArrow || input === "k") {
+            navRef.current.moveUp();
+            setCurr(navRef.current.getCurr());
+        }
+
+        if (key.leftArrow || input === "h") {
+            navRef.current.moveLeft();
+            setCurr(navRef.current.getCurr());
+        }
+
+        if (key.rightArrow || input === "l") {
+            navRef.current.moveRight();
+            setCurr(navRef.current.getCurr());
+        }
+    });
+
+    return (
+        <>
+            <Box alignSelf="center">
+                <Text color="yellow" dimColor>
+                    Edit Question
+                </Text>
+            </Box>
+            <HorizontalLine />
+            <Box flexDirection="column" justifyContent="center">
+                <QuestionOptions
+                    questionCopy={questionCopy}
+                    setQuestionCopy={setQuestionCopy}
+                    curr={curr}
+                />
+                {questionContent}
+            </Box>
+            <Box width="100%" justifyContent="space-between" marginTop={1}>
+                <Box borderStyle="round">
+                    <Text>{`${normal ? "--NORMAL--" : "--INSERT--"}`}</Text>
+                </Box>
+                <Box>
+                    <Box
+                        borderStyle={curr === "save" ? "bold" : "round"}
+                        borderColor={curr === "save" ? "blue" : ""}
+                    >
+                        <Text>Save</Text>
+                    </Box>
+                    <Box
+                        borderStyle={curr === "cancel" ? "bold" : "round"}
+                        borderColor={curr === "cancel" ? "blue" : ""}
+                    >
+                        <Text>Cancel</Text>
+                    </Box>
+                </Box>
+            </Box>
+        </>
+    );
+}
+
+type QuestionType = "mc" | "qa" | "qi";
+function QuestionOptions({
+    questionCopy,
+    setQuestionCopy,
+    curr,
+}: {
+    questionCopy: Question;
+    setQuestionCopy: (q: Question) => void;
+    curr: string;
+}): React.ReactElement {
+    function isType(type: QuestionType): boolean {
+        return questionCopy.type === type;
+    }
+
+    function isChecked(type: QuestionType): string {
+        return isType(type) ? "[ x ] " : "[   ] ";
+    }
+
+    return (
+        <Box flexDirection="column" borderStyle="round" width="100%">
+            <Box alignItems="center">
+                <Text color={isType("qa") ? "green" : ""}>
+                    {isChecked("qa")}
+                </Text>
+                <Text color={curr === "qa" ? "blue" : ""}>Question Answer</Text>
+            </Box>
+            <Box alignItems="center">
+                <Text color={isType("qi") ? "green" : ""}>
+                    {isChecked("qi")}
+                </Text>
+                <Text color={curr === "qi" ? "blue" : ""}>Question Input</Text>
+            </Box>
+            <Box alignItems="center">
+                <Text color={isType("mc") ? "green" : ""}>
+                    {isChecked("mc")}
+                </Text>
+                <Text color={curr === "mc" ? "blue" : ""}>Multiple Choice</Text>
+            </Box>
+        </Box>
+    );
+}
+
+function Edit({
+    question,
+    curr,
+}: {
+    question: Question;
+    curr: string;
+}): React.ReactElement {
+    const [questionInput, setQuestionInput] = useState<string>(question.q);
+    const [answerInput, setAnswerInput] = useState<string>(question.a);
+
+    const { normal } = useContext(NormalContext)!;
+
+    return (
+        <>
+            <Box width="100%" justifyContent="space-around" gap={-1}>
+                <Box
+                    width="50%"
+                    flexDirection="column"
+                    alignItems="center"
+                    borderColor={curr === "q" ? "blue" : ""}
+                    borderStyle={curr === "q" ? "bold" : "round"}
+                >
+                    <Box>
+                        <Text dimColor>Question: </Text>
+                    </Box>
+                    <HorizontalLine />
+                    <TextInput
+                        value={questionInput}
+                        onChange={setQuestionInput}
+                        focus={!normal && curr === "q"}
+                    ></TextInput>
+                </Box>
+                <Box
+                    width="50%"
+                    flexDirection="column"
+                    alignItems="center"
+                    borderColor={curr === "a" ? "blue" : ""}
+                    borderStyle={curr === "a" ? "bold" : "round"}
+                >
+                    <Box>
+                        <Text dimColor>Answer: </Text>
+                    </Box>
+                    <HorizontalLine />
+                    <TextInput
+                        value={answerInput}
+                        onChange={setAnswerInput}
+                        focus={!normal && curr === "a"}
+                    ></TextInput>
+                </Box>
+            </Box>
+        </>
+    );
+}
+
+function EditQA({
+    question,
+    curr,
+}: {
+    question: QA;
+    curr: string;
+}): React.ReactElement {
+    return <Edit question={question} curr={curr} />;
+}
+
+function EditQI({
+    question,
+    curr,
+}: {
+    question: QI;
+    curr: string;
+}): React.ReactElement {
+    return <Edit question={question} curr={curr} />;
+}
+
+function EditMC({
+    question,
+    curr,
+    mcList,
+}: {
+    question: MC;
+    curr: string;
+    mcList: any[];
+}): React.ReactElement {
+    const { normal } = useContext(NormalContext)!;
+
+    return (
+        <>
+            <Edit question={question} curr={curr} />
+            {mcList.map((choice, index) => {
+                const getLabel = (i: number): string =>
+                    String.fromCharCode(65 + i);
+
+                const desc: string = choice[getLabel(index)];
+
+                return (
+                    <>
+                        <Box width="100%" alignItems="center" key={index}>
+                            <Box>
+                                <Text bold>{`${getLabel(index)}: `}</Text>
+                            </Box>
+                            <Box
+                                borderColor={
+                                    curr === getLabel(index) ? "blue" : ""
+                                }
+                                borderStyle={
+                                    curr === getLabel(index) ? "bold" : "round"
+                                }
+                                flexGrow={1}
+                            >
+                                <MCText
+                                    desc={desc}
+                                    isFocused={
+                                        !normal && curr === getLabel(index)
+                                    }
+                                />
+                            </Box>
+                        </Box>
+                    </>
+                );
+            })}
+            <Box width="100%">
+                <Text>{"   "}</Text>
+                <Box
+                    flexGrow={1}
+                    borderColor={curr === "add" ? "blue" : ""}
+                    borderStyle={curr === "add" ? "bold" : "round"}
+                >
+                    <Text color="green">{" + Add Option"}</Text>
+                </Box>
+            </Box>
+        </>
+    );
+}
+
+function MCText({
+    desc,
+    isFocused,
+}: {
+    desc: string;
+    isFocused: boolean;
+}): React.ReactElement {
+    const [mcInput, setMcInput] = useState<string>(desc);
+    return (
+        <TextInput
+            value={mcInput}
+            onChange={setMcInput}
+            focus={isFocused}
+        ></TextInput>
+    );
+}

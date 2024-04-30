@@ -1,32 +1,23 @@
 import React from "react";
 import { useState, createContext } from "react";
-import { useApp, useInput } from "ink";
-import { CreateMenu } from "./Components/createMode/CreateNew.js";
+import { useApp, useInput, Box } from "ink";
+import { CurrentPage } from "./Components/createMode/CreateNew.js";
 import { getData } from "./readDir.js";
-function getQuiz(quiz, sections) {
-    const listOfQuiz = [];
-    for (const section of quiz.sections) {
-        if (!sections || sections.has(section.name)) {
-            for (const question of section.questions) {
-                listOfQuiz.push(question);
-            }
-        }
-    }
-    return listOfQuiz;
-}
+import useStdoutDimensions from "./useStdoutDimensions.js";
 const initialQuizData = getData();
 export const NormalContext = createContext(null);
-export default function App({ quiz, sections, }) {
+export default function App() {
     const { exit } = useApp();
     const [normal, setNormal] = useState(true);
+    const [cols, rows] = useStdoutDimensions();
     useInput((input) => {
         if (normal && input === "q") {
             exit();
         }
     });
-    // const QuizArray: (MC | QA | QI)[] = getQuiz(quiz, sections);
-    // return <QuizMode Quiz={QuizArray} normal={normal} setNormal={setNormal} />;
     return (React.createElement(NormalContext.Provider, { value: { normal, setNormal } },
-        React.createElement(CreateMenu, { initialQuizData: initialQuizData })));
+        React.createElement(Box, { alignItems: "center", justifyContent: "center" },
+            React.createElement(Box, { width: 75, flexDirection: "column", borderStyle: "round" },
+                React.createElement(CurrentPage, { initialQuizData: initialQuizData })))));
 }
 //# sourceMappingURL=App.js.map

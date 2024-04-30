@@ -1,6 +1,6 @@
 import React from "react";
-import { useState } from "react";
-import { Box, Text } from "ink";
+import { useState, useEffect } from "react";
+import { Box, Text, useInput } from "ink";
 
 export interface WindowState {
     start: number;
@@ -14,28 +14,30 @@ export interface WindowControl {
     setWindowState: (ws: WindowState) => void;
 }
 
-type WindowDestructure = [
-    WindowControl,
-    number,
-    (n: number) => void,
-    (ws: WindowState) => void,
-];
+type WindowDestructure = {
+    window: WindowControl;
+    currIndex: number;
+    setCurrIndex: (n: number) => void;
+    resetWindow: () => void;
+};
 
 export function useWindow(windowSize: number): WindowDestructure {
-    const [currIndex, setCurrIndex] = useState<number>(0);
-    const [windowState, setWindowState] = useState<WindowState>({
+    const startWindow = {
         start: 0,
         end: windowSize,
         mid: Math.floor(windowSize / 2),
         windowSize: windowSize,
-    });
+    };
 
-    return [
-        { windowState: windowState, setWindowState: setWindowState },
-        currIndex,
-        setCurrIndex,
-        setWindowState,
-    ];
+    const [currIndex, setCurrIndex] = useState<number>(0);
+    const [windowState, setWindowState] = useState<WindowState>(startWindow);
+
+    return {
+        window: { windowState: windowState, setWindowState: setWindowState },
+        currIndex: currIndex,
+        setCurrIndex: setCurrIndex,
+        resetWindow: () => setWindowState(startWindow),
+    };
 }
 
 type BorderStyle =
@@ -76,66 +78,68 @@ export function Window({
     let { start, end, mid } = windowState;
 
     // get the start / end indexes of the window
-    let modified: boolean = false;
+    useEffect(() => {
+        let modified: boolean = false;
 
-    // keep current list item in middle
-    if (scrollMiddle) {
-        const getMid = (s: number, e: number) => Math.floor((s + e) / 2);
-        if (currIndex < windowState.mid) {
-            while (start > 0 && currIndex !== mid) {
-                --start;
-                --end;
-                mid = getMid(start, end);
+        // keep current list item in middle
+        if (scrollMiddle) {
+            const getMid = (s: number, e: number) => Math.floor((s + e) / 2);
+            if (currIndex < windowState.mid) {
+                while (start > 0 && currIndex !== mid) {
+                    --start;
+                    --end;
+                    mid = getMid(start, end);
 
-                modified = true;
+                    modified = true;
+                }
+            } else if (currIndex > windowState.mid) {
+                while (end < items.length && currIndex !== mid) {
+                    ++start;
+                    ++end;
+                    mid = getMid(start, end);
+
+                    modified = true;
+                }
             }
-        } else if (currIndex > windowState.mid) {
-            while (end < items.length && currIndex !== mid) {
-                ++start;
-                ++end;
-                mid = getMid(start, end);
-
-                modified = true;
+        } else {
+            if (currIndex === end) {
+                if (end < items.length) {
+                    ++start;
+                    ++end;
+                    modified = true;
+                }
+            } else if (currIndex === start - 1) {
+                if (start > 0) {
+                    --start;
+                    --end;
+                    modified = true;
+                }
+            } else if (end < currIndex || start > currIndex) {
+                // handle edge cases where the currIndex starts outside the bounds of
+                // the window
+                while (end > currIndex && start > 0) {
+                    --start;
+                    --end;
+                    modified = true;
+                }
+                while (start < currIndex && end < items.length - 1) {
+                    ++start;
+                    ++end;
+                    modified = true;
+                }
             }
         }
-    } else {
-        if (currIndex === end) {
-            if (end < items.length) {
-                ++start;
-                ++end;
-                modified = true;
-            }
-        } else if (currIndex === start - 1) {
-            if (start > 0) {
-                --start;
-                --end;
-                modified = true;
-            }
-        } else if (end < currIndex || start > currIndex) {
-            // handle edge cases where the currIndex starts outside the bounds of
-            // the window
-            while (end > currIndex && start > 0) {
-                --start;
-                --end;
-                modified = true;
-            }
-            while (start < currIndex && end < items.length - 1) {
-                ++start;
-                ++end;
-                modified = true;
-            }
-        }
-    }
 
-    // update the state of the Window if changes were made
-    if (modified) {
-        setWindowState({
-            start: start,
-            end: end,
-            mid: mid,
-            windowSize: windowState.windowSize,
-        });
-    }
+        // update the state of the Window if changes were made
+        if (modified) {
+            setWindowState({
+                start: start,
+                end: end,
+                mid: mid,
+                windowSize: windowState.windowSize,
+            });
+        }
+    }, [currIndex]);
 
     // use the start and end indexes to slice the input array
     const slicedComponents = items.slice(start, end);

@@ -6,7 +6,6 @@ import { Quiz } from "./interfaces.js";
 
 function validateQuizObject(quiz: Quiz): boolean {
     if (!quiz.sections) {
-        console.log("1");
         console.log("JSON object must include 'sections' array.");
         return false;
     }
@@ -23,25 +22,21 @@ function validateQuizObject(quiz: Quiz): boolean {
                 question.type !== "mc" &&
                 question.type !== "qi"
             ) {
-                console.log("3");
                 return false;
             }
 
             if (question.type === "qa" || question.type === "qi") {
                 if (!question.q || !question.a) {
-                    console.log("4");
                     return false;
                 }
             }
 
             if (question.type === "mc") {
                 if (!question.q || !question.a || !question.choices) {
-                    console.log("5");
                     return false;
                 }
 
                 if (!Array.isArray(question.choices)) {
-                    console.log("6");
                     return false;
                 }
 
@@ -49,12 +44,10 @@ function validateQuizObject(quiz: Quiz): boolean {
                 for (const obj of question.choices) {
                     for (const key in obj) {
                         if (typeof key !== "string") {
-                            console.log("7");
                             return false;
                         }
 
                         if (typeof obj[key] !== "string") {
-                            console.log("8");
                             return false;
                         }
                         if (key === question.a) {
@@ -64,7 +57,6 @@ function validateQuizObject(quiz: Quiz): boolean {
                 }
 
                 if (!hasValidAnswer) {
-                    console.log("9");
                     return false;
                 }
             }
@@ -112,15 +104,12 @@ async function processArguments(): Promise<void> {
         let sectionsOrNull: Set<string> | null;
         if (!sections.size) {
             sectionsOrNull = null;
-            console.log("Set is empty");
         } else {
             sectionsOrNull = sections;
-            console.log("Set is NOT empty");
             console.log(sections);
         }
 
-        console.log(quiz);
-        render(<App quiz={quiz} sections={sectionsOrNull} />);
+        render(<App />);
     } catch (err) {
         console.error(err);
         process.exit(0);

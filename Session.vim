@@ -13,43 +13,27 @@ if &shortmess =~ 'A'
 else
   set shortmess=aoO
 endif
-badd +1 src/root.tsx
-badd +35 src/App.tsx
-badd +70 src/Components/createMode/CreateNew.tsx
+badd +61 src/root.tsx
+badd +21 src/App.tsx
+badd +235 src/Components/createMode/CreateNew.tsx
 badd +22 src/Components/quizMode/QuestionInput.tsx
-badd +9 src/interfaces.ts
-badd +152 src/Components/createMode/useWindow.tsx
-badd +14 ~/repos/flashcards/src/readDir.ts
+badd +21 src/interfaces.ts
+badd +77 src/Components/createMode/useWindow.tsx
+badd +15 ~/repos/flashcards/src/readDir.ts
 badd +1 ~/repos/flashcards/src/Components/quizMode/MultipleChoice.tsx
 badd +1 ~/repos/flashcards/src/Components/quizMode/QuestionAnswer.tsx
 badd +1 ~/repos/flashcards/src/Components/quizMode/QuizMode.tsx
 badd +1 ~/repos/flashcards/src/Components/quizMode/FooterKeybinds.tsx
 badd +7 ~/repos/flashcards/src/Components/quizMode/Header.tsx
 badd +1 ~/repos/flashcards/src/Components/Lines.tsx
-badd +7 ~/repos/flashcards/src/Components/createMode/usePageStack.tsx
-badd +2 ~/repos/flashcards/src/Components/createMode/classes.ts
+badd +327 ~/repos/flashcards/src/Components/createMode/classes.ts
 badd +1 src/Components/createMode/pageStack.ts
+badd +38 ~/repos/flashcards/src/keybinds.ts
+badd +4 ~/repos/flashcards/node_modules/ink/build/hooks/use-input.d.ts
 argglobal
 %argdel
 $argadd src/root.tsx
 edit src/Components/createMode/CreateNew.tsx
-let s:save_splitbelow = &splitbelow
-let s:save_splitright = &splitright
-set splitbelow splitright
-wincmd _ | wincmd |
-split
-1wincmd k
-wincmd w
-let &splitbelow = s:save_splitbelow
-let &splitright = s:save_splitright
-wincmd t
-let s:save_winminheight = &winminheight
-let s:save_winminwidth = &winminwidth
-set winminheight=0
-set winheight=1
-set winminwidth=0
-set winwidth=1
-wincmd =
 argglobal
 balt ~/repos/flashcards/src/Components/createMode/classes.ts
 setlocal fdm=manual
@@ -62,36 +46,12 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 70 - ((9 * winheight(0) + 20) / 41)
+let s:l = 125 - ((12 * winheight(0) + 26) / 52)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 70
-normal! 019|
-wincmd w
-argglobal
-if bufexists(fnamemodify("term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1", ":p")) | buffer term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1 | else | edit term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1 | endif
-if &buftype ==# 'terminal'
-  silent file term://~/repos/flashcards//3488:/usr/bin/zsh;\#toggleterm\#1
-endif
-balt src/Components/createMode/CreateNew.tsx
-setlocal fdm=manual
-setlocal fde=0
-setlocal fmr={{{,}}}
-setlocal fdi=#
-setlocal fdl=0
-setlocal fml=1
-setlocal fdn=20
-setlocal fen
-let s:l = 1 - ((0 * winheight(0) + 5) / 10)
-if s:l < 1 | let s:l = 1 | endif
-keepjumps exe s:l
-normal! zt
-keepjumps 1
+keepjumps 125
 normal! 0
-wincmd w
-2wincmd w
-wincmd =
 tabnext 1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf
@@ -99,8 +59,6 @@ endif
 unlet! s:wipebuf
 set winheight=1 winwidth=20
 let &shortmess = s:shortmess_save
-let &winminheight = s:save_winminheight
-let &winminwidth = s:save_winminwidth
 let s:sx = expand("<sfile>:p:r")."x.vim"
 if filereadable(s:sx)
   exe "source " . fnameescape(s:sx)
