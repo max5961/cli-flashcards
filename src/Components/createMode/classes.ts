@@ -373,113 +373,49 @@ export class Update {
     }
 }
 
-class Opt {
-    public name: string;
-    public left: Opt | null;
-    public right: Opt | null;
-    public up: Opt | null;
-    public down: Opt | null;
+export class Opt<T> {
+    public name: T;
+    public left: Opt<T> | null;
+    public right: Opt<T> | null;
+    public up: Opt<T> | null;
+    public down: Opt<T> | null;
 
-    constructor(name: string) {
+    constructor(name: T) {
         this.name = name;
         this.left = null;
         this.right = null;
         this.up = null;
         this.down = null;
     }
-}
 
-export class QuestionNav {
-    private curr: Opt;
-
-    constructor(mcList: any[]) {
-        const qa: Opt = new Opt("qa");
-        const qi: Opt = new Opt("qi");
-        const mc: Opt = new Opt("mc");
-        const question: Opt = new Opt("q");
-        const answer: Opt = new Opt("a");
-        const save: Opt = new Opt("save");
-        const cancel: Opt = new Opt("cancel");
-
-        // qa
-        qa.down = qi;
-
-        // qi
-        qi.down = mc;
-        qi.up = qa;
-
-        // mc
-        mc.up = qi;
-        mc.down = question;
-
-        // q
-        question.up = mc;
-        question.right = answer;
-        question.down = save;
-
-        // a
-        answer.up = mc;
-        answer.left = question;
-        answer.down = save;
-
-        // save
-        save.up = question;
-        save.right = cancel;
-
-        // cancel
-        cancel.up = answer;
-        cancel.left = save;
-
-        if (mcList.length) {
-            this.buildMcList(mcList, save, cancel, question, answer);
-        }
-
-        // set curr pointer
-        this.curr = question;
+    linkUp(toLink: Opt<T>): void {
+        this.up = toLink;
     }
 
-    buildMcList(mcList: any[], save: Opt, cancel: Opt, q: Opt, a: Opt): void {
-        const opts: Opt[] = [];
-        const add: Opt = new Opt("add");
+    linkDown(toLink: Opt<T>): void {
+        this.down = toLink;
+    }
 
-        for (let i = 0; i < mcList.length; ++i) {
-            const name: string = String.fromCharCode(65 + i);
-            const opt = new Opt(name);
-            opts.push(opt);
-        }
+    linkLeft(toLink: Opt<T>): void {
+        this.left = toLink;
+    }
 
-        for (let i = 0; i < opts.length; ++i) {
-            if (i === 0) {
-                q.down = opts[i];
-                a.down = opts[i];
-                opts[i].up = q;
-            }
+    linkRight(toLink: Opt<T>): void {
+        this.right = toLink;
+    }
+}
 
-            if (opts[i + 1]) {
-                opts[i].down = opts[i + 1];
-            }
+export class Nav<T> {
+    private curr: Opt<T>;
+    private optMap: Map<T, Opt<T>> = new Map();
 
-            if (opts[i - 1]) {
-                opts[i].up = opts[i - 1];
-            }
+    constructor(navConfig: (n: Nav<T>) => Opt<T>) {
+        this.curr = navConfig(this);
+    }
 
-            if (i === opts.length - 1) {
-                opts[i].down = add;
-            }
-        }
-
-        if (opts.length) {
-            add.up = opts[opts.length - 1];
-        } else {
-            add.up = q;
-            q.down = add;
-            a.down = add;
-        }
-
-        add.down = save;
-        save.up = add;
-        save.right = cancel;
-        cancel.left = save;
+    addNode(name: T): Opt<T> {
+        this.optMap.set(name, new Opt(name));
+        return this.optMap.get(name)!;
     }
 
     moveUp(): void {
@@ -506,7 +442,15 @@ export class QuestionNav {
         }
     }
 
-    getCurr(): string {
+    goTo(name: T): void {
+        if (this.optMap.has(name)) {
+            this.curr = this.optMap.get(name)!;
+        } else {
+            throw new Error(`name: ${name} is not part of navigation map`);
+        }
+    }
+
+    getCurr(): T {
         return this.curr.name;
     }
 }

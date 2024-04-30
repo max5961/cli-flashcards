@@ -5,7 +5,8 @@ import { NormalContext } from "../../App.js";
 import TextInput from "ink-text-input";
 import { QuizData, Question, QA, MC, QI } from "../../interfaces.js";
 import { Window, useWindow } from "./useWindow.js";
-import { PageStack, Page, QuestionNav } from "./classes.js";
+import { PageStack, Page, Nav } from "./classes.js";
+import { NavUtils, QuestionData, opts } from "./NavUtils.js";
 import { Update } from "./classes.js";
 
 enum Icons {
@@ -208,14 +209,6 @@ function List({ pageStack, setPageStack }: ListProps): React.ReactNode {
     );
 }
 
-enum Indexes {
-    questionTypeQA = -5,
-    questionTypeQI = -4,
-    questionTypeMC = -3,
-    question = -2,
-    answer = -1,
-}
-
 interface QuestionPageProps {
     pageStack: PageStack;
     setPageStack: (ps: PageStack) => void;
@@ -224,84 +217,74 @@ function QuestionPage({
     pageStack,
     setPageStack,
 }: QuestionPageProps): React.ReactNode {
-    const { normal, setNormal } = useContext(NormalContext)!;
-
-    // set questionCopy state
     const lastPage: Page = pageStack.top()!.prev!;
     const lastIndex = lastPage.lastIndex;
-    const question = lastPage.listItems![lastIndex] as Question;
-    // Update class doesn't fit very well here but it is needed.  The cloneQuestion
-    // function should just be in its own class or separate function
-    const update: Update = new Update(0, pageStack, setPageStack);
-    const [questionCopy, setQuestionCopy] = useState<Question>(
-        update.cloneQuestion(question),
+    const question: Question = lastPage.listItems![lastIndex] as Question;
+    const initialQuestionData = NavUtils.toQuestionData(question);
+
+    // normal context
+    const { normal, setNormal } = useContext(NormalContext)!;
+
+    // questionData state
+    const [questionData, setQuestionData] = useState<QuestionData>(
+        NavUtils.cloneQuestion(initialQuestionData),
     );
 
-    // set mc choies state
-    const initialMcList: any[] =
-        questionCopy.type === "mc" ? questionCopy.choices : [];
-    const [mcList, setMcList] = useState<any[]>(initialMcList);
-    const navRef = useRef<QuestionNav>(new QuestionNav(mcList));
-    const [curr, setCurr] = useState<string>(navRef.current.getCurr());
-    const [resetNav, setResetNav] = useState<boolean>(false);
+    // nav state
+    const navInitializer = NavUtils.getNavInitializer(questionData);
+    const [nav, setNav] = useState<Nav<opts>>(new Nav<opts>(navInitializer));
 
-    useEffect(() => {
-        if (resetNav) {
-            navRef.current = new QuestionNav(mcList);
-            setResetNav(false);
-        }
-    }, [resetNav]);
+    // curr node state
+    const [curr, setCurr] = useState<opts>(nav.getCurr());
 
-    let questionContent: React.ReactNode;
-    if (questionCopy.type === "qa") {
-        questionContent = <EditQA question={questionCopy} curr={curr} />;
-    } else if (questionCopy.type === "qi") {
-        questionContent = <EditQI question={questionCopy} curr={curr} />;
-    } else if (questionCopy.type === "mc") {
-        questionContent = (
-            <EditMC question={questionCopy} curr={curr} mcList={mcList} />
-        );
+    function setState(type: "qa" | "qi" | "mc") {
+        const questionDataCopy = NavUtils.cloneQuestion(questionData);
+        questionDataCopy.type = type;
+
+        const navCopyInitializer = NavUtils.getNavInitializer(questionDataCopy);
+        const newNav = new Nav<opts>(navCopyInitializer);
+        newNav.goTo(curr);
+
+        setQuestionData(questionDataCopy);
+        setNav(newNav);
     }
 
     useInput((input, key) => {
-        if (key.return) {
-            const curr = navRef.current.getCurr();
-
-            // NOT WORKING
-            // reset the question
-            const newQuestion = update.cloneQuestion(questionCopy);
-            newQuestion.type = curr as "qa" | "qi" | "mc";
-            setQuestionCopy(newQuestion);
-
-            // reset the nav
-            if (
-                (curr === "mc" && question.type !== "mc") ||
-                (curr !== "mc" && question.type === "mc")
-            ) {
-                setResetNav(true);
+        if (normal && key.return) {
+            if (curr === "qa" || curr === "qi" || curr === "mc") {
+                setState(curr);
             }
         }
 
         if (key.downArrow || input === "j") {
-            navRef.current.moveDown();
-            setCurr(navRef.current.getCurr());
+            nav.moveDown();
+            setCurr(nav.getCurr());
         }
 
         if (key.upArrow || input === "k") {
-            navRef.current.moveUp();
-            setCurr(navRef.current.getCurr());
+            nav.moveUp();
+            setCurr(nav.getCurr());
         }
 
         if (key.leftArrow || input === "h") {
-            navRef.current.moveLeft();
-            setCurr(navRef.current.getCurr());
+            nav.moveLeft();
+            setCurr(nav.getCurr());
         }
 
         if (key.rightArrow || input === "l") {
-            navRef.current.moveRight();
-            setCurr(navRef.current.getCurr());
+            nav.moveRight();
+            setCurr(nav.getCurr());
         }
     });
+
+    let questionContent: React.ReactNode;
+    if (questionData.type === "qa") {
+        questionContent = <Edit questionData={questionData} curr={curr} />;
+    } else if (questionData.type === "qi") {
+        questionContent = <Edit questionData={questionData} curr={curr} />;
+    } else if (questionData.type === "mc") {
+        questionContent = <EditMC questionData={questionData} curr={curr} />;
+    }
 
     return (
         <>
@@ -312,11 +295,7 @@ function QuestionPage({
             </Box>
             <HorizontalLine />
             <Box flexDirection="column" justifyContent="center">
-                <QuestionOptions
-                    questionCopy={questionCopy}
-                    setQuestionCopy={setQuestionCopy}
-                    curr={curr}
-                />
+                <QuestionOptions questionData={questionData} curr={curr} />
                 {questionContent}
             </Box>
             <Box width="100%" justifyContent="space-between" marginTop={1}>
@@ -344,24 +323,31 @@ function QuestionPage({
 
 type QuestionType = "mc" | "qa" | "qi";
 function QuestionOptions({
-    questionCopy,
-    setQuestionCopy,
+    questionData,
     curr,
 }: {
-    questionCopy: Question;
-    setQuestionCopy: (q: Question) => void;
-    curr: string;
+    questionData: QuestionData;
+    curr: opts;
 }): React.ReactElement {
     function isType(type: QuestionType): boolean {
-        return questionCopy.type === type;
+        return questionData.type === type;
     }
 
     function isChecked(type: QuestionType): string {
         return isType(type) ? "[ x ] " : "[   ] ";
     }
 
+    function isWithin(): boolean {
+        return curr === "qa" || curr === "qi" || curr === "mc";
+    }
+
     return (
-        <Box flexDirection="column" borderStyle="round" width="100%">
+        <Box
+            flexDirection="column"
+            width="100%"
+            borderColor={isWithin() ? "blue" : ""}
+            borderStyle={isWithin() ? "bold" : "round"}
+        >
             <Box alignItems="center">
                 <Text color={isType("qa") ? "green" : ""}>
                     {isChecked("qa")}
@@ -385,14 +371,14 @@ function QuestionOptions({
 }
 
 function Edit({
-    question,
+    questionData,
     curr,
 }: {
-    question: Question;
-    curr: string;
+    questionData: QuestionData;
+    curr: opts;
 }): React.ReactElement {
-    const [questionInput, setQuestionInput] = useState<string>(question.q);
-    const [answerInput, setAnswerInput] = useState<string>(question.a);
+    const [questionInput, setQuestionInput] = useState<string>(questionData.q);
+    const [answerInput, setAnswerInput] = useState<string>(questionData.a);
 
     const { normal } = useContext(NormalContext)!;
 
@@ -403,8 +389,8 @@ function Edit({
                     width="50%"
                     flexDirection="column"
                     alignItems="center"
-                    borderColor={curr === "q" ? "blue" : ""}
-                    borderStyle={curr === "q" ? "bold" : "round"}
+                    borderColor={curr === "question" ? "blue" : ""}
+                    borderStyle={curr === "question" ? "bold" : "round"}
                 >
                     <Box>
                         <Text dimColor>Question: </Text>
@@ -413,15 +399,15 @@ function Edit({
                     <TextInput
                         value={questionInput}
                         onChange={setQuestionInput}
-                        focus={!normal && curr === "q"}
+                        focus={!normal && curr === "question"}
                     ></TextInput>
                 </Box>
                 <Box
                     width="50%"
                     flexDirection="column"
                     alignItems="center"
-                    borderColor={curr === "a" ? "blue" : ""}
-                    borderStyle={curr === "a" ? "bold" : "round"}
+                    borderColor={curr === "answer" ? "blue" : ""}
+                    borderStyle={curr === "answer" ? "bold" : "round"}
                 >
                     <Box>
                         <Text dimColor>Answer: </Text>
@@ -430,7 +416,7 @@ function Edit({
                     <TextInput
                         value={answerInput}
                         onChange={setAnswerInput}
-                        focus={!normal && curr === "a"}
+                        focus={!normal && curr === "answer"}
                     ></TextInput>
                 </Box>
             </Box>
@@ -438,41 +424,20 @@ function Edit({
     );
 }
 
-function EditQA({
-    question,
-    curr,
-}: {
-    question: QA;
-    curr: string;
-}): React.ReactElement {
-    return <Edit question={question} curr={curr} />;
-}
-
-function EditQI({
-    question,
-    curr,
-}: {
-    question: QI;
-    curr: string;
-}): React.ReactElement {
-    return <Edit question={question} curr={curr} />;
-}
-
 function EditMC({
-    question,
+    questionData,
     curr,
-    mcList,
 }: {
-    question: MC;
-    curr: string;
-    mcList: any[];
+    questionData: QuestionData;
+    curr: opts;
 }): React.ReactElement {
     const { normal } = useContext(NormalContext)!;
+    const choices = questionData.choices;
 
     return (
         <>
-            <Edit question={question} curr={curr} />
-            {mcList.map((choice, index) => {
+            <Edit questionData={questionData} curr={curr} />
+            {choices.map((choice, index) => {
                 const getLabel = (i: number): string =>
                     String.fromCharCode(65 + i);
 
