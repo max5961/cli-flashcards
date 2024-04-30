@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from "react";
+import React, { useState, useContext, useEffect, createContext } from "react";
 import { Box, Text, useInput } from "ink";
 import { HorizontalLine } from "../Lines.js";
 import { NormalContext } from "../../App.js";
@@ -6,7 +6,7 @@ import TextInput from "ink-text-input";
 import { QuizData, Question, QA, MC, QI } from "../../interfaces.js";
 import { Window, useWindow } from "./useWindow.js";
 import { PageStack, Page, Nav } from "./classes.js";
-import { NavUtils, QuestionData, opts } from "./NavUtils.js";
+import { QuestionUtils, QuestionData, opts } from "./QuestionUtils.js";
 import { Update } from "./classes.js";
 
 enum Icons {
@@ -54,16 +54,12 @@ function List({ pageStack, setPageStack }: ListProps): React.ReactNode {
         // !normal
         if (!normal) {
             if (key.return) {
-                const update: Update = new Update(
-                    currIndex,
-                    pageStack,
-                    setPageStack,
-                );
+                const update: Update = new Update(pageStack, setPageStack);
 
                 if (currIndex === page.listItems!.length) {
                     update.handleAdd(edit);
                 } else {
-                    update.handleEdit(edit);
+                    update.handleEdit(edit, currIndex);
                 }
 
                 setNormal(true);
@@ -102,11 +98,7 @@ function List({ pageStack, setPageStack }: ListProps): React.ReactNode {
             if (dCount === 2) {
                 setDCount(0);
                 if (currIndex < page.listItems!.length) {
-                    const update: Update = new Update(
-                        currIndex,
-                        pageStack,
-                        setPageStack,
-                    );
+                    const update: Update = new Update(pageStack, setPageStack);
                     update.handleRemove(currIndex);
                 }
             }
@@ -209,6 +201,16 @@ function List({ pageStack, setPageStack }: ListProps): React.ReactNode {
     );
 }
 
+interface QuestionPageContext {
+    pageStack: PageStack;
+    setPageStack: (ps: PageStack) => void;
+    questionData: QuestionData;
+    setQuestionData: (qd: QuestionData) => void;
+    curr: opts;
+}
+
+const QuestionPageContext = createContext<QuestionPageContext | null>(null);
+
 interface QuestionPageProps {
     pageStack: PageStack;
     setPageStack: (ps: PageStack) => void;
@@ -220,28 +222,29 @@ function QuestionPage({
     const lastPage: Page = pageStack.top()!.prev!;
     const lastIndex = lastPage.lastIndex;
     const question: Question = lastPage.listItems![lastIndex] as Question;
-    const initialQuestionData = NavUtils.toQuestionData(question);
+    const initialQuestionData = QuestionUtils.toQuestionData(question);
 
     // normal context
     const { normal, setNormal } = useContext(NormalContext)!;
 
     // questionData state
     const [questionData, setQuestionData] = useState<QuestionData>(
-        NavUtils.cloneQuestion(initialQuestionData),
+        QuestionUtils.cloneQuestion(initialQuestionData),
     );
 
     // nav state
-    const navInitializer = NavUtils.getNavInitializer(questionData);
+    const navInitializer = QuestionUtils.getNavInitializer(questionData);
     const [nav, setNav] = useState<Nav<opts>>(new Nav<opts>(navInitializer));
 
     // curr node state
     const [curr, setCurr] = useState<opts>(nav.getCurr());
 
     function setState(type: "qa" | "qi" | "mc") {
-        const questionDataCopy = NavUtils.cloneQuestion(questionData);
+        const questionDataCopy = QuestionUtils.cloneQuestion(questionData);
         questionDataCopy.type = type;
 
-        const navCopyInitializer = NavUtils.getNavInitializer(questionDataCopy);
+        const navCopyInitializer =
+            QuestionUtils.getNavInitializer(questionDataCopy);
         const newNav = new Nav<opts>(navCopyInitializer);
         newNav.goTo(curr);
 
@@ -249,10 +252,44 @@ function QuestionPage({
         setNav(newNav);
     }
 
+    const writeData: (qd: QuestionData) => void = QuestionUtils.writeData(
+        pageStack,
+        setPageStack,
+    );
+
     useInput((input, key) => {
+        if (!normal) {
+            if (key.escape) {
+                setNormal(true);
+            } else {
+                return;
+            }
+        }
+
         if (normal && key.return) {
             if (curr === "qa" || curr === "qi" || curr === "mc") {
                 setState(curr);
+            }
+
+            if (curr === "save") {
+                writeData(questionData);
+            }
+
+            if (curr === "cancel") {
+                //
+            }
+        }
+
+        if (normal && input === "i") {
+            if (
+                curr === "question" ||
+                curr === "answer" ||
+                curr === "A" ||
+                curr === "B" ||
+                curr === "C" ||
+                curr === "D"
+            ) {
+                setNormal(false);
             }
         }
 
@@ -279,56 +316,62 @@ function QuestionPage({
 
     let questionContent: React.ReactNode;
     if (questionData.type === "qa") {
-        questionContent = <Edit questionData={questionData} curr={curr} />;
+        questionContent = <Edit />;
     } else if (questionData.type === "qi") {
-        questionContent = <Edit questionData={questionData} curr={curr} />;
+        questionContent = <Edit />;
     } else if (questionData.type === "mc") {
-        questionContent = <EditMC questionData={questionData} curr={curr} />;
+        questionContent = <EditMC />;
     }
 
     return (
         <>
-            <Box alignSelf="center">
-                <Text color="yellow" dimColor>
-                    Edit Question
-                </Text>
-            </Box>
-            <HorizontalLine />
-            <Box flexDirection="column" justifyContent="center">
-                <QuestionOptions questionData={questionData} curr={curr} />
-                {questionContent}
-            </Box>
-            <Box width="100%" justifyContent="space-between" marginTop={1}>
-                <Box borderStyle="round">
-                    <Text>{`${normal ? "--NORMAL--" : "--INSERT--"}`}</Text>
+            <QuestionPageContext.Provider
+                value={{
+                    questionData: questionData,
+                    setQuestionData: setQuestionData,
+                    pageStack: pageStack,
+                    setPageStack: setPageStack,
+                    curr: curr,
+                }}
+            >
+                <Box alignSelf="center">
+                    <Text color="yellow" dimColor>
+                        Edit Question
+                    </Text>
                 </Box>
-                <Box>
-                    <Box
-                        borderStyle={curr === "save" ? "bold" : "round"}
-                        borderColor={curr === "save" ? "blue" : ""}
-                    >
-                        <Text>Save</Text>
+                <HorizontalLine />
+                <Box flexDirection="column" justifyContent="center">
+                    <QuestionOptions />
+                    {questionContent}
+                </Box>
+                <Box width="100%" justifyContent="space-between" marginTop={1}>
+                    <Box borderStyle="round">
+                        <Text>{`${normal ? "--NORMAL--" : "--INSERT--"}`}</Text>
                     </Box>
-                    <Box
-                        borderStyle={curr === "cancel" ? "bold" : "round"}
-                        borderColor={curr === "cancel" ? "blue" : ""}
-                    >
-                        <Text>Cancel</Text>
+                    <Box>
+                        <Box
+                            borderStyle={curr === "save" ? "bold" : "round"}
+                            borderColor={curr === "save" ? "blue" : ""}
+                        >
+                            <Text>Save</Text>
+                        </Box>
+                        <Box
+                            borderStyle={curr === "cancel" ? "bold" : "round"}
+                            borderColor={curr === "cancel" ? "blue" : ""}
+                        >
+                            <Text>Cancel</Text>
+                        </Box>
                     </Box>
                 </Box>
-            </Box>
+            </QuestionPageContext.Provider>
         </>
     );
 }
 
 type QuestionType = "mc" | "qa" | "qi";
-function QuestionOptions({
-    questionData,
-    curr,
-}: {
-    questionData: QuestionData;
-    curr: opts;
-}): React.ReactElement {
+function QuestionOptions(): React.ReactElement {
+    const { questionData, curr } = useContext(QuestionPageContext)!;
+
     function isType(type: QuestionType): boolean {
         return questionData.type === type;
     }
@@ -370,15 +413,24 @@ function QuestionOptions({
     );
 }
 
-function Edit({
-    questionData,
-    curr,
-}: {
-    questionData: QuestionData;
-    curr: opts;
-}): React.ReactElement {
+function Edit(): React.ReactElement {
+    const { questionData, setQuestionData, curr } =
+        useContext(QuestionPageContext)!;
+
     const [questionInput, setQuestionInput] = useState<string>(questionData.q);
     const [answerInput, setAnswerInput] = useState<string>(questionData.a);
+
+    useEffect(() => {
+        const questionDataCopy = QuestionUtils.cloneQuestion(questionData);
+        questionDataCopy.q = questionInput;
+        setQuestionData(questionDataCopy);
+    }, [questionInput]);
+
+    useEffect(() => {
+        const questionDataCopy = QuestionUtils.cloneQuestion(questionData);
+        questionDataCopy.a = answerInput;
+        setQuestionData(questionDataCopy);
+    }, [answerInput]);
 
     const { normal } = useContext(NormalContext)!;
 
@@ -424,19 +476,15 @@ function Edit({
     );
 }
 
-function EditMC({
-    questionData,
-    curr,
-}: {
-    questionData: QuestionData;
-    curr: opts;
-}): React.ReactElement {
+function EditMC(): React.ReactElement {
+    const { questionData, curr } = useContext(QuestionPageContext)!;
+
     const { normal } = useContext(NormalContext)!;
     const choices = questionData.choices;
 
     return (
         <>
-            <Edit questionData={questionData} curr={curr} />
+            <Edit />
             {choices.map((choice, index) => {
                 const getLabel = (i: number): string =>
                     String.fromCharCode(65 + i);
@@ -463,6 +511,9 @@ function EditMC({
                                     isFocused={
                                         !normal && curr === getLabel(index)
                                     }
+                                    label={
+                                        getLabel(index) as "A" | "B" | "C" | "D"
+                                    }
                                 />
                             </Box>
                         </Box>
@@ -486,11 +537,33 @@ function EditMC({
 function MCText({
     desc,
     isFocused,
+    label,
 }: {
     desc: string;
     isFocused: boolean;
+    label: "A" | "B" | "C" | "D";
 }): React.ReactElement {
+    const { curr, questionData, setQuestionData } =
+        useContext(QuestionPageContext)!;
+
     const [mcInput, setMcInput] = useState<string>(desc);
+
+    useEffect(() => {
+        if (curr === label) {
+            const questionDataCopy = QuestionUtils.cloneQuestion(questionData);
+            questionDataCopy.choices[curr] = mcInput;
+
+            for (const choice of questionDataCopy.choices) {
+                const key = Object.keys(choice)[0];
+                if (key === curr) {
+                    choice[key] = mcInput;
+                }
+            }
+
+            setQuestionData(questionDataCopy);
+        }
+    }, [mcInput]);
+
     return (
         <TextInput
             value={mcInput}

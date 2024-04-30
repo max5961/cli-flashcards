@@ -2,6 +2,7 @@ import { QuizFileData, Section, Question, QuizData } from "../../interfaces.js";
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
+import { QuestionData, QuestionUtils } from "./QuestionUtils.js";
 
 type ListItems = QuizFileData[] | Section[] | Question[];
 // type PageData = QuizData | QuizFileData | Section | Question;
@@ -175,18 +176,12 @@ export class PageStack {
 type SetPageStack = (ps: PageStack) => void;
 
 export class Update {
-    private index: number;
     private directory: string;
     private pageStack: PageStack;
     private setPageStack: SetPageStack;
     private page: Page;
 
-    constructor(
-        index: number,
-        pageStack: PageStack,
-        setPageStack: SetPageStack,
-    ) {
-        this.index = index;
+    constructor(pageStack: PageStack, setPageStack: SetPageStack) {
         this.pageStack = pageStack;
         this.setPageStack = setPageStack;
         this.page = pageStack.top()!;
@@ -232,28 +227,10 @@ export class Update {
         }
     }
 
-    cloneQuestion(question: Question): Question {
-        if (question.type === "qa" || question.type === "qi") {
-            return {
-                ...question,
-            };
-        } else if (question.type === "mc") {
-            const choicesCopy: any[] = [];
-            for (const choice of question.choices) {
-                choicesCopy.push({
-                    ...choice,
-                });
-            }
+    updateQuestion(updatedQuestion: QuestionData): void {
+        const convertedUpdatedQuestion: Question =
+            QuestionUtils.toQuestion(updatedQuestion);
 
-            return {
-                ...question,
-                choices: [...choicesCopy],
-            };
-        }
-        throw new Error("Invalid question type");
-    }
-
-    updateQuestion(updatedQuestion: Question): void {
         if (this.pageStack.top()!.pageType !== "QUESTION") {
             throw new Error("Can only update question on question page");
         }
@@ -262,17 +239,17 @@ export class Update {
         const lastPage: Page = pageStackCopy.top()!.prev!;
         const lastPageIndex: number = lastPage.lastIndex;
 
-        lastPage.listItems![lastPageIndex] = updatedQuestion;
+        lastPage.listItems![lastPageIndex] = convertedUpdatedQuestion;
         this.pageStack = pageStackCopy;
         this.setPageStack(pageStackCopy);
     }
 
-    async handleUpdateQuestion(updatedQuestion: Question): Promise<void> {
+    async handleUpdateQuestion(updatedQuestion: QuestionData): Promise<void> {
         this.updateQuestion(updatedQuestion);
         await this.writeData();
     }
 
-    updateName(newName: string): void {
+    updateName(newName: string, index: number): void {
         if (!this.page.listItems) {
             throw new Error("List items is null");
         }
@@ -282,22 +259,22 @@ export class Update {
         if (this.page.pageType === "QUIZZES") {
             const quizzes = pageStackCopy.top()!.listItems as QuizFileData[];
 
-            quizzes[this.index] = {
-                ...quizzes[this.index],
+            quizzes[index] = {
+                ...quizzes[index],
                 fileName: newName,
             };
         } else if (this.page.pageType === "SECTIONS") {
             const sections = pageStackCopy.top()!.listItems as Section[];
 
-            sections[this.index] = {
-                ...sections[this.index],
+            sections[index] = {
+                ...sections[index],
                 name: newName,
             };
         } else if (this.page.pageType === "QUESTIONS") {
             const questions = pageStackCopy.top()!.listItems as Question[];
 
-            questions[this.index] = {
-                ...questions[this.index],
+            questions[index] = {
+                ...questions[index],
                 q: newName,
             };
         }
@@ -367,8 +344,8 @@ export class Update {
         await this.writeData();
     }
 
-    async handleEdit(newName: string): Promise<void> {
-        this.updateName(newName);
+    async handleEdit(newName: string, index: number): Promise<void> {
+        this.updateName(newName, index);
         await this.writeData();
     }
 }

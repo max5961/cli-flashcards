@@ -1,5 +1,5 @@
 import { Question } from "../../interfaces.js";
-import { Nav, Opt } from "./classes.js";
+import { Nav, Opt, PageStack, Update } from "./classes.js";
 
 export interface QuestionData {
     type: "qa" | "qi" | "mc";
@@ -26,7 +26,7 @@ export type opts =
     | "G"
     | "H"; // should update to only allow A - D
 
-export class NavUtils {
+export class QuestionUtils {
     static getNavInitializer(questionData: Question) {
         return (nav: Nav<opts>): Opt<opts> => {
             const qa = nav.addNode("qa");
@@ -134,12 +134,39 @@ export class NavUtils {
         };
     }
 
+    static toQuestion(questionData: QuestionData): Question {
+        if (questionData.type === "mc") {
+            return {
+                type: questionData.type,
+                q: questionData.q,
+                a: questionData.a,
+                choices: questionData.choices,
+            };
+        }
+
+        return {
+            type: questionData.type,
+            q: questionData.q,
+            a: questionData.a,
+        };
+    }
+
     static cloneQuestion(question: QuestionData): QuestionData {
         return {
             type: question.type,
             q: question.q,
             a: question.a,
             choices: question.choices,
+        };
+    }
+
+    static writeData(
+        pageStack: PageStack,
+        setPageStack: (ps: PageStack) => void,
+    ) {
+        const update = new Update(pageStack, setPageStack);
+        return (questionData: QuestionData) => {
+            update.handleUpdateQuestion(questionData);
         };
     }
 }
