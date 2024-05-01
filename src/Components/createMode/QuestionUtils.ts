@@ -14,7 +14,6 @@ export type opts =
     | "mc"
     | "question"
     | "answer"
-    | "save"
     | "cancel"
     | "add"
     | "A"
@@ -34,7 +33,6 @@ export class QuestionUtils {
             const mc = nav.addNode("mc");
             const question = nav.addNode("question");
             const answer = nav.addNode("answer");
-            const save = nav.addNode("save");
             const cancel = nav.addNode("cancel");
 
             // qa
@@ -51,20 +49,15 @@ export class QuestionUtils {
             // q
             question.linkUp(mc);
             question.linkRight(answer);
-            question.linkDown(save);
+            question.linkDown(cancel);
 
             // a
             answer.linkUp(mc);
-            answer.linkDown(save);
+            answer.linkDown(cancel);
             answer.linkLeft(question);
 
-            // save
-            save.linkUp(question);
-            save.linkRight(cancel);
-
             // cancel
-            cancel.linkUp(answer);
-            cancel.linkLeft(save);
+            cancel.linkUp(question);
 
             // need to add check if mcList has any items
             if (questionData.type === "mc") {
@@ -105,11 +98,8 @@ export class QuestionUtils {
                     answer.linkDown(add);
                 }
 
-                add.linkDown(save);
-                save.linkUp(add);
-                save.linkRight(cancel);
+                add.linkDown(cancel);
                 cancel.linkUp(add);
-                cancel.linkLeft(save);
             }
 
             // return an Opt node which will be assigned to the curr pointer
@@ -151,12 +141,19 @@ export class QuestionUtils {
         };
     }
 
-    static cloneQuestion(question: QuestionData): QuestionData {
+    static cloneQuestionData(questionData: QuestionData): QuestionData {
+        const choicesClone: { [key: string]: string }[] = [];
+
+        for (const obj of questionData.choices) {
+            const key: string = Object.keys(obj)[0];
+            choicesClone.push({ [key]: `${obj[key]}` });
+        }
+
         return {
-            type: question.type,
-            q: question.q,
-            a: question.a,
-            choices: question.choices,
+            type: questionData.type,
+            q: questionData.q,
+            a: questionData.a,
+            choices: choicesClone,
         };
     }
 

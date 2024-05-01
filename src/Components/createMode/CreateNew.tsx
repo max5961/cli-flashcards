@@ -1,4 +1,10 @@
-import React, { useState, useContext, useEffect, createContext } from "react";
+import React, {
+    useState,
+    useContext,
+    useEffect,
+    createContext,
+    useRef,
+} from "react";
 import { Box, Text, useInput } from "ink";
 import { HorizontalLine } from "../Lines.js";
 import { NormalContext } from "../../App.js";
@@ -224,12 +230,16 @@ function QuestionPage({
     const question: Question = lastPage.listItems![lastIndex] as Question;
     const initialQuestionData = QuestionUtils.toQuestionData(question);
 
+    const initialData = useRef<QuestionData>(
+        QuestionUtils.cloneQuestionData(initialQuestionData),
+    );
+
     // normal context
     const { normal, setNormal } = useContext(NormalContext)!;
 
     // questionData state
     const [questionData, setQuestionData] = useState<QuestionData>(
-        QuestionUtils.cloneQuestion(initialQuestionData),
+        QuestionUtils.cloneQuestionData(initialQuestionData),
     );
 
     // nav state
@@ -240,7 +250,7 @@ function QuestionPage({
     const [curr, setCurr] = useState<opts>(nav.getCurr());
 
     function setState(type: "qa" | "qi" | "mc") {
-        const questionDataCopy = QuestionUtils.cloneQuestion(questionData);
+        const questionDataCopy = QuestionUtils.cloneQuestionData(questionData);
         questionDataCopy.type = type;
 
         const navCopyInitializer =
@@ -259,11 +269,12 @@ function QuestionPage({
 
     useInput((input, key) => {
         if (!normal) {
-            if (key.escape) {
+            if (key.escape || key.return) {
                 setNormal(true);
-            } else {
-                return;
+                writeData(questionData);
             }
+
+            return;
         }
 
         if (normal && key.return) {
@@ -271,12 +282,15 @@ function QuestionPage({
                 setState(curr);
             }
 
-            if (curr === "save") {
-                writeData(questionData);
-            }
-
             if (curr === "cancel") {
-                //
+                const initializer = QuestionUtils.getNavInitializer(
+                    initialData.current,
+                );
+                const newNav: Nav<opts> = new Nav<opts>(initializer);
+                newNav.goTo("cancel");
+                setNav(newNav);
+                setQuestionData(initialData.current);
+                writeData(initialData.current);
             }
         }
 
@@ -350,12 +364,6 @@ function QuestionPage({
                     </Box>
                     <Box>
                         <Box
-                            borderStyle={curr === "save" ? "bold" : "round"}
-                            borderColor={curr === "save" ? "blue" : ""}
-                        >
-                            <Text>Save</Text>
-                        </Box>
-                        <Box
                             borderStyle={curr === "cancel" ? "bold" : "round"}
                             borderColor={curr === "cancel" ? "blue" : ""}
                         >
@@ -421,16 +429,22 @@ function Edit(): React.ReactElement {
     const [answerInput, setAnswerInput] = useState<string>(questionData.a);
 
     useEffect(() => {
-        const questionDataCopy = QuestionUtils.cloneQuestion(questionData);
+        const questionDataCopy = QuestionUtils.cloneQuestionData(questionData);
         questionDataCopy.q = questionInput;
         setQuestionData(questionDataCopy);
     }, [questionInput]);
 
     useEffect(() => {
-        const questionDataCopy = QuestionUtils.cloneQuestion(questionData);
+        const questionDataCopy = QuestionUtils.cloneQuestionData(questionData);
         questionDataCopy.a = answerInput;
         setQuestionData(questionDataCopy);
     }, [answerInput]);
+
+    // for when changes are reverted
+    useEffect(() => {
+        setQuestionInput(questionData.q);
+        setAnswerInput(questionData.a);
+    }, [questionData]);
 
     const { normal } = useContext(NormalContext)!;
 
@@ -550,8 +564,8 @@ function MCText({
 
     useEffect(() => {
         if (curr === label) {
-            const questionDataCopy = QuestionUtils.cloneQuestion(questionData);
-            questionDataCopy.choices[curr] = mcInput;
+            const questionDataCopy =
+                QuestionUtils.cloneQuestionData(questionData);
 
             for (const choice of questionDataCopy.choices) {
                 const key = Object.keys(choice)[0];
@@ -563,6 +577,16 @@ function MCText({
             setQuestionData(questionDataCopy);
         }
     }, [mcInput]);
+
+    // for when changes are reverted
+    useEffect(() => {
+        for (const choice of questionData.choices) {
+            const key = Object.keys(choice)[0];
+            if (key === label) {
+                setMcInput(choice[key]);
+            }
+        }
+    }, [questionData]);
 
     return (
         <TextInput
