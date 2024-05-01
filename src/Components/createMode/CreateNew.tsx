@@ -534,16 +534,20 @@ function EditMC(): React.ReactElement {
                     </>
                 );
             })}
-            <Box width="100%">
-                <Text>{"   "}</Text>
-                <Box
-                    flexGrow={1}
-                    borderColor={curr === "add" ? "blue" : ""}
-                    borderStyle={curr === "add" ? "bold" : "round"}
-                >
-                    <Text color="green">{" + Add Option"}</Text>
+            {choices.length >= 4 ? (
+                <></>
+            ) : (
+                <Box width="100%">
+                    <Text>{"   "}</Text>
+                    <Box
+                        flexGrow={1}
+                        borderColor={curr === "add" ? "blue" : ""}
+                        borderStyle={curr === "add" ? "bold" : "round"}
+                    >
+                        <Text color="green">{" + Add Option"}</Text>
+                    </Box>
                 </Box>
-            </Box>
+            )}
         </>
     );
 }

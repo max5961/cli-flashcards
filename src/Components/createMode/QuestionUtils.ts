@@ -90,6 +90,14 @@ export class QuestionUtils {
                     }
                 }
 
+                // handle edge (make 4 the maximum number of choices)
+                if (opts.length >= 4) {
+                    const last = opts[opts.length - 1];
+                    last.linkDown(cancel);
+                    cancel.linkUp(last);
+                    return question;
+                }
+
                 if (opts.length) {
                     add.linkUp(opts[opts.length - 1]);
                 } else {
