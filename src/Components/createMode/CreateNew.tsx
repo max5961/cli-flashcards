@@ -212,7 +212,10 @@ interface QuestionPageContext {
     setPageStack: (ps: PageStack) => void;
     questionData: QuestionData;
     setQuestionData: (qd: QuestionData) => void;
+    nav: Nav<opts>;
+    setNav: (n: Nav<opts>) => void;
     curr: opts;
+    setCurr: (o: opts) => void;
 }
 
 const QuestionPageContext = createContext<QuestionPageContext | null>(null);
@@ -301,7 +304,8 @@ function QuestionPage({
                 curr === "A" ||
                 curr === "B" ||
                 curr === "C" ||
-                curr === "D"
+                curr === "D" ||
+                curr === "add"
             ) {
                 setNormal(false);
             }
@@ -345,7 +349,10 @@ function QuestionPage({
                     setQuestionData: setQuestionData,
                     pageStack: pageStack,
                     setPageStack: setPageStack,
+                    nav: nav,
+                    setNav: setNav,
                     curr: curr,
+                    setCurr: setCurr,
                 }}
             >
                 <Box alignSelf="center">
@@ -422,6 +429,7 @@ function QuestionOptions(): React.ReactElement {
 }
 
 function Edit(): React.ReactElement {
+    const { normal } = useContext(NormalContext)!;
     const { questionData, setQuestionData, curr } =
         useContext(QuestionPageContext)!;
 
@@ -446,7 +454,24 @@ function Edit(): React.ReactElement {
         setAnswerInput(questionData.a);
     }, [questionData]);
 
-    const { normal } = useContext(NormalContext)!;
+    function isValidAnswer(): boolean {
+        if (questionData.type !== "mc") return true;
+
+        const keys: string[] = [];
+        for (let i = 0; i < questionData.choices.length; ++i) {
+            keys.push(String.fromCharCode(65 + i));
+        }
+
+        return keys.includes(questionData.a);
+    }
+
+    function answerBorderColor(): string {
+        if (!isValidAnswer()) {
+            return "red";
+        }
+
+        return curr === "answer" ? "blue" : "";
+    }
 
     return (
         <>
@@ -472,7 +497,7 @@ function Edit(): React.ReactElement {
                     width="50%"
                     flexDirection="column"
                     alignItems="center"
-                    borderColor={curr === "answer" ? "blue" : ""}
+                    borderColor={answerBorderColor()}
                     borderStyle={curr === "answer" ? "bold" : "round"}
                 >
                     <Box>
@@ -491,10 +516,98 @@ function Edit(): React.ReactElement {
 }
 
 function EditMC(): React.ReactElement {
-    const { questionData, curr } = useContext(QuestionPageContext)!;
+    const {
+        questionData,
+        setQuestionData,
+        curr,
+        setCurr,
+        pageStack,
+        setPageStack,
+        setNav,
+    } = useContext(QuestionPageContext)!;
+    const { normal, setNormal } = useContext(NormalContext)!;
+    const [addInput, setAddInput] = useState<string>("");
 
-    const { normal } = useContext(NormalContext)!;
     const choices = questionData.choices;
+
+    useInput((input, key) => {
+        if ((normal && key.return) || (normal && input === "i")) {
+            if (curr !== "add") return;
+            setNormal(false);
+        }
+
+        if ((!normal && key.return) || (!normal && key.escape)) {
+            if (curr !== "add") return;
+
+            const questionDataCopy =
+                QuestionUtils.cloneQuestionData(questionData);
+            const key = String.fromCharCode(
+                65 + questionDataCopy.choices.length,
+            ) as "A" | "B" | "C" | "D";
+            questionDataCopy.choices.push({ [key]: `${addInput}` });
+            const initializer =
+                QuestionUtils.getNavInitializer(questionDataCopy);
+            const newNav: Nav<opts> = new Nav<opts>(initializer);
+            newNav.goTo(key);
+            newNav.moveDown();
+            if (newNav.getCurr() === "cancel") {
+                newNav.moveUp();
+            }
+            setCurr(newNav.getCurr());
+            setAddInput("");
+
+            const writeData: (qd: QuestionData) => void =
+                QuestionUtils.writeData(pageStack, setPageStack);
+            setNav(newNav);
+            setQuestionData(questionDataCopy);
+            writeData(questionDataCopy);
+
+            setNormal(true);
+        }
+
+        if (normal && input === "d") {
+            if (curr !== "A" && curr !== "B" && curr !== "C" && curr !== "D") {
+                return;
+            }
+
+            const questionDataCopy =
+                QuestionUtils.cloneQuestionData(questionData);
+
+            let toSplice: number | null = null;
+            let nextKey: "A" | "B" | "C" | "D" | null = null;
+            for (let i = 0; i < questionDataCopy.choices.length; ++i) {
+                const key = String.fromCharCode(65 + i) as
+                    | "A"
+                    | "B"
+                    | "C"
+                    | "D";
+
+                console.log("KEY AND CURR: " + key + " " + curr);
+                if (key === curr) {
+                    toSplice = i;
+                    nextKey = key;
+                    break;
+                }
+            }
+
+            if (toSplice === null || nextKey === null)
+                throw new Error("Could not find index to delete from");
+
+            questionDataCopy.choices.splice(toSplice, 1);
+
+            const initializer =
+                QuestionUtils.getNavInitializer(questionDataCopy);
+            const newNav: Nav<opts> = new Nav<opts>(initializer);
+            const nextNode: opts = newNav.returnIfValid(nextKey) || "add";
+            newNav.goTo(nextNode);
+
+            const writeData: (qd: QuestionData) => void =
+                QuestionUtils.writeData(pageStack, setPageStack);
+            setQuestionData(questionDataCopy);
+            setNav(newNav);
+            writeData(questionDataCopy);
+        }
+    });
 
     return (
         <>
@@ -544,7 +657,16 @@ function EditMC(): React.ReactElement {
                         borderColor={curr === "add" ? "blue" : ""}
                         borderStyle={curr === "add" ? "bold" : "round"}
                     >
-                        <Text color="green">{" + Add Option"}</Text>
+                        <Text>{Icons.add}</Text>
+                        {!normal && curr === "add" ? (
+                            <TextInput
+                                value={addInput}
+                                onChange={setAddInput}
+                                focus={!normal && curr === "add"}
+                            ></TextInput>
+                        ) : (
+                            <Text color="green">{"Add Option"}</Text>
+                        )}
                     </Box>
                 </Box>
             )}

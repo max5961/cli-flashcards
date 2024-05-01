@@ -430,4 +430,12 @@ export class Nav<T> {
     getCurr(): T {
         return this.curr.name;
     }
+
+    returnIfValid(name: T): T | null {
+        if (this.optMap.has(name)) {
+            return name;
+        } else {
+            return null;
+        }
+    }
 }
