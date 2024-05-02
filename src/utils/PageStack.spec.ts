@@ -1,5 +1,6 @@
 import { Quiz } from "../types.js";
 import { MCPage, PageStack, QuizPage, SectionPage } from "./PageStack.ts";
+import { cloneDeep } from "lodash";
 
 const inputData: Quiz[] = [
     {
@@ -32,7 +33,8 @@ const inputData: Quiz[] = [
 
 // SectionPage is top of the stack
 function getStack() {
-    const pageStack: PageStack = new PageStack(inputData);
+    const inputDataCopy = cloneDeep(inputData);
+    const pageStack: PageStack = new PageStack(inputDataCopy);
     pageStack.appendNextPage(0); // append first Question
     pageStack.appendNextPage(0); // append first Section
     return pageStack;
@@ -70,7 +72,7 @@ const modifiedData: Quiz[] = [
 ];
 
 describe("Shallow clone data with PageStack", () => {
-    test("Modify and remove then pop() Pages", () => {
+    function modifyData(): PageStack {
         const ps: PageStack = getStack();
         // append the MC question
         ps.top().lastIndex = 2;
@@ -102,8 +104,23 @@ describe("Shallow clone data with PageStack", () => {
         quizzesPage.setListItemName(0, Mod.modifiedFileName);
 
         const finalCopy = c4.getShallowClone();
-        const finalData: Quiz[] = finalCopy.top().data as Quiz[];
+        return finalCopy;
+    }
 
+    test("Modify and remove then pop() Pages", () => {
+        const finalCopy = modifyData();
+        const finalData: Quiz[] = finalCopy.bottom().data as Quiz[];
         expect(finalData).toEqual(modifiedData);
+    });
+
+    test("Can stringify", () => {
+        const finalCopy = modifyData();
+        const finalData: Quiz[] = finalCopy.bottom().data as Quiz[];
+        try {
+            JSON.stringify(finalData, null, 4);
+            expect(true).toBe(true);
+        } catch (err) {
+            expect(true).toBe(false);
+        }
     });
 });
