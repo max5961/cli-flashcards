@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useInput } from "ink";
 import { Box, Text } from "ink";
 import { HorizontalLine } from "../Lines.js";
-import { QI } from "../../interfaces.js";
+import { QI } from "../../types.js";
 import TextInput from "ink-text-input";
 
 export function QuestionInput({

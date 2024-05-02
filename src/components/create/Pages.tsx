@@ -9,33 +9,42 @@ import { Box, Text, useInput } from "ink";
 import { HorizontalLine } from "../Lines.js";
 import { NormalContext } from "../../App.js";
 import TextInput from "ink-text-input";
-import { QuizData, Question, QA, MC, QI } from "../../interfaces.js";
-import { Window, useWindow } from "./useWindow.js";
-import { PageStack, Page, Nav } from "./classes.js";
-import { QuestionUtils, QuestionData, opts } from "./QuestionUtils.js";
-import { Update } from "./classes.js";
+import { Quiz, Question, QuestionData } from "../../types.js";
+import { Window, useWindow } from "../../hooks/useWindow.js";
+import {
+    PageStack,
+    Page,
+    ListPage,
+    QuestionPage,
+} from "../../utils/PageStack.js";
+import { Nav } from "../../utils/Nav.js";
+import { QUtils, QBoxNode } from "../../utils/QUtils.js";
+import Update from "../../utils/Write.js";
 
 enum Icons {
     edit = "  ",
     add = "  ",
 }
 
-export function CurrentPage({
-    initialQuizData,
+export function CurrentPageView({
+    initialQuizzes,
 }: {
-    initialQuizData: QuizData;
+    initialQuizzes: Quiz[];
 }): React.ReactNode {
     const initialPageStack: PageStack = new PageStack();
-    initialPageStack.append(initialQuizData.quizzes, "QUIZZES");
+    initialPageStack.append("QUIZZES", initialQuizzes);
 
     const [pageStack, setPageStack] = useState<PageStack>(initialPageStack);
 
-    if (pageStack.top()!.pageType === "QUESTION") {
+    const page: Page = pageStack.top()!;
+    if (page.pageType === "QUESTION") {
         return (
             <QuestionPage pageStack={pageStack} setPageStack={setPageStack} />
         );
     } else {
-        return <List pageStack={pageStack} setPageStack={setPageStack} />;
+        return (
+            <ListPageView pageStack={pageStack} setPageStack={setPageStack} />
+        );
     }
 }
 
@@ -43,13 +52,13 @@ interface ListProps {
     pageStack: PageStack;
     setPageStack: (ps: PageStack) => void;
 }
-function List({ pageStack, setPageStack }: ListProps): React.ReactNode {
+function ListPageView({ pageStack, setPageStack }: ListProps): React.ReactNode {
     const { normal, setNormal } = useContext(NormalContext)!;
     const [edit, setEdit] = useState<string>("");
     const { window, currIndex, setCurrIndex } = useWindow(5);
     const [dCount, setDCount] = useState<number>(1);
 
-    const page = pageStack.top()!;
+    const page: ListPage = pageStack.top()! as ListPage;
 
     // update the currIndex to last index on first render
     useEffect(() => {
@@ -212,10 +221,10 @@ interface QuestionPageContext {
     setPageStack: (ps: PageStack) => void;
     questionData: QuestionData;
     setQuestionData: (qd: QuestionData) => void;
-    nav: Nav<opts>;
-    setNav: (n: Nav<opts>) => void;
-    curr: opts;
-    setCurr: (o: opts) => void;
+    nav: Nav<QBoxNode>;
+    setNav: (n: Nav<QBoxNode>) => void;
+    curr: QBoxNode;
+    setCurr: (o: QBoxNode) => void;
 }
 
 const QuestionPageContext = createContext<QuestionPageContext | null>(null);
@@ -224,17 +233,17 @@ interface QuestionPageProps {
     pageStack: PageStack;
     setPageStack: (ps: PageStack) => void;
 }
-function QuestionPage({
+function QuestionPageView({
     pageStack,
     setPageStack,
 }: QuestionPageProps): React.ReactNode {
     const lastPage: Page = pageStack.top()!.prev!;
     const lastIndex = lastPage.lastIndex;
     const question: Question = lastPage.listItems![lastIndex] as Question;
-    const initialQuestionData = QuestionUtils.toQuestionData(question);
+    const initialQuestionData = QUtils.toQuestionData(question);
 
     const initialData = useRef<QuestionData>(
-        QuestionUtils.cloneQuestionData(initialQuestionData),
+        QUtils.cloneQuestionData(initialQuestionData),
     );
 
     // normal context
@@ -242,30 +251,31 @@ function QuestionPage({
 
     // questionData state
     const [questionData, setQuestionData] = useState<QuestionData>(
-        QuestionUtils.cloneQuestionData(initialQuestionData),
+        QUtils.cloneQuestionData(initialQuestionData),
     );
 
     // nav state
-    const navInitializer = QuestionUtils.getNavInitializer(questionData);
-    const [nav, setNav] = useState<Nav<opts>>(new Nav<opts>(navInitializer));
+    const navInitializer = QUtils.getNavInitializer(questionData);
+    const [nav, setNav] = useState<Nav<QBoxNode>>(
+        new Nav<QBoxNode>(navInitializer),
+    );
 
     // curr node state
-    const [curr, setCurr] = useState<opts>(nav.getCurr());
+    const [curr, setCurr] = useState<QBoxNode>(nav.getCurr());
 
     function setState(type: "qa" | "qi" | "mc") {
-        const questionDataCopy = QuestionUtils.cloneQuestionData(questionData);
+        const questionDataCopy = QUtils.cloneQuestionData(questionData);
         questionDataCopy.type = type;
 
-        const navCopyInitializer =
-            QuestionUtils.getNavInitializer(questionDataCopy);
-        const newNav = new Nav<opts>(navCopyInitializer);
+        const navCopyInitializer = QUtils.getNavInitializer(questionDataCopy);
+        const newNav = new Nav<QBoxNode>(navCopyInitializer);
         newNav.goTo(curr);
 
         setQuestionData(questionDataCopy);
         setNav(newNav);
     }
 
-    const writeData: (qd: QuestionData) => void = QuestionUtils.writeData(
+    const writeData: (qd: QuestionData) => void = QUtils.writeData(
         pageStack,
         setPageStack,
     );
@@ -286,10 +296,10 @@ function QuestionPage({
             }
 
             if (curr === "cancel") {
-                const initializer = QuestionUtils.getNavInitializer(
+                const initializer = QUtils.getNavInitializer(
                     initialData.current,
                 );
-                const newNav: Nav<opts> = new Nav<opts>(initializer);
+                const newNav: Nav<QBoxNode> = new Nav<QBoxNode>(initializer);
                 newNav.goTo("cancel");
                 setNav(newNav);
                 setQuestionData(initialData.current);
@@ -437,13 +447,13 @@ function Edit(): React.ReactElement {
     const [answerInput, setAnswerInput] = useState<string>(questionData.a);
 
     useEffect(() => {
-        const questionDataCopy = QuestionUtils.cloneQuestionData(questionData);
+        const questionDataCopy = QUtils.cloneQuestionData(questionData);
         questionDataCopy.q = questionInput;
         setQuestionData(questionDataCopy);
     }, [questionInput]);
 
     useEffect(() => {
-        const questionDataCopy = QuestionUtils.cloneQuestionData(questionData);
+        const questionDataCopy = QUtils.cloneQuestionData(questionData);
         questionDataCopy.a = answerInput;
         setQuestionData(questionDataCopy);
     }, [answerInput]);
@@ -539,15 +549,13 @@ function EditMC(): React.ReactElement {
         if ((!normal && key.return) || (!normal && key.escape)) {
             if (curr !== "add") return;
 
-            const questionDataCopy =
-                QuestionUtils.cloneQuestionData(questionData);
+            const questionDataCopy = QUtils.cloneQuestionData(questionData);
             const key = String.fromCharCode(
                 65 + questionDataCopy.choices.length,
             ) as "A" | "B" | "C" | "D";
             questionDataCopy.choices.push({ [key]: `${addInput}` });
-            const initializer =
-                QuestionUtils.getNavInitializer(questionDataCopy);
-            const newNav: Nav<opts> = new Nav<opts>(initializer);
+            const initializer = QUtils.getNavInitializer(questionDataCopy);
+            const newNav: Nav<QBoxNode> = new Nav<QBoxNode>(initializer);
             newNav.goTo(key);
             newNav.moveDown();
             if (newNav.getCurr() === "cancel") {
@@ -556,8 +564,10 @@ function EditMC(): React.ReactElement {
             setCurr(newNav.getCurr());
             setAddInput("");
 
-            const writeData: (qd: QuestionData) => void =
-                QuestionUtils.writeData(pageStack, setPageStack);
+            const writeData: (qd: QuestionData) => void = QUtils.writeData(
+                pageStack,
+                setPageStack,
+            );
             setNav(newNav);
             setQuestionData(questionDataCopy);
             writeData(questionDataCopy);
@@ -570,8 +580,7 @@ function EditMC(): React.ReactElement {
                 return;
             }
 
-            const questionDataCopy =
-                QuestionUtils.cloneQuestionData(questionData);
+            const questionDataCopy = QUtils.cloneQuestionData(questionData);
 
             let toSplice: number | null = null;
             let nextKey: "A" | "B" | "C" | "D" | null = null;
@@ -595,14 +604,15 @@ function EditMC(): React.ReactElement {
 
             questionDataCopy.choices.splice(toSplice, 1);
 
-            const initializer =
-                QuestionUtils.getNavInitializer(questionDataCopy);
-            const newNav: Nav<opts> = new Nav<opts>(initializer);
-            const nextNode: opts = newNav.returnIfValid(nextKey) || "add";
+            const initializer = QUtils.getNavInitializer(questionDataCopy);
+            const newNav: Nav<QBoxNode> = new Nav<QBoxNode>(initializer);
+            const nextNode: QBoxNode = newNav.returnIfValid(nextKey) || "add";
             newNav.goTo(nextNode);
 
-            const writeData: (qd: QuestionData) => void =
-                QuestionUtils.writeData(pageStack, setPageStack);
+            const writeData: (qd: QuestionData) => void = QUtils.writeData(
+                pageStack,
+                setPageStack,
+            );
             setQuestionData(questionDataCopy);
             setNav(newNav);
             writeData(questionDataCopy);
@@ -690,8 +700,7 @@ function MCText({
 
     useEffect(() => {
         if (curr === label) {
-            const questionDataCopy =
-                QuestionUtils.cloneQuestionData(questionData);
+            const questionDataCopy = QUtils.cloneQuestionData(questionData);
 
             for (const choice of questionDataCopy.choices) {
                 const key = Object.keys(choice)[0];

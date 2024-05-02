@@ -1,13 +1,12 @@
 import React from "react";
 import { useState, createContext } from "react";
-import { Quiz, QuizData, MC, QA, QI } from "./interfaces.js";
 import { useApp, useInput, Box } from "ink";
-import { QuizMode } from "./Components/quizMode/QuizMode.js";
-import { CurrentPage } from "./Components/createMode/CreateNew.js";
-import { getData } from "./readDir.js";
-import useStdoutDimensions from "./useStdoutDimensions.js";
+import { Quiz } from "./types.js";
+import { CurrentPage } from "./components/create/Pages.js";
+import Read from "./utils/Read.js";
+import useStdoutDimensions from "./hooks/useStdoutDimensions.js";
 
-const initialQuizData: QuizData = getData();
+const initialQuizzes: Quiz[] = Read.getData();
 
 interface NormalContext {
     normal: boolean;
@@ -30,7 +29,7 @@ export default function App(): React.ReactElement {
         <NormalContext.Provider value={{ normal, setNormal }}>
             <Box alignItems="center" justifyContent="center">
                 <Box width={75} flexDirection="column" borderStyle="round">
-                    <CurrentPage initialQuizData={initialQuizData} />
+                    <CurrentPage initialQuizzes={initialQuizzes} />
                 </Box>
             </Box>
         </NormalContext.Provider>

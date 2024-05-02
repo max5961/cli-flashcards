@@ -1,6 +1,6 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box } from "ink";
 
 export interface WindowState {
     start: number;
@@ -229,11 +229,6 @@ function Scroller({
     const height: string = flexDirection === "column" ? "100%" : "";
     const width: string = flexDirection === "row" ? "100%" : "";
 
-    // <Box flexDirection="column">
-    //     <Text>{sPercent}</Text>
-    //     <Text>{mPercent}</Text>
-    //     <Text>{ePercent}</Text>
-    // </Box>
     return (
         <>
             <Box

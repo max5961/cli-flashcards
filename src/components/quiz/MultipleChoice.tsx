@@ -2,8 +2,7 @@ import React from "react";
 import { useState } from "react";
 import { useInput } from "ink";
 import { Box, Text } from "ink";
-import { MC } from "../../interfaces.js";
-import { HorizontalLine } from "../Lines.js";
+import { MC } from "../../types.js";
 
 export function MultipleChoice({
     question,
