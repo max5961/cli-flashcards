@@ -1,119 +1,304 @@
-import { Quiz, Section, Question } from "../types.js";
+import { Quiz, Section, Question, QA, QI, MC } from "../types.js";
 type Data = Quiz[] | Quiz | Section | Question;
+type ListItems = Quiz[] | Section[] | Question[];
 type PageType = "QUIZZES" | "QUIZ" | "SECTION" | "QUESTION";
 
 export abstract class Page {
-    public pageType: PageType;
-    public data: Data;
+    public abstract pageType: PageType;
+    public abstract data: Data;
     public prev: Page | null;
     public next: Page | null;
     public lastIndex: number;
 
-    constructor(pageType: PageType, data: Data) {
-        this.pageType = pageType;
-        this.data = data;
+    constructor() {
         this.prev = null;
         this.next = null;
         this.lastIndex = 0;
     }
+
+    abstract cloneData(): Question | Section | Quiz | Quiz[];
+}
+
+export class QuestionPage<T extends Question> extends Page {
+    public pageType: "QUESTION";
+    public data: T;
+
+    constructor(data: T) {
+        super();
+        this.pageType = "QUESTION";
+        this.data = data;
+    }
+
+    cloneData(): Question {
+        const questionData: Question = this.data as Question;
+
+        let copy: QA | QI | MC;
+        if (questionData.type === "mc") {
+            copy = {
+                ...questionData,
+                choices: questionData.choices.slice(),
+            };
+        } else {
+            copy = {
+                ...questionData,
+            };
+        }
+
+        return copy;
+    }
+
+    setQuestion(question: string): void {
+        this.data.q = question;
+    }
+
+    setAnswer(answer: string): void {
+        this.data.a = answer;
+    }
+}
+
+export class MCPage extends QuestionPage<MC> {
+    constructor(data: MC) {
+        super(data);
+    }
+
+    removeMC(index: number): void {
+        (this.data as MC).choices.splice(index, 1);
+    }
+
+    addMC(choice: string): void {
+        const data: MC = this.data as MC;
+        if (data.choices.length >= 4) {
+            throw new Error("Maximum multiple choice length is 4");
+        }
+
+        data.choices.push(choice);
+    }
+
+    editMC(index: number, newChoice: string): void {
+        (this.data as MC).choices[index] = newChoice;
+    }
 }
 
 // QUIZZES | QUIZ | SECTION
-export class ListPage extends Page {
+export abstract class ListPage extends Page {
+    public abstract listItems: ListItems;
     public title!: string;
     public addItemText!: string;
     public getItemDesc!: (index: number) => string;
 
-    constructor(pageType: PageType, data: Data) {
-        super(pageType, data);
+    constructor() {
+        super();
+    }
+
+    // called when appending to PageStack
+    abstract buildPage(): void;
+    abstract removeListItem(index: number): void;
+    abstract addListItem(name: string): void;
+    abstract setListItemName(index: number, name: string): void;
+}
+
+export class QuizzesPage extends ListPage {
+    public pageType: "QUIZZES";
+    public data: Quiz[];
+    public listItems!: Quiz[];
+
+    constructor(data: Quiz[]) {
+        super();
+        this.pageType = "QUIZZES";
         this.data = data;
     }
 
     buildPage(): void {
-        // QUIZZES
-        if (this.pageType === "QUIZZES") {
-            this.title = "All Quizzes";
-            this.addItemText = "Add Quiz";
-            this.getItemDesc = (index: number) => {
-                const quiz: Quiz = (this.data as Quiz[])[index];
-                return quiz.fileName;
-            };
-            return;
+        if (this.pageType !== "QUIZZES") {
+            throw new Error("Invalid PageType for QuizzesPage");
         }
 
-        // QUIZ
-        if (this.pageType === "QUIZ") {
-            if (!this.prev) {
-                throw new Error("SECTIONS Page should have a previous Page");
-            }
+        this.title = "All Quizzes";
+        this.addItemText = "Add Quiz";
+        this.listItems = this.data as Quiz[];
+        this.getItemDesc = (index: number) => {
+            const quiz: Quiz = (this.data as Quiz[])[index];
+            return quiz.fileName;
+        };
+    }
 
-            const prev: ListPage = this.prev as ListPage;
-            const fileName: string = prev.getItemDesc(prev.lastIndex);
+    cloneData(): Quiz[] {
+        this.listItems = this.listItems.slice();
+        return this.listItems;
+    }
 
-            this.title = `Sections in: ${fileName}`;
-            this.addItemText = "Add Section";
-            this.getItemDesc = (index: number) => {
-                const sections: Section[] = (this.data as Quiz).sections;
-                return sections[index].name;
-            };
-            return;
-        }
+    removeListItem(index: number): void {
+        this.listItems.splice(index, 1);
+        this.data = this.listItems;
+    }
 
-        // SECTION
-        if (this.pageType === "SECTION") {
-            if (!this.prev || !this.prev.prev) {
-                throw new Error(
-                    "QUESTIONS Page should have two previous Pages",
-                );
-            }
+    addListItem(name: string): void {
+        this.listItems.push({
+            fileName: name,
+            sections: [],
+        });
+        this.data = this.listItems;
+    }
 
-            const sections: ListPage = this.prev as ListPage;
-            const quizzes: ListPage = this.prev.prev as ListPage;
-
-            const sectionName = sections.getItemDesc(sections.lastIndex);
-            const fileName = quizzes.getItemDesc(quizzes.lastIndex);
-
-            this.title = `Questions in: ${fileName} -> ${sectionName}`;
-            this.addItemText = "Add Question";
-            this.getItemDesc = (index: number) => {
-                const questions: Question[] = (this.data as Section).questions;
-                return questions[index].q;
-            };
-            return;
-        }
+    setListItemName(index: number, name: string): void {
+        this.listItems[index].fileName = name;
+        this.data = this.listItems;
     }
 }
 
-// QUESTION
-export class QuestionPage extends Page {
-    constructor(pageType: PageType, data: Data) {
-        super(pageType, data);
+export class QuizPage extends ListPage {
+    public pageType: "QUIZ";
+    public data: Quiz;
+    public listItems!: Section[];
+
+    constructor(data: Quiz) {
+        super();
+        this.pageType = "QUIZ";
+        this.data = data;
+    }
+
+    buildPage(): void {
+        if (this.pageType !== "QUIZ") {
+            throw new Error("Invalid PageType for QuizPage");
+        }
+
+        if (!this.prev) {
+            throw new Error("QuizPage should have a previous Page");
+        }
+
+        const prev: ListPage = this.prev as ListPage;
+        const fileName: string = prev.getItemDesc(prev.lastIndex);
+
+        this.title = `Sections in: ${fileName}`;
+        this.addItemText = "Add Section";
+        this.listItems = (this.data as Quiz).sections;
+        this.getItemDesc = (index: number) => {
+            return (this.listItems as Section[])[index].name;
+        };
+    }
+
+    cloneData(): Quiz {
+        this.listItems = this.listItems.slice();
+        return {
+            fileName: this.data.fileName,
+            sections: this.listItems,
+        };
+    }
+
+    removeListItem(index: number): void {
+        this.listItems.splice(index, 1);
+        this.data.sections = this.listItems;
+    }
+
+    addListItem(name: string): void {
+        this.listItems.push({
+            name: name,
+            questions: [],
+        });
+        this.data.sections = this.listItems;
+    }
+
+    setListItemName(index: number, name: string): void {
+        this.listItems[index].name = name;
+        this.data.sections = this.listItems;
     }
 }
 
+export class SectionPage extends ListPage {
+    public pageType: "SECTION";
+    public data: Section;
+    public listItems!: Question[];
+
+    constructor(data: Section) {
+        super();
+        this.pageType = "SECTION";
+        this.data = data;
+    }
+
+    buildPage(): void {
+        if (this.pageType !== "SECTION") {
+            throw new Error("Invalid PageType for SectionPage");
+        }
+
+        if (!this.prev || !this.prev.prev) {
+            throw new Error("SectionPage should have two previous Pages");
+        }
+
+        const sections: ListPage = this.prev as QuizPage;
+        const quizzes: ListPage = this.prev.prev as QuizzesPage;
+
+        const sectionName = sections.getItemDesc(sections.lastIndex);
+        const fileName = quizzes.getItemDesc(quizzes.lastIndex);
+
+        this.title = `Questions in: ${fileName} -> ${sectionName}`;
+        this.addItemText = "Add Question";
+        this.listItems = (this.data as Section).questions;
+        this.getItemDesc = (index: number) => {
+            return (this.listItems as Question[])[index].q;
+        };
+    }
+
+    cloneData(): Section {
+        this.listItems = this.listItems.slice();
+        return {
+            name: this.data.name,
+            questions: this.listItems,
+        };
+    }
+
+    removeListItem(index: number): void {
+        this.listItems.splice(index, 1);
+        this.data.questions = this.listItems;
+    }
+
+    addListItem(name: string): void {
+        this.listItems.push({
+            type: "qa",
+            q: name,
+            a: "",
+        });
+        this.data.questions = this.listItems;
+    }
+
+    setListItemName(index: number, name: string): void {
+        this.listItems[index].q = name;
+        this.data.questions = this.listItems;
+    }
+}
+
+const emptyStackMessage: string = "PageStack should never be empty";
 export class PageStack {
-    private head: Page | null;
-    private tail: Page | null;
+    private head!: Page | null;
+    private tail!: Page | null;
     private size: number;
 
-    constructor() {
-        this.head = null;
-        this.tail = null;
+    constructor(data: Data) {
         this.size = 0;
+        this.append("QUIZZES", data);
     }
 
-    top(): Page | null {
+    getSize(): number {
+        return this.size;
+    }
+
+    top(): Page {
+        if (!this.head) {
+            throw new Error(emptyStackMessage);
+        }
         return this.head;
     }
 
-    bottom(): Page | null {
+    bottom(): Page {
+        if (!this.tail) {
+            throw new Error(emptyStackMessage);
+        }
         return this.tail;
     }
 
     pop(): void {
         // always want to have at least one Page in the stack
         if (!this.head || this.size <= 1) {
-            return;
+            throw new Error(emptyStackMessage);
         }
 
         const newHead: Page | null = this.head.prev;
@@ -130,10 +315,25 @@ export class PageStack {
 
     append(pageType: PageType, data: Data): void {
         let newPage: Page;
-        if (pageType === "QUESTION") {
-            newPage = new QuestionPage(pageType, data);
+        if (pageType === "QUIZZES") {
+            newPage = new QuizzesPage(data as Quiz[]);
+        } else if (pageType === "QUIZ") {
+            newPage = new QuizPage(data as Quiz);
+        } else if (pageType === "SECTION") {
+            newPage = new SectionPage(data as Section);
+        } else if (pageType === "QUESTION") {
+            const q: Question = data as Question;
+            if (q.type === "mc") {
+                newPage = new MCPage(q);
+            } else if (q.type === "qa") {
+                newPage = new QuestionPage<QA>(q);
+            } else if (q.type === "qi") {
+                newPage = new QuestionPage<QI>(q);
+            } else {
+                throw new Error("Invalid question type");
+            }
         } else {
-            newPage = new ListPage(pageType, data);
+            throw new Error("Invalid PageType argument");
         }
 
         if (!this.head || !this.tail) {
@@ -155,13 +355,11 @@ export class PageStack {
 
     appendNextPage(currIndex: number): void {
         if (!this.head || !this.tail) {
-            throw new Error(
-                "Can only call appendNextPage on a non-empty PageStack",
-            );
+            throw new Error("PageStack should never be empty");
         }
 
         if (this.head.pageType === "QUESTION") {
-            throw new Error("Cannot append more Pages to the QUESTION Page");
+            throw new Error("Cannot append more Pages to a QuestionPage");
         }
 
         const top: ListPage = this.head as ListPage;
@@ -196,27 +394,30 @@ export class PageStack {
             const prevIndex: number = prevPage.lastIndex;
 
             if ((prevPage.data as Section).questions) {
-                (prevPage.data as Section).questions[prevIndex] =
-                    currPage.data as Question;
+                const section: Section = prevPage.data as Section;
+                section.questions[prevIndex] = currPage.cloneData() as Question;
             } else if ((prevPage.data as Quiz).sections) {
-                (prevPage.data as Quiz).sections[prevIndex] =
-                    currPage.data as Section;
+                const quiz: Quiz = prevPage.data as Quiz;
+                quiz.sections[prevIndex] = currPage.cloneData() as Section;
             } else {
-                (prevPage.data as Quiz[])[prevIndex] = currPage.data as Quiz;
+                const quizzes: Quiz[] = prevPage.data as Quiz[];
+                quizzes[prevIndex] = currPage.cloneData() as Quiz;
             }
 
             currPage = currPage.prev;
         }
     }
 
-    shallowClone(): PageStack {
+    getShallowClone(): PageStack {
         if (!this.head || !this.tail) {
-            return new PageStack();
+            throw new Error("PageStack should never be empty");
         }
 
-        const pageStackCopy = new PageStack();
-        let curr: Page | null = this.tail;
+        this.shallowCloneData();
 
+        const initialData: Quiz[] = (this.tail as QuizzesPage).data;
+        const pageStackCopy = new PageStack(initialData);
+        let curr: Page | null = this.tail.next;
         while (curr) {
             pageStackCopy.append(curr.pageType, curr.data);
             pageStackCopy.head!.lastIndex = curr.lastIndex;

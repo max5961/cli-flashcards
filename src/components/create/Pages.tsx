@@ -39,7 +39,10 @@ export function CurrentPageView({
     const page: Page = pageStack.top()!;
     if (page.pageType === "QUESTION") {
         return (
-            <QuestionPage pageStack={pageStack} setPageStack={setPageStack} />
+            <QuestionPageView
+                pageStack={pageStack}
+                setPageStack={setPageStack}
+            />
         );
     } else {
         return (
@@ -71,7 +74,7 @@ function ListPageView({ pageStack, setPageStack }: ListProps): React.ReactNode {
             if (key.return) {
                 const update: Update = new Update(pageStack, setPageStack);
 
-                if (currIndex === page.listItems!.length) {
+                if (currIndex === page.listItems.length) {
                     update.handleAdd(edit);
                 } else {
                     update.handleEdit(edit, currIndex);
@@ -84,8 +87,8 @@ function ListPageView({ pageStack, setPageStack }: ListProps): React.ReactNode {
         }
 
         if (input === "i") {
-            if (currIndex < page.listItems!.length) {
-                setEdit(page.getDesc!(currIndex));
+            if (currIndex < page.listItems.length) {
+                setEdit(page.getItemDesc(currIndex));
             } else {
                 setEdit("");
             }
@@ -121,7 +124,7 @@ function ListPageView({ pageStack, setPageStack }: ListProps): React.ReactNode {
 
         if (key.return) {
             // adding new item
-            if (currIndex === page.listItems!.length) {
+            if (currIndex === page.listItems.length) {
                 setNormal(false);
                 setEdit("");
                 return;
@@ -160,7 +163,7 @@ function ListPageView({ pageStack, setPageStack }: ListProps): React.ReactNode {
                                 focus={!normal && i === currIndex}
                             ></TextInput>
                         ) : (
-                            <Text>{page.getDesc!(i)}</Text>
+                            <Text>{page.getItemDesc(i)}</Text>
                         )}
                     </Box>
                 </Box>,
@@ -237,7 +240,7 @@ function QuestionPageView({
     pageStack,
     setPageStack,
 }: QuestionPageProps): React.ReactNode {
-    const lastPage: Page = pageStack.top()!.prev!;
+    const lastPage: ListPage = pageStack.top().prev! as ListPage;
     const lastIndex = lastPage.lastIndex;
     const question: Question = lastPage.listItems![lastIndex] as Question;
     const initialQuestionData = QUtils.toQuestionData(question);
