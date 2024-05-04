@@ -31,11 +31,13 @@ export class Opt<T> {
 }
 
 export class Nav<T> {
-    private curr: Opt<T>;
+    private curr!: Opt<T>;
     private optMap: Map<T, Opt<T>> = new Map();
 
-    constructor(navConfig: (n: Nav<T>) => Opt<T>) {
-        this.curr = navConfig(this);
+    constructor(navConfig: (n: Nav<T>) => void) {
+        // the constructor assumes that the callback will handle the task of
+        // setting the curr pointer
+        navConfig(this);
     }
 
     addNode(name: T): Opt<T> {
@@ -75,7 +77,7 @@ export class Nav<T> {
         }
     }
 
-    getCurr(): T {
+    getCurrNode(): T {
         return this.curr.name;
     }
 

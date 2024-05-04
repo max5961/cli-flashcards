@@ -67,7 +67,7 @@ function MCList({
     currIndex,
     correctAnswer,
 }: {
-    choices: { [key: string]: string }[];
+    choices: string[];
     currIndex: number;
     correctAnswer: string;
 }): React.ReactElement {
@@ -104,10 +104,8 @@ function MCList({
 
     return (
         <Box flexDirection="column" flexGrow={1}>
-            {choices.map((choice: { [key: string]: string }, index: number) => {
-                // The JSON format is a nuisance here, but the format should make
-                // writing the JSON itself easier which is of greater importance
-                const choiceMarker = Object.keys(choice)[0];
+            {choices.map((choice: string, index: number) => {
+                const choiceMarker = String.fromCharCode(65 + index); // [A-D]
                 const choiceTextContent = choice[choiceMarker];
 
                 // highlight current selected choice

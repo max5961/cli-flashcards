@@ -130,6 +130,7 @@ export class QuizzesPage extends ListPage {
     removeListItem(index: number): void {
         this.listItems.splice(index, 1);
         this.data = this.listItems;
+        this.lastIndex = index;
     }
 
     addListItem(name: string): void {
@@ -138,11 +139,13 @@ export class QuizzesPage extends ListPage {
             sections: [],
         });
         this.data = this.listItems;
+        this.lastIndex = this.listItems.length - 1;
     }
 
     setListItemName(index: number, name: string): void {
         this.listItems[index].fileName = name;
         this.data = this.listItems;
+        this.lastIndex = index;
     }
 }
 
@@ -188,6 +191,7 @@ export class QuizPage extends ListPage {
     removeListItem(index: number): void {
         this.listItems.splice(index, 1);
         this.data.sections = this.listItems;
+        this.lastIndex = index;
     }
 
     addListItem(name: string): void {
@@ -196,11 +200,13 @@ export class QuizPage extends ListPage {
             questions: [],
         });
         this.data.sections = this.listItems;
+        this.lastIndex = this.listItems.length - 1;
     }
 
     setListItemName(index: number, name: string): void {
         this.listItems[index].name = name;
         this.data.sections = this.listItems;
+        this.lastIndex = index;
     }
 }
 
@@ -249,6 +255,7 @@ export class SectionPage extends ListPage {
     removeListItem(index: number): void {
         this.listItems.splice(index, 1);
         this.data.questions = this.listItems;
+        this.lastIndex = index;
     }
 
     addListItem(name: string): void {
@@ -258,11 +265,13 @@ export class SectionPage extends ListPage {
             a: "",
         });
         this.data.questions = this.listItems;
+        this.lastIndex = this.listItems.length - 1;
     }
 
     setListItemName(index: number, name: string): void {
         this.listItems[index].q = name;
         this.data.questions = this.listItems;
+        this.lastIndex = index;
     }
 }
 
@@ -363,6 +372,7 @@ export class PageStack {
         }
 
         const top: ListPage = this.head as ListPage;
+        top.lastIndex = currIndex;
 
         if (top.pageType === "QUIZZES") {
             const quizzes: Quiz[] = top.data as Quiz[];

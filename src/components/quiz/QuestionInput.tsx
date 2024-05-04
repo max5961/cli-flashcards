@@ -2,7 +2,7 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { useInput } from "ink";
 import { Box, Text } from "ink";
-import { HorizontalLine } from "../Lines.js";
+import { HorizontalLine } from "../shared/Lines.js";
 import { QI } from "../../types.js";
 import TextInput from "ink-text-input";
 

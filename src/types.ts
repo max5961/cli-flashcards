@@ -9,6 +9,7 @@ export interface Section {
 }
 
 export type Question = QA | QI | MC;
+export type QuestionTypes = "qa" | "qi" | "mc";
 
 export interface QA {
     type: "qa";
@@ -29,11 +30,11 @@ export interface MC {
     choices: string[];
 }
 
-export interface QuestionData {
+export interface FlexibleQuestion {
     type: "qa" | "qi" | "mc";
     q: string;
     a: string;
     choices: string[];
 }
 
-export type choice = "A" | "B" | "C" | "D";
+export type McChoice = "A" | "B" | "C" | "D";

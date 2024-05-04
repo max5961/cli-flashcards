@@ -1,5 +1,5 @@
 import { Quiz } from "../types.js";
-import { MCPage, PageStack, QuizPage, SectionPage } from "./PageStack.ts";
+import { MCPage, PageStack, QuizPage, SectionPage } from "./PageStack.js";
 import { cloneDeep } from "lodash";
 
 const inputData: Quiz[] = [

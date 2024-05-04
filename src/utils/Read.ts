@@ -26,65 +26,70 @@ export default class Read {
         return quizzes;
     }
 
-    static validateQuizObject(quiz: Quiz): boolean {
+    static validateQuizObject(quiz: Quiz): void {
         if (!quiz.sections) {
-            console.log("JSON object must include 'sections' array.");
-            return false;
+            throw new Error("JSON Object must include a sections array");
+        }
+
+        if (!Array.isArray(quiz.sections)) {
+            throw new Error("sections property must be an array");
         }
 
         for (const section of quiz.sections) {
-            if (!section.name || !section.questions) {
-                console.log("2");
-                return false;
+            if (!section.name) {
+                throw new Error("Missing section name");
+            }
+
+            if (!section.questions) {
+                throw new Error("Missing questions array in section");
+            }
+
+            if (!Array.isArray(section.questions)) {
+                throw new Error("questions property must be an array");
             }
 
             for (const question of section.questions) {
                 if (
                     question.type !== "qa" &&
-                    question.type !== "mc" &&
-                    question.type !== "qi"
+                    question.type !== "qi" &&
+                    question.type !== "mc"
                 ) {
-                    return false;
+                    throw new Error(
+                        "type property must be either 'qa', 'qi', or 'mc'",
+                    );
                 }
 
-                if (question.type === "qa" || question.type === "qi") {
-                    if (!question.q || !question.a) {
-                        return false;
-                    }
+                if (!question.q || !question.a) {
+                    throw new Error("Missing q and a properties");
                 }
 
                 if (question.type === "mc") {
-                    if (!question.q || !question.a || !question.choices) {
-                        return false;
+                    if (!question.choices) {
+                        throw new Error("Missing choices array");
                     }
 
                     if (!Array.isArray(question.choices)) {
-                        return false;
+                        throw new Error("choices property must be an array");
                     }
 
-                    let hasValidAnswer: boolean = false;
-                    for (const obj of question.choices) {
-                        for (const key in obj) {
-                            if (typeof key !== "string") {
-                                return false;
-                            }
-
-                            if (typeof obj[key] !== "string") {
-                                return false;
-                            }
-                            if (key === question.a) {
-                                hasValidAnswer = true;
-                            }
-                        }
+                    if (question.choices.length > 4) {
+                        throw new Error(
+                            "choices array exceeds maximum length of 4",
+                        );
                     }
 
-                    if (!hasValidAnswer) {
-                        return false;
+                    if (
+                        question.a !== "A" &&
+                        question.a !== "B" &&
+                        question.a !== "C" &&
+                        question.a !== "D"
+                    ) {
+                        throw new Error(
+                            "Invalid answer for multiple choice.  (should be either 'A', 'B', 'C', or 'D')",
+                        );
                     }
                 }
             }
         }
-
-        return true;
     }
 }

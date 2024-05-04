@@ -2,7 +2,7 @@ import React from "react";
 import { useState, createContext } from "react";
 import { useApp, useInput, Box } from "ink";
 import { Quiz } from "./types.js";
-import { CurrentPage } from "./components/create/Pages.js";
+import { CurrentPageView } from "./components/create/Pages.js";
 import Read from "./utils/Read.js";
 import useStdoutDimensions from "./hooks/useStdoutDimensions.js";
 
@@ -19,7 +19,11 @@ export default function App(): React.ReactElement {
     const [normal, setNormal] = useState<boolean>(true);
     const [cols, rows] = useStdoutDimensions();
 
-    useInput((input) => {
+    useInput((input, key) => {
+        if (key.escape) {
+            setNormal(true);
+        }
+
         if (normal && input === "q") {
             exit();
         }
@@ -29,7 +33,7 @@ export default function App(): React.ReactElement {
         <NormalContext.Provider value={{ normal, setNormal }}>
             <Box alignItems="center" justifyContent="center">
                 <Box width={75} flexDirection="column" borderStyle="round">
-                    <CurrentPage initialQuizzes={initialQuizzes} />
+                    <CurrentPageView initialQuizzes={initialQuizzes} />
                 </Box>
             </Box>
         </NormalContext.Provider>

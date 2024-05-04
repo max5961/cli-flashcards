@@ -2,24 +2,22 @@ import React, {
     useState,
     useContext,
     useEffect,
-    createContext,
     useRef,
+    createContext,
 } from "react";
 import { Box, Text, useInput } from "ink";
-import { HorizontalLine } from "../Lines.js";
+import { HorizontalLine } from "../shared/Lines.js";
 import { NormalContext } from "../../App.js";
-import TextInput from "ink-text-input";
-import { Quiz, Question, QuestionData } from "../../types.js";
+import { FlexibleQuestion, QuestionTypes, Quiz } from "../../types.js";
 import { Window, useWindow } from "../../hooks/useWindow.js";
-import {
-    PageStack,
-    Page,
-    ListPage,
-    QuestionPage,
-} from "../../utils/PageStack.js";
-import { Nav } from "../../utils/Nav.js";
-import { QUtils, QBoxNode } from "../../utils/QUtils.js";
-import Update from "../../utils/Write.js";
+import { PageStack, Page, ListPage } from "../../utils/PageStack.js";
+import { LpvUtil } from "../../utils/LpvUtils.js";
+import { InputBox } from "../shared/InputBox.js";
+import { FocusableBox } from "../shared/FocusableBox.js";
+import { TitleBox } from "../shared/TitleBox.js";
+import { ShowMode } from "../shared/ShowMode.js";
+import { QpvNode, QpvUtils } from "../../utils/QpvUtils.js";
+import { useNav } from "../../hooks/useNav.js";
 
 enum Icons {
     edit = "  ",
@@ -31,12 +29,10 @@ export function CurrentPageView({
 }: {
     initialQuizzes: Quiz[];
 }): React.ReactNode {
-    const initialPageStack: PageStack = new PageStack();
-    initialPageStack.append("QUIZZES", initialQuizzes);
-
+    const initialPageStack: PageStack = new PageStack(initialQuizzes);
     const [pageStack, setPageStack] = useState<PageStack>(initialPageStack);
 
-    const page: Page = pageStack.top()!;
+    const page: Page = pageStack.top();
     if (page.pageType === "QUESTION") {
         return (
             <QuestionPageView
@@ -51,144 +47,100 @@ export function CurrentPageView({
     }
 }
 
-interface ListProps {
+interface LpvProps {
     pageStack: PageStack;
     setPageStack: (ps: PageStack) => void;
 }
-function ListPageView({ pageStack, setPageStack }: ListProps): React.ReactNode {
+function ListPageView({ pageStack, setPageStack }: LpvProps): React.ReactNode {
     const { normal, setNormal } = useContext(NormalContext)!;
     const [edit, setEdit] = useState<string>("");
     const { window, currIndex, setCurrIndex } = useWindow(5);
-    const [dCount, setDCount] = useState<number>(1);
 
-    const page: ListPage = pageStack.top()! as ListPage;
+    const page: ListPage = pageStack.top() as ListPage;
 
-    // update the currIndex to last index on first render
     useEffect(() => {
         setCurrIndex(page.lastIndex);
     }, [pageStack]);
 
     useInput((input, key) => {
-        // !normal
-        if (!normal) {
-            if (key.return) {
-                const update: Update = new Update(pageStack, setPageStack);
+        const util: LpvUtil = new LpvUtil();
+        util.buildStack(pageStack);
+        util.buildSetStack(setPageStack);
+        util.buildIndex(currIndex);
+        util.buildSetIndex(setCurrIndex);
+        util.buildMaxIndex(page.listItems.length);
+        util.buildNormal(normal);
+        util.buildSetNormal(setNormal);
 
-                if (currIndex === page.listItems.length) {
-                    update.handleAdd(edit);
-                } else {
-                    update.handleEdit(edit, currIndex);
-                }
-
-                setNormal(true);
-            }
-
-            return;
+        if (normal && input === "j") {
+            util.moveDown();
         }
 
-        if (input === "i") {
-            if (currIndex < page.listItems.length) {
-                setEdit(page.getItemDesc(currIndex));
-            } else {
-                setEdit("");
-            }
-            setNormal(false);
+        if (normal && input === "k") {
+            util.moveUp();
         }
 
-        if (key.downArrow || input === "j") {
-            if (currIndex < page.listItems!.length) {
-                setCurrIndex(currIndex + 1);
-            }
+        if (normal && key.return) {
+            util.enterNextPage(currIndex);
         }
 
-        if (key.upArrow || input === "k") {
-            if (currIndex > 0) {
-                setCurrIndex(currIndex - 1);
-            }
+        if (normal && key.delete) {
+            util.backPrevPage();
         }
 
-        if (input === "d") {
-            setDCount(dCount + 1);
-            setTimeout(() => {
-                setDCount(1);
-            }, 500);
-
-            if (dCount === 2) {
-                setDCount(0);
-                if (currIndex < page.listItems!.length) {
-                    const update: Update = new Update(pageStack, setPageStack);
-                    update.handleRemove(currIndex);
-                }
-            }
+        if (normal && input === "d") {
+            util.removeListItem(currIndex);
         }
 
-        if (key.return) {
-            // adding new item
-            if (currIndex === page.listItems.length) {
-                setNormal(false);
-                setEdit("");
-                return;
-            }
-
-            // enter an already created menu option
-            const pageStackCopy = pageStack.shallowClone();
-            pageStackCopy.top()!.lastIndex = currIndex;
-            pageStackCopy.appendNextPage(currIndex);
-            setPageStack(pageStackCopy);
+        if (normal && input === "i") {
+            setEdit(page.getItemDesc(currIndex));
+            util.enterInsert(currIndex);
         }
 
-        if (key.delete) {
-            const pageStackCopy = pageStack.shallowClone();
-            pageStackCopy.pop();
-            setPageStack(pageStackCopy);
+        if (normal && input === "c") {
+            setEdit("");
+            util.enterInsert(currIndex);
+        }
+
+        if ((!normal && key.escape) || (!normal && key.return)) {
+            util.setListItemName(currIndex, edit);
+            util.enterNormal();
         }
     });
 
     function mapItems(items: any[]): React.ReactNode[] {
         const components: React.ReactNode[] = [];
+        const isFocus = (i: number): boolean => i === currIndex;
+        const acceptsInput = (i: number): boolean => !normal && isFocus(i);
 
         for (let i = 0; i < items.length; ++i) {
             components.push(
-                <Box
-                    borderStyle={i === currIndex ? "bold" : "round"}
-                    borderColor={i === currIndex ? "blue" : ""}
-                    key={i}
-                >
+                <FocusableBox isFocus={isFocus(i)} key={i}>
                     <Box>
                         <Text color="yellow">{Icons.edit}</Text>
-                        {!normal && i === currIndex ? (
-                            <TextInput
-                                value={edit}
-                                onChange={setEdit}
-                                focus={!normal && i === currIndex}
-                            ></TextInput>
-                        ) : (
-                            <Text>{page.getItemDesc(i)}</Text>
-                        )}
+                        <InputBox
+                            acceptsInput={acceptsInput(i)}
+                            value={edit}
+                            onChange={setEdit}
+                            defaultText={page.getItemDesc(i)}
+                        ></InputBox>
                     </Box>
-                </Box>,
+                </FocusableBox>,
             );
         }
 
-        // add items
+        // add items box
         const i = items.length;
         components.push(
-            <Box
-                borderStyle={currIndex === i ? "bold" : "round"}
-                borderColor={currIndex === i ? "blue" : ""}
-                key={i}
-            >
+            <FocusableBox isFocus={isFocus(i)} key={i}>
                 <Text color="green">{Icons.add}</Text>
-                {!normal && i === currIndex ? (
-                    <TextInput
-                        value={edit}
-                        onChange={setEdit}
-                        focus={!normal && i === currIndex}
-                    ></TextInput>
-                ) : (
-                    <Text>{page.addItemText}</Text>
-                )}
-            </Box>,
+                <InputBox
+                    acceptsInput={acceptsInput(i)}
+                    value={edit}
+                    onChange={setEdit}
+                    defaultText={page.addItemText}
+                ></InputBox>
+            </FocusableBox>,
         );
 
         return components;
@@ -196,14 +148,9 @@ function ListPageView({ pageStack, setPageStack }: ListProps): React.ReactNode {
 
     return (
         <>
-            <Box justifyContent="space-around" alignItems="center">
-                <Text color="yellow" dimColor bold>
-                    {page.title}
-                </Text>
-                <Box borderStyle="round" flexShrink={1}>
-                    <Text dimColor>{normal ? "--NORMAL--" : "--INSERT--"}</Text>
-                </Box>
-            </Box>
+            <TitleBox title={page.title}>
+                <ShowMode normal={normal} />
+            </TitleBox>
             <HorizontalLine />
             <Window
                 items={mapItems(page.listItems!)}
@@ -219,197 +166,92 @@ function ListPageView({ pageStack, setPageStack }: ListProps): React.ReactNode {
     );
 }
 
-interface QuestionPageContext {
+interface QpvContext {
     pageStack: PageStack;
     setPageStack: (ps: PageStack) => void;
-    questionData: QuestionData;
-    setQuestionData: (qd: QuestionData) => void;
-    nav: Nav<QBoxNode>;
-    setNav: (n: Nav<QBoxNode>) => void;
-    curr: QBoxNode;
-    setCurr: (o: QBoxNode) => void;
+    data: FlexibleQuestion;
+    setData: (fq: FlexibleQuestion) => void;
+    currNode: QpvNode;
 }
 
-const QuestionPageContext = createContext<QuestionPageContext | null>(null);
+const QpvContext = createContext<QpvContext | null>(null);
 
-interface QuestionPageProps {
+interface QpvProps {
     pageStack: PageStack;
     setPageStack: (ps: PageStack) => void;
 }
+
 function QuestionPageView({
     pageStack,
     setPageStack,
-}: QuestionPageProps): React.ReactNode {
-    const lastPage: ListPage = pageStack.top().prev! as ListPage;
-    const lastIndex = lastPage.lastIndex;
-    const question: Question = lastPage.listItems![lastIndex] as Question;
-    const initialQuestionData = QUtils.toQuestionData(question);
-
-    const initialData = useRef<QuestionData>(
-        QUtils.cloneQuestionData(initialQuestionData),
-    );
-
-    // normal context
+}: QpvProps): React.ReactNode {
     const { normal, setNormal } = useContext(NormalContext)!;
 
-    // questionData state
-    const [questionData, setQuestionData] = useState<QuestionData>(
-        QUtils.cloneQuestionData(initialQuestionData),
-    );
+    const defaultData: FlexibleQuestion = QpvUtils.getFlexibleData(pageStack);
+    const [data, setData] = useState<FlexibleQuestion>(defaultData);
 
-    // nav state
-    const navInitializer = QUtils.getNavInitializer(questionData);
-    const [nav, setNav] = useState<Nav<QBoxNode>>(
-        new Nav<QBoxNode>(navInitializer),
-    );
+    // used for reverting changes
+    const initialData = useRef<FlexibleQuestion>(defaultData);
 
-    // curr node state
-    const [curr, setCurr] = useState<QBoxNode>(nav.getCurr());
-
-    function setState(type: "qa" | "qi" | "mc") {
-        const questionDataCopy = QUtils.cloneQuestionData(questionData);
-        questionDataCopy.type = type;
-
-        const navCopyInitializer = QUtils.getNavInitializer(questionDataCopy);
-        const newNav = new Nav<QBoxNode>(navCopyInitializer);
-        newNav.goTo(curr);
-
-        setQuestionData(questionDataCopy);
-        setNav(newNav);
-    }
-
-    const writeData: (qd: QuestionData) => void = QUtils.writeData(
-        pageStack,
-        setPageStack,
+    const currNode: QpvNode = useNav<QpvNode, FlexibleQuestion>(
+        data,
+        QpvUtils.getNavInit,
+        normal,
     );
 
     useInput((input, key) => {
-        if (!normal) {
-            if (key.escape || key.return) {
-                setNormal(true);
-                writeData(questionData);
-            }
-
-            return;
-        }
-
-        if (normal && key.return) {
-            if (curr === "qa" || curr === "qi" || curr === "mc") {
-                setState(curr);
-            }
-
-            if (curr === "cancel") {
-                const initializer = QUtils.getNavInitializer(
-                    initialData.current,
-                );
-                const newNav: Nav<QBoxNode> = new Nav<QBoxNode>(initializer);
-                newNav.goTo("cancel");
-                setNav(newNav);
-                setQuestionData(initialData.current);
-                writeData(initialData.current);
-            }
-        }
-
+        const validNodes: QpvNode[] = [
+            "question",
+            "answer",
+            "A",
+            "B",
+            "C",
+            "D",
+        ];
         if (normal && input === "i") {
-            if (
-                curr === "question" ||
-                curr === "answer" ||
-                curr === "A" ||
-                curr === "B" ||
-                curr === "C" ||
-                curr === "D" ||
-                curr === "add"
-            ) {
+            if (validNodes.includes(currNode)) {
                 setNormal(false);
             }
         }
-
-        if (key.downArrow || input === "j") {
-            nav.moveDown();
-            setCurr(nav.getCurr());
-        }
-
-        if (key.upArrow || input === "k") {
-            nav.moveUp();
-            setCurr(nav.getCurr());
-        }
-
-        if (key.leftArrow || input === "h") {
-            nav.moveLeft();
-            setCurr(nav.getCurr());
-        }
-
-        if (key.rightArrow || input === "l") {
-            nav.moveRight();
-            setCurr(nav.getCurr());
-        }
     });
-
-    let questionContent: React.ReactNode;
-    if (questionData.type === "qa") {
-        questionContent = <Edit />;
-    } else if (questionData.type === "qi") {
-        questionContent = <Edit />;
-    } else if (questionData.type === "mc") {
-        questionContent = <EditMC />;
-    }
 
     return (
         <>
-            <QuestionPageContext.Provider
+            <QpvContext.Provider
                 value={{
-                    questionData: questionData,
-                    setQuestionData: setQuestionData,
                     pageStack: pageStack,
                     setPageStack: setPageStack,
-                    nav: nav,
-                    setNav: setNav,
-                    curr: curr,
-                    setCurr: setCurr,
+                    data: data,
+                    setData: setData,
+                    currNode: currNode,
                 }}
             >
-                <Box alignSelf="center">
-                    <Text color="yellow" dimColor>
-                        Edit Question
-                    </Text>
-                </Box>
+                <TitleBox title={"Edit Question"}>
+                    <ShowMode normal={normal} />
+                </TitleBox>
                 <HorizontalLine />
                 <Box flexDirection="column" justifyContent="center">
-                    <QuestionOptions />
-                    {questionContent}
+                    <EditQuestionType />
+                    <QuestionContents />
                 </Box>
-                <Box width="100%" justifyContent="space-between" marginTop={1}>
-                    <Box borderStyle="round">
-                        <Text>{`${normal ? "--NORMAL--" : "--INSERT--"}`}</Text>
-                    </Box>
-                    <Box>
-                        <Box
-                            borderStyle={curr === "cancel" ? "bold" : "round"}
-                            borderColor={curr === "cancel" ? "blue" : ""}
-                        >
-                            <Text>Cancel</Text>
-                        </Box>
+                <Box width="100%" justifyContent="flex-end" marginTop={1}>
+                    <Box
+                        borderStyle={currNode === "cancel" ? "bold" : "round"}
+                        borderColor={currNode === "cancel" ? "blue" : ""}
+                    >
+                        <Text>Cancel</Text>
                     </Box>
                 </Box>
-            </QuestionPageContext.Provider>
+            </QpvContext.Provider>
         </>
     );
 }
 
-type QuestionType = "mc" | "qa" | "qi";
-function QuestionOptions(): React.ReactElement {
-    const { questionData, curr } = useContext(QuestionPageContext)!;
-
-    function isType(type: QuestionType): boolean {
-        return questionData.type === type;
-    }
-
-    function isChecked(type: QuestionType): string {
-        return isType(type) ? "[ x ] " : "[   ] ";
-    }
+function EditQuestionType(): React.ReactNode {
+    const { currNode } = useContext(QpvContext)!;
 
     function isWithin(): boolean {
-        return curr === "qa" || curr === "qi" || curr === "mc";
+        return currNode === "qa" || currNode === "qi" || currNode === "mc";
     }
 
     return (
@@ -419,318 +261,222 @@ function QuestionOptions(): React.ReactElement {
             borderColor={isWithin() ? "blue" : ""}
             borderStyle={isWithin() ? "bold" : "round"}
         >
-            <Box alignItems="center">
-                <Text color={isType("qa") ? "green" : ""}>
-                    {isChecked("qa")}
-                </Text>
-                <Text color={curr === "qa" ? "blue" : ""}>Question Answer</Text>
+            <EqtItem itemType={"qa"} textContent={"Question Answer"} />
+            <EqtItem itemType={"qi"} textContent={"Question Input"} />
+            <EqtItem itemType={"mc"} textContent={"Multiple Choice"} />
+        </Box>
+    );
+}
+
+interface EqtItemProps {
+    itemType: QuestionTypes;
+    textContent: string;
+}
+
+function EqtItem({ itemType, textContent }: EqtItemProps): React.ReactNode {
+    const { currNode, data } = useContext(QpvContext)!;
+
+    function isChosen(): boolean {
+        return itemType === data.type;
+    }
+
+    function getColor(): string {
+        if (currNode === itemType) return "blue";
+        return "";
+    }
+
+    function checkBox(): string {
+        return isChosen() ? "[ x ] " : "[   ] ";
+    }
+
+    return (
+        <Box alignItems="center">
+            <Text color={isChosen() ? "green" : ""}>{checkBox()}</Text>
+            <Text color={getColor()}>{textContent}</Text>
+        </Box>
+    );
+}
+
+function QuestionContents(): React.ReactNode {
+    const { data } = useContext(QpvContext)!;
+    if (data.type === "mc") {
+        return (
+            <>
+                <QandABoxes />
+                <MCBoxes />
+            </>
+        );
+    }
+
+    return <QandABoxes />;
+}
+
+function QandABoxes(): React.ReactNode {
+    const { normal } = useContext(NormalContext)!;
+    const { data, pageStack, currNode } = useContext(QpvContext)!;
+
+    const [questionInput, setQuestionInput] = useState<string>("");
+    const [answerInput, setAnswerInput] = useState<string>("");
+
+    useEffect(() => {
+        setQuestionInput("");
+        setAnswerInput("");
+    }, [pageStack]);
+
+    function acceptsInput(node: QpvNode): boolean {
+        return currNode === node && !normal;
+    }
+
+    function borderColor(node: QpvNode): string {
+        if (currNode === node) {
+            return "blue";
+        }
+        return "";
+    }
+
+    function answerBorderColor(node: QpvNode): string {
+        if (data.type !== "mc") return borderColor(node);
+
+        const possibleValues: string[] = [];
+        for (let i = 0; i < data.choices.length; ++i) {
+            possibleValues.push(String.fromCharCode(65 + i));
+        }
+
+        if (
+            !possibleValues.includes(answerInput) &&
+            !possibleValues.includes(data.a)
+        ) {
+            return "red";
+        } else {
+            return borderColor(node);
+        }
+    }
+
+    // build question and answer Boxes
+    return (
+        <Box width="100%" justifyContent="space-around" gap={-1}>
+            <Box
+                width="50%"
+                flexDirection="column"
+                alignItems="center"
+                borderColor={borderColor("question")}
+                borderStyle={currNode === "question" ? "bold" : "round"}
+            >
+                <Box>
+                    <Text dimColor>Question: </Text>
+                </Box>
+                <HorizontalLine />
+                <InputBox
+                    acceptsInput={acceptsInput("question")}
+                    value={questionInput}
+                    onChange={setQuestionInput}
+                    defaultText={data.q}
+                />
             </Box>
-            <Box alignItems="center">
-                <Text color={isType("qi") ? "green" : ""}>
-                    {isChecked("qi")}
-                </Text>
-                <Text color={curr === "qi" ? "blue" : ""}>Question Input</Text>
-            </Box>
-            <Box alignItems="center">
-                <Text color={isType("mc") ? "green" : ""}>
-                    {isChecked("mc")}
-                </Text>
-                <Text color={curr === "mc" ? "blue" : ""}>Multiple Choice</Text>
+            <Box
+                width="50%"
+                flexDirection="column"
+                alignItems="center"
+                borderColor={answerBorderColor("answer")}
+                borderStyle={currNode === "answer" ? "bold" : "round"}
+            >
+                <Box>
+                    <Text dimColor>Answer: </Text>
+                </Box>
+                <HorizontalLine />
+                <InputBox
+                    acceptsInput={acceptsInput("answer")}
+                    value={answerInput}
+                    onChange={setAnswerInput}
+                    defaultText={data.a}
+                />
             </Box>
         </Box>
     );
 }
 
-function Edit(): React.ReactElement {
+function MCBoxes(): React.ReactNode {
+    const { data, currNode } = useContext(QpvContext)!;
+
+    function mapChoices(): React.ReactNode[] {
+        const built: React.ReactNode[] = [];
+        const getLabel = (index: number) => String.fromCharCode(65 + index);
+
+        for (let i = 0; i < data.choices.length; ++i) {
+            const label: string = getLabel(i);
+            built.push(
+                <Box width="100%" alignItems="center" key={i}>
+                    <Box>
+                        <Text bold>{`${label}: `}</Text>
+                    </Box>
+                    <FocusableBox isFocus={currNode === label}>
+                        <McText index={i} />
+                    </FocusableBox>
+                </Box>,
+            );
+        }
+
+        return built;
+    }
+
+    return (
+        <>
+            {mapChoices()}
+            {data.choices.length < 4 ? <AddChoice /> : <></>}
+        </>
+    );
+}
+
+function AddChoice(): React.ReactNode {
     const { normal } = useContext(NormalContext)!;
-    const { questionData, setQuestionData, curr } =
-        useContext(QuestionPageContext)!;
+    const { currNode } = useContext(QpvContext)!;
+    const [edit, setEdit] = useState<string>("");
 
-    const [questionInput, setQuestionInput] = useState<string>(questionData.q);
-    const [answerInput, setAnswerInput] = useState<string>(questionData.a);
-
-    useEffect(() => {
-        const questionDataCopy = QUtils.cloneQuestionData(questionData);
-        questionDataCopy.q = questionInput;
-        setQuestionData(questionDataCopy);
-    }, [questionInput]);
-
-    useEffect(() => {
-        const questionDataCopy = QUtils.cloneQuestionData(questionData);
-        questionDataCopy.a = answerInput;
-        setQuestionData(questionDataCopy);
-    }, [answerInput]);
-
-    // for when changes are reverted
-    useEffect(() => {
-        setQuestionInput(questionData.q);
-        setAnswerInput(questionData.a);
-    }, [questionData]);
-
-    function isValidAnswer(): boolean {
-        if (questionData.type !== "mc") return true;
-
-        const keys: string[] = [];
-        for (let i = 0; i < questionData.choices.length; ++i) {
-            keys.push(String.fromCharCode(65 + i));
-        }
-
-        return keys.includes(questionData.a);
-    }
-
-    function answerBorderColor(): string {
-        if (!isValidAnswer()) {
-            return "red";
-        }
-
-        return curr === "answer" ? "blue" : "";
-    }
+    const isFocus = currNode === "add";
+    const acceptsInput = isFocus && !normal;
 
     return (
-        <>
-            <Box width="100%" justifyContent="space-around" gap={-1}>
-                <Box
-                    width="50%"
-                    flexDirection="column"
-                    alignItems="center"
-                    borderColor={curr === "question" ? "blue" : ""}
-                    borderStyle={curr === "question" ? "bold" : "round"}
-                >
-                    <Box>
-                        <Text dimColor>Question: </Text>
-                    </Box>
-                    <HorizontalLine />
-                    <TextInput
-                        value={questionInput}
-                        onChange={setQuestionInput}
-                        focus={!normal && curr === "question"}
-                    ></TextInput>
-                </Box>
-                <Box
-                    width="50%"
-                    flexDirection="column"
-                    alignItems="center"
-                    borderColor={answerBorderColor()}
-                    borderStyle={curr === "answer" ? "bold" : "round"}
-                >
-                    <Box>
-                        <Text dimColor>Answer: </Text>
-                    </Box>
-                    <HorizontalLine />
-                    <TextInput
-                        value={answerInput}
-                        onChange={setAnswerInput}
-                        focus={!normal && curr === "answer"}
-                    ></TextInput>
-                </Box>
+        <Box width="100%">
+            <Text>{"   "}</Text>
+            <Box
+                flexGrow={1}
+                borderColor={isFocus ? "blue" : ""}
+                borderStyle={isFocus ? "bold" : "round"}
+            >
+                <Text>{Icons.add}</Text>
+                <InputBox
+                    acceptsInput={acceptsInput}
+                    value={edit}
+                    onChange={setEdit}
+                    defaultText={"Add Choice"}
+                    textColor={"green"}
+                />
             </Box>
-        </>
+        </Box>
     );
 }
 
-function EditMC(): React.ReactElement {
-    const {
-        questionData,
-        setQuestionData,
-        curr,
-        setCurr,
-        pageStack,
-        setPageStack,
-        setNav,
-    } = useContext(QuestionPageContext)!;
-    const { normal, setNormal } = useContext(NormalContext)!;
-    const [addInput, setAddInput] = useState<string>("");
-
-    const choices = questionData.choices;
-
-    useInput((input, key) => {
-        if ((normal && key.return) || (normal && input === "i")) {
-            if (curr !== "add") return;
-            setNormal(false);
-        }
-
-        if ((!normal && key.return) || (!normal && key.escape)) {
-            if (curr !== "add") return;
-
-            const questionDataCopy = QUtils.cloneQuestionData(questionData);
-            const key = String.fromCharCode(
-                65 + questionDataCopy.choices.length,
-            ) as "A" | "B" | "C" | "D";
-            questionDataCopy.choices.push({ [key]: `${addInput}` });
-            const initializer = QUtils.getNavInitializer(questionDataCopy);
-            const newNav: Nav<QBoxNode> = new Nav<QBoxNode>(initializer);
-            newNav.goTo(key);
-            newNav.moveDown();
-            if (newNav.getCurr() === "cancel") {
-                newNav.moveUp();
-            }
-            setCurr(newNav.getCurr());
-            setAddInput("");
-
-            const writeData: (qd: QuestionData) => void = QUtils.writeData(
-                pageStack,
-                setPageStack,
-            );
-            setNav(newNav);
-            setQuestionData(questionDataCopy);
-            writeData(questionDataCopy);
-
-            setNormal(true);
-        }
-
-        if (normal && input === "d") {
-            if (curr !== "A" && curr !== "B" && curr !== "C" && curr !== "D") {
-                return;
-            }
-
-            const questionDataCopy = QUtils.cloneQuestionData(questionData);
-
-            let toSplice: number | null = null;
-            let nextKey: "A" | "B" | "C" | "D" | null = null;
-            for (let i = 0; i < questionDataCopy.choices.length; ++i) {
-                const key = String.fromCharCode(65 + i) as
-                    | "A"
-                    | "B"
-                    | "C"
-                    | "D";
-
-                console.log("KEY AND CURR: " + key + " " + curr);
-                if (key === curr) {
-                    toSplice = i;
-                    nextKey = key;
-                    break;
-                }
-            }
-
-            if (toSplice === null || nextKey === null)
-                throw new Error("Could not find index to delete from");
-
-            questionDataCopy.choices.splice(toSplice, 1);
-
-            const initializer = QUtils.getNavInitializer(questionDataCopy);
-            const newNav: Nav<QBoxNode> = new Nav<QBoxNode>(initializer);
-            const nextNode: QBoxNode = newNav.returnIfValid(nextKey) || "add";
-            newNav.goTo(nextNode);
-
-            const writeData: (qd: QuestionData) => void = QUtils.writeData(
-                pageStack,
-                setPageStack,
-            );
-            setQuestionData(questionDataCopy);
-            setNav(newNav);
-            writeData(questionDataCopy);
-        }
-    });
-
-    return (
-        <>
-            <Edit />
-            {choices.map((choice, index) => {
-                const getLabel = (i: number): string =>
-                    String.fromCharCode(65 + i);
-
-                const desc: string = choice[getLabel(index)];
-
-                return (
-                    <>
-                        <Box width="100%" alignItems="center" key={index}>
-                            <Box>
-                                <Text bold>{`${getLabel(index)}: `}</Text>
-                            </Box>
-                            <Box
-                                borderColor={
-                                    curr === getLabel(index) ? "blue" : ""
-                                }
-                                borderStyle={
-                                    curr === getLabel(index) ? "bold" : "round"
-                                }
-                                flexGrow={1}
-                            >
-                                <MCText
-                                    desc={desc}
-                                    isFocused={
-                                        !normal && curr === getLabel(index)
-                                    }
-                                    label={
-                                        getLabel(index) as "A" | "B" | "C" | "D"
-                                    }
-                                />
-                            </Box>
-                        </Box>
-                    </>
-                );
-            })}
-            {choices.length >= 4 ? (
-                <></>
-            ) : (
-                <Box width="100%">
-                    <Text>{"   "}</Text>
-                    <Box
-                        flexGrow={1}
-                        borderColor={curr === "add" ? "blue" : ""}
-                        borderStyle={curr === "add" ? "bold" : "round"}
-                    >
-                        <Text>{Icons.add}</Text>
-                        {!normal && curr === "add" ? (
-                            <TextInput
-                                value={addInput}
-                                onChange={setAddInput}
-                                focus={!normal && curr === "add"}
-                            ></TextInput>
-                        ) : (
-                            <Text color="green">{"Add Option"}</Text>
-                        )}
-                    </Box>
-                </Box>
-            )}
-        </>
-    );
-}
-
-function MCText({
-    desc,
-    isFocused,
-    label,
-}: {
-    desc: string;
-    isFocused: boolean;
-    label: "A" | "B" | "C" | "D";
-}): React.ReactElement {
-    const { curr, questionData, setQuestionData } =
-        useContext(QuestionPageContext)!;
-
-    const [mcInput, setMcInput] = useState<string>(desc);
+function McText({ index }: { index: number }): React.ReactNode {
+    const { normal } = useContext(NormalContext)!;
+    const { data, currNode, pageStack } = useContext(QpvContext)!;
+    const [edit, setEdit] = useState<string>("");
 
     useEffect(() => {
-        if (curr === label) {
-            const questionDataCopy = QUtils.cloneQuestionData(questionData);
+        setEdit("");
+    }, [pageStack]);
 
-            for (const choice of questionDataCopy.choices) {
-                const key = Object.keys(choice)[0];
-                if (key === curr) {
-                    choice[key] = mcInput;
-                }
-            }
+    function getLabel(index: number): string {
+        return String.fromCharCode(65 + index);
+    }
 
-            setQuestionData(questionDataCopy);
-        }
-    }, [mcInput]);
-
-    // for when changes are reverted
-    useEffect(() => {
-        for (const choice of questionData.choices) {
-            const key = Object.keys(choice)[0];
-            if (key === label) {
-                setMcInput(choice[key]);
-            }
-        }
-    }, [questionData]);
+    const acceptsInput: boolean = !normal && getLabel(index) === currNode;
 
     return (
-        <TextInput
-            value={mcInput}
-            onChange={setMcInput}
-            focus={isFocused}
-        ></TextInput>
+        <InputBox
+            acceptsInput={acceptsInput}
+            value={edit}
+            onChange={setEdit}
+            defaultText={data.choices[index]}
+        />
     );
 }
