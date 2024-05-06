@@ -7,106 +7,57 @@ import React, {
 } from "react";
 import { Box, Text, useInput } from "ink";
 import { HorizontalLine } from "../shared/Lines.js";
-import { NormalContext } from "../../App.js";
 import { FlexibleQuestion, QuestionTypes, Quiz } from "../../types.js";
-import { Window, useWindow } from "../../hooks/useWindow.js";
-import { PageStack, Page, ListPage } from "../../utils/PageStack.js";
-import { LpvUtil } from "../../utils/LpvUtils.js";
+import { Window } from "../../hooks/useWindow.js";
+import { PageStack, Page } from "../../utils/PageStack.js";
 import { InputBox } from "../shared/InputBox.js";
 import { FocusableBox } from "../shared/FocusableBox.js";
 import { TitleBox } from "../shared/TitleBox.js";
 import { ShowMode } from "../shared/ShowMode.js";
 import { QpvNode, QpvUtils } from "../../utils/QpvUtils.js";
 import { useNav } from "../../hooks/useNav.js";
+import { useLpv } from "../../hooks/useLpv.js";
+import { NormalContext } from "../../App.js";
 
 enum Icons {
     edit = "  ",
     add = "  ",
 }
 
-export function CurrentPageView({
-    initialQuizzes,
-}: {
+interface PageContext {
+    pageStack: PageStack;
+    setPageStack: (ps: PageStack) => void;
+}
+
+export const PageContext = createContext<PageContext | null>(null);
+
+interface CpvProps {
     initialQuizzes: Quiz[];
-}): React.ReactNode {
+}
+
+export function CurrentPageView({ initialQuizzes }: CpvProps): React.ReactNode {
     const initialPageStack: PageStack = new PageStack(initialQuizzes);
     const [pageStack, setPageStack] = useState<PageStack>(initialPageStack);
 
     const page: Page = pageStack.top();
-    if (page.pageType === "QUESTION") {
-        return (
-            <QuestionPageView
-                pageStack={pageStack}
-                setPageStack={setPageStack}
-            />
-        );
-    } else {
-        return (
-            <ListPageView pageStack={pageStack} setPageStack={setPageStack} />
-        );
-    }
+
+    const currentPage: React.ReactNode =
+        page.pageType === "QUESTION" ? <QuestionPageView /> : <ListPageView />;
+
+    return (
+        <PageContext.Provider
+            value={{
+                pageStack: pageStack,
+                setPageStack: setPageStack,
+            }}
+        >
+            {currentPage}
+        </PageContext.Provider>
+    );
 }
 
-interface LpvProps {
-    pageStack: PageStack;
-    setPageStack: (ps: PageStack) => void;
-}
-function ListPageView({ pageStack, setPageStack }: LpvProps): React.ReactNode {
-    const { normal, setNormal } = useContext(NormalContext)!;
-    const [edit, setEdit] = useState<string>("");
-    const { window, currIndex, setCurrIndex } = useWindow(5);
-
-    const page: ListPage = pageStack.top() as ListPage;
-
-    useEffect(() => {
-        setCurrIndex(page.lastIndex);
-    }, [pageStack]);
-
-    useInput((input, key) => {
-        const util: LpvUtil = new LpvUtil();
-        util.buildStack(pageStack);
-        util.buildSetStack(setPageStack);
-        util.buildIndex(currIndex);
-        util.buildSetIndex(setCurrIndex);
-        util.buildMaxIndex(page.listItems.length);
-        util.buildNormal(normal);
-        util.buildSetNormal(setNormal);
-
-        if (normal && input === "j") {
-            util.moveDown();
-        }
-
-        if (normal && input === "k") {
-            util.moveUp();
-        }
-
-        if (normal && key.return) {
-            util.enterNextPage(currIndex);
-        }
-
-        if (normal && key.delete) {
-            util.backPrevPage();
-        }
-
-        if (normal && input === "d") {
-            util.removeListItem(currIndex);
-        }
-
-        if (normal && input === "i") {
-            setEdit(page.getItemDesc(currIndex));
-            util.enterInsert(currIndex);
-        }
-
-        if (normal && input === "c") {
-            setEdit("");
-            util.enterInsert(currIndex);
-        }
-
-        if ((!normal && key.escape) || (!normal && key.return)) {
-            util.setListItemName(currIndex, edit);
-            util.enterNormal();
-        }
-    });
+function ListPageView(): React.ReactNode {
+    const { page, edit, setEdit, window, currIndex, normal } = useLpv();
 
     function mapItems(items: any[]): React.ReactNode[] {
         const components: React.ReactNode[] = [];
@@ -176,16 +127,9 @@ interface QpvContext {
 
 const QpvContext = createContext<QpvContext | null>(null);
 
-interface QpvProps {
-    pageStack: PageStack;
-    setPageStack: (ps: PageStack) => void;
-}
-
-function QuestionPageView({
-    pageStack,
-    setPageStack,
-}: QpvProps): React.ReactNode {
+function QuestionPageView(): React.ReactNode {
     const { normal, setNormal } = useContext(NormalContext)!;
+    const { pageStack, setPageStack } = useContext(PageContext)!;
 
     const defaultData: FlexibleQuestion = QpvUtils.getFlexibleData(pageStack);
     const [data, setData] = useState<FlexibleQuestion>(defaultData);
@@ -203,6 +147,7 @@ function QuestionPageView({
         const validNodes: QpvNode[] = [
             "question",
             "answer",
+            "add",
             "A",
             "B",
             "C",

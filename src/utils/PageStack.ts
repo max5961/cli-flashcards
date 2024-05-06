@@ -1,7 +1,7 @@
 import { Quiz, Section, Question, QA, QI, MC } from "../types.js";
 type Data = Quiz[] | Quiz | Section | Question;
 type ListItems = Quiz[] | Section[] | Question[];
-type PageType = "QUIZZES" | "QUIZ" | "SECTION" | "QUESTION";
+export type PageType = "QUIZZES" | "QUIZ" | "SECTION" | "QUESTION";
 
 export abstract class Page {
     public abstract pageType: PageType;
@@ -427,6 +427,8 @@ export class PageStack {
 
         const initialData: Quiz[] = (this.tail as QuizzesPage).data;
         const pageStackCopy = new PageStack(initialData);
+        pageStackCopy.tail!.lastIndex = this.tail.lastIndex;
+
         let curr: Page | null = this.tail.next;
         while (curr) {
             pageStackCopy.append(curr.pageType, curr.data);

@@ -1,6 +1,6 @@
 import { Question, FlexibleQuestion } from "../types.js";
 import { Nav, Opt } from "./Nav.js";
-import { PageStack, QuestionPage } from "./PageStack.js";
+import { PageStack } from "./PageStack.js";
 
 export type QpvNode =
     | "qa"
@@ -136,10 +136,6 @@ export class QpvUtils {
             if (choices[i - 1]) {
                 choices[i].setUp(choices[i - 1]);
             }
-
-            if (i === choices.length - 1) {
-                choices[i].setDown(add);
-            }
         }
 
         // 4 is the maximum number of MC choices (unlink add Node)
@@ -153,6 +149,7 @@ export class QpvUtils {
         } else if (choices.length) {
             const cancel = nav.getNode("cancel");
             const lastChoice = choices[choices.length - 1];
+            lastChoice.setDown(add);
             add.setUp(lastChoice);
             add.setDown(cancel);
             cancel.setUp(add);
