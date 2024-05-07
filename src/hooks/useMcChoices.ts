@@ -14,8 +14,6 @@ export function useMcChoices() {
 
     function getCurrNodeIndex(): number | null {
         for (let i = 0; i < possibleChoices.length; ++i) {
-            console.log("CURR NODE IS: " + currNode);
-            console.log(possibleChoices[i]);
             if (currNode === possibleChoices[i]) {
                 return i;
             }
