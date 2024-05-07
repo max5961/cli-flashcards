@@ -2,8 +2,7 @@ import React from "react";
 import { useState } from "react";
 import { useInput } from "ink";
 import { Box } from "ink";
-import { QA, QI, MC } from "../../interfaces.js";
-import useStdoutDimensions from "../../useStdoutDimensions.js";
+import { QA, QI, MC } from "../../types.js";
 import { Header } from "./Header.js";
 import { MultipleChoice } from "./MultipleChoice.js";
 import { QuestionAnswer } from "./QuestionAnswer.js";
@@ -21,7 +20,6 @@ export function QuizMode({
 }): React.ReactElement {
     const [currIndex, setCurrIndex] = useState<number>(0);
     const [currQuestion, setCurrQuestion] = useState<MC | QA | QI>(Quiz[0]);
-    const [columns, rows] = useStdoutDimensions();
 
     useInput((input, key) => {
         // relevant to Question/Input Quiz
@@ -72,12 +70,10 @@ export function QuizMode({
             flexDirection="column"
             alignItems="center"
             justifyContent="space-between"
-            height={rows}
-            width={columns}
         >
             <Header currIndex={currIndex} QuizLength={Quiz.length} />
             {currentCard()}
-            <FooterKeybinds columns={columns} />
+            <FooterKeybinds />
         </Box>
     );
 }

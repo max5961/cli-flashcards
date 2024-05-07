@@ -1,6 +1,6 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box } from "ink";
 
 export interface WindowState {
     start: number;
@@ -22,21 +22,23 @@ type WindowDestructure = {
 };
 
 export function useWindow(windowSize: number): WindowDestructure {
-    const startWindow = {
-        start: 0,
+    const [currIndex, setCurrIndex] = useState<number>(0);
+
+    const startWindowState = {
+        start: currIndex,
         end: windowSize,
         mid: Math.floor(windowSize / 2),
         windowSize: windowSize,
     };
 
-    const [currIndex, setCurrIndex] = useState<number>(0);
-    const [windowState, setWindowState] = useState<WindowState>(startWindow);
+    const [windowState, setWindowState] =
+        useState<WindowState>(startWindowState);
 
     return {
         window: { windowState: windowState, setWindowState: setWindowState },
         currIndex: currIndex,
         setCurrIndex: setCurrIndex,
-        resetWindow: () => setWindowState(startWindow),
+        resetWindow: () => setWindowState(startWindowState),
     };
 }
 
@@ -229,11 +231,6 @@ function Scroller({
     const height: string = flexDirection === "column" ? "100%" : "";
     const width: string = flexDirection === "row" ? "100%" : "";
 
-    // <Box flexDirection="column">
-    //     <Text>{sPercent}</Text>
-    //     <Text>{mPercent}</Text>
-    //     <Text>{ePercent}</Text>
-    // </Box>
     return (
         <>
             <Box

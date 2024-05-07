@@ -13,7 +13,7 @@ if &shortmess =~ 'A'
 else
   set shortmess=aoO
 endif
-badd +223 ~/repos/flashcards/src/Components/createMode/CreateNew.tsx
+badd +1 ~/repos/flashcards/src/Components/createMode/CreateNew.tsx
 badd +366 src/Components/createMode/classes.ts
 badd +151 src/Components/quizMode/MultipleChoice.tsx
 badd +1 src/Components/createMode/useNav.ts
@@ -21,9 +21,31 @@ badd +1 ~/repos/flashcards/src/Components/createMode/useWindow.tsx
 badd +1 src/Components/createMode/useQuestionNav.ts
 badd +21 ~/repos/flashcards/src/Components/createMode/QuestionNavUtils.ts
 badd +1 src/Components/createMode/QuestionNavUtil.ts
+badd +1 package.json
+badd +2 src/components/create/Pages.tsx
+badd +239 src/utils/PageStack.ts
+badd +61 ~/repos/flashcards/src/utils/KeyBinds.ts
+badd +25 src/hooks/useLpv.ts
+badd +21 ~/repos/flashcards/src/components/shared/InputBox.tsx
+badd +8 ~/repos/flashcards/src/App.tsx
+badd +25 ~/repos/flashcards/src/hooks/useNav.ts
+badd +1 ~/repos/flashcards/src/hooks/useStdoutDimensions.ts
+badd +1 ~/repos/flashcards/src/hooks/useWindow.tsx
+badd +1 src/hooks/useStdInput.ts
+badd +1 ~/repos/flashcards/src/hooks/useKeyBinds.ts
+badd +21 ~/repos/flashcards/src/utils/LpvUtil.ts
+badd +222 ~/repos/flashcards/src/utils/QpvUtils.ts
+badd +72 ~/repos/flashcards/src/hooks/useQpv.ts
+badd +80 ~/repos/flashcards/src/utils/Nav.ts
+badd +35 ~/repos/flashcards/src/hooks/useEqt.ts
+badd +4 ~/repos/flashcards/src/hooks/useQABoxes.ts
+badd +47 src/hooks/useAddChoice.ts
+badd +19 Session.vim
+badd +36 ~/repos/flashcards/src/hooks/useMcChoices.ts
+badd +1 ~/repos/flashcards/src/utils/useMcText.ts
 argglobal
 %argdel
-edit ~/repos/flashcards/src/Components/createMode/CreateNew.tsx
+edit ~/repos/flashcards/src/hooks/useQpv.ts
 let s:save_splitbelow = &splitbelow
 let s:save_splitright = &splitright
 set splitbelow splitright
@@ -37,7 +59,7 @@ set winheight=1
 set winminwidth=0
 set winwidth=1
 argglobal
-balt ~/repos/flashcards/src/Components/createMode/QuestionNavUtils.ts
+balt ~/repos/flashcards/src/utils/useMcText.ts
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -48,11 +70,11 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 223 - ((25 * winheight(0) + 26) / 52)
+let s:l = 72 - ((28 * winheight(0) + 26) / 52)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 223
+keepjumps 72
 normal! 0
 tabnext 1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'

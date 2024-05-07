@@ -2,8 +2,8 @@ import React from "react";
 import { useState } from "react";
 import { useInput } from "ink";
 import { Box, Text } from "ink";
-import { HorizontalLine } from "../Lines.js";
-import { QA } from "../../interfaces.js";
+import { HorizontalLine } from "../shared/Lines.js";
+import { QA } from "../../types.js";
 
 export function QuestionAnswer({
     question,
