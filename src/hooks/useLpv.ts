@@ -32,7 +32,7 @@ export function useLpv() {
         setEdit,
     });
 
-    const handleKeyBinds = (command: Command | null) => {
+    function handleKeyBinds(command: Command | null): void {
         if (!command) return;
 
         if (command === "DOWN") {
@@ -69,7 +69,7 @@ export function useLpv() {
         if (command === "EXIT_INSERT") {
             lpvUtil.handleEnterNormal();
         }
-    };
+    }
 
     useKeyBinds(handleKeyBinds);
 

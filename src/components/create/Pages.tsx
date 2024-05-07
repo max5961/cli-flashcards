@@ -1,11 +1,5 @@
-import React, {
-    useState,
-    useContext,
-    useEffect,
-    useRef,
-    createContext,
-} from "react";
-import { Box, Text, useInput } from "ink";
+import React, { useState, useContext, createContext } from "react";
+import { Box, Text } from "ink";
 import { HorizontalLine } from "../shared/Lines.js";
 import { FlexibleQuestion, QuestionTypes, Quiz } from "../../types.js";
 import { Window } from "../../hooks/useWindow.js";
@@ -14,10 +8,14 @@ import { InputBox } from "../shared/InputBox.js";
 import { FocusableBox } from "../shared/FocusableBox.js";
 import { TitleBox } from "../shared/TitleBox.js";
 import { ShowMode } from "../shared/ShowMode.js";
-import { QpvNode, QpvUtils } from "../../utils/QpvUtils.js";
-import { useNav } from "../../hooks/useNav.js";
+import { QpvNode } from "../../utils/QpvUtils.js";
 import { useLpv } from "../../hooks/useLpv.js";
-import { NormalContext } from "../../App.js";
+import { useQpv } from "../../hooks/useQpv.js";
+import { useEqt } from "../../hooks/useEqt.js";
+import { useQABox } from "../../hooks/useQABoxes.js";
+import { useAddChoice } from "../../hooks/useAddChoice.js";
+import { useMcChoices } from "../../hooks/useMcChoices.js";
+import { useMcText } from "../../utils/useMcText.js";
 
 enum Icons {
     edit = "  ",
@@ -118,57 +116,39 @@ function ListPageView(): React.ReactNode {
 }
 
 interface QpvContext {
+    normal: boolean;
+    data: FlexibleQuestion;
     pageStack: PageStack;
     setPageStack: (ps: PageStack) => void;
-    data: FlexibleQuestion;
     setData: (fq: FlexibleQuestion) => void;
     currNode: QpvNode;
+    setCurrNode: (n: QpvNode) => void;
 }
 
-const QpvContext = createContext<QpvContext | null>(null);
+export const QpvContext = createContext<QpvContext | null>(null);
 
 function QuestionPageView(): React.ReactNode {
-    const { normal, setNormal } = useContext(NormalContext)!;
-    const { pageStack, setPageStack } = useContext(PageContext)!;
-
-    const defaultData: FlexibleQuestion = QpvUtils.getFlexibleData(pageStack);
-    const [data, setData] = useState<FlexibleQuestion>(defaultData);
-
-    // used for reverting changes
-    const initialData = useRef<FlexibleQuestion>(defaultData);
-
-    const currNode: QpvNode = useNav<QpvNode, FlexibleQuestion>(
-        data,
-        QpvUtils.getNavInit,
+    const {
         normal,
-    );
-
-    useInput((input, key) => {
-        const validNodes: QpvNode[] = [
-            "question",
-            "answer",
-            "add",
-            "A",
-            "B",
-            "C",
-            "D",
-        ];
-        if (normal && input === "i") {
-            if (validNodes.includes(currNode)) {
-                setNormal(false);
-            }
-        }
-    });
+        data,
+        setData,
+        currNode,
+        setCurrNode,
+        pageStack,
+        setPageStack,
+    } = useQpv();
 
     return (
         <>
             <QpvContext.Provider
                 value={{
-                    pageStack: pageStack,
-                    setPageStack: setPageStack,
-                    data: data,
-                    setData: setData,
-                    currNode: currNode,
+                    normal,
+                    data,
+                    setData,
+                    currNode,
+                    setCurrNode,
+                    pageStack,
+                    setPageStack,
                 }}
             >
                 <TitleBox title={"Edit Question"}>
@@ -193,18 +173,14 @@ function QuestionPageView(): React.ReactNode {
 }
 
 function EditQuestionType(): React.ReactNode {
-    const { currNode } = useContext(QpvContext)!;
-
-    function isWithin(): boolean {
-        return currNode === "qa" || currNode === "qi" || currNode === "mc";
-    }
+    const isWithin = useEqt();
 
     return (
         <Box
             flexDirection="column"
             width="100%"
-            borderColor={isWithin() ? "blue" : ""}
-            borderStyle={isWithin() ? "bold" : "round"}
+            borderColor={isWithin ? "blue" : ""}
+            borderStyle={isWithin ? "bold" : "round"}
         >
             <EqtItem itemType={"qa"} textContent={"Question Answer"} />
             <EqtItem itemType={"qi"} textContent={"Question Input"} />
@@ -257,45 +233,18 @@ function QuestionContents(): React.ReactNode {
 }
 
 function QandABoxes(): React.ReactNode {
-    const { normal } = useContext(NormalContext)!;
-    const { data, pageStack, currNode } = useContext(QpvContext)!;
-
-    const [questionInput, setQuestionInput] = useState<string>("");
-    const [answerInput, setAnswerInput] = useState<string>("");
-
-    useEffect(() => {
-        setQuestionInput("");
-        setAnswerInput("");
-    }, [pageStack]);
-
-    function acceptsInput(node: QpvNode): boolean {
-        return currNode === node && !normal;
-    }
-
-    function borderColor(node: QpvNode): string {
-        if (currNode === node) {
-            return "blue";
-        }
-        return "";
-    }
-
-    function answerBorderColor(node: QpvNode): string {
-        if (data.type !== "mc") return borderColor(node);
-
-        const possibleValues: string[] = [];
-        for (let i = 0; i < data.choices.length; ++i) {
-            possibleValues.push(String.fromCharCode(65 + i));
-        }
-
-        if (
-            !possibleValues.includes(answerInput) &&
-            !possibleValues.includes(data.a)
-        ) {
-            return "red";
-        } else {
-            return borderColor(node);
-        }
-    }
+    const {
+        questionBorderColor,
+        questionAcceptsInput,
+        answerBorderColor,
+        answerAcceptsInput,
+        questionInput,
+        setQuestionInput,
+        answerInput,
+        setAnswerInput,
+        currNode,
+        data,
+    } = useQABox();
 
     // build question and answer Boxes
     return (
@@ -304,7 +253,7 @@ function QandABoxes(): React.ReactNode {
                 width="50%"
                 flexDirection="column"
                 alignItems="center"
-                borderColor={borderColor("question")}
+                borderColor={questionBorderColor}
                 borderStyle={currNode === "question" ? "bold" : "round"}
             >
                 <Box>
@@ -312,7 +261,7 @@ function QandABoxes(): React.ReactNode {
                 </Box>
                 <HorizontalLine />
                 <InputBox
-                    acceptsInput={acceptsInput("question")}
+                    acceptsInput={questionAcceptsInput}
                     value={questionInput}
                     onChange={setQuestionInput}
                     defaultText={data.q}
@@ -322,7 +271,7 @@ function QandABoxes(): React.ReactNode {
                 width="50%"
                 flexDirection="column"
                 alignItems="center"
-                borderColor={answerBorderColor("answer")}
+                borderColor={answerBorderColor}
                 borderStyle={currNode === "answer" ? "bold" : "round"}
             >
                 <Box>
@@ -330,7 +279,7 @@ function QandABoxes(): React.ReactNode {
                 </Box>
                 <HorizontalLine />
                 <InputBox
-                    acceptsInput={acceptsInput("answer")}
+                    acceptsInput={answerAcceptsInput}
                     value={answerInput}
                     onChange={setAnswerInput}
                     defaultText={data.a}
@@ -341,7 +290,7 @@ function QandABoxes(): React.ReactNode {
 }
 
 function MCBoxes(): React.ReactNode {
-    const { data, currNode } = useContext(QpvContext)!;
+    const { data, currNode } = useMcChoices();
 
     function mapChoices(): React.ReactNode[] {
         const built: React.ReactNode[] = [];
@@ -373,12 +322,7 @@ function MCBoxes(): React.ReactNode {
 }
 
 function AddChoice(): React.ReactNode {
-    const { normal } = useContext(NormalContext)!;
-    const { currNode } = useContext(QpvContext)!;
-    const [edit, setEdit] = useState<string>("");
-
-    const isFocus = currNode === "add";
-    const acceptsInput = isFocus && !normal;
+    const { isFocus, acceptsInput, edit, setEdit } = useAddChoice();
 
     return (
         <Box width="100%">
@@ -402,26 +346,14 @@ function AddChoice(): React.ReactNode {
 }
 
 function McText({ index }: { index: number }): React.ReactNode {
-    const { normal } = useContext(NormalContext)!;
-    const { data, currNode, pageStack } = useContext(QpvContext)!;
-    const [edit, setEdit] = useState<string>("");
-
-    useEffect(() => {
-        setEdit("");
-    }, [pageStack]);
-
-    function getLabel(index: number): string {
-        return String.fromCharCode(65 + index);
-    }
-
-    const acceptsInput: boolean = !normal && getLabel(index) === currNode;
+    const { acceptsInput, edit, setEdit, defaultText } = useMcText(index);
 
     return (
         <InputBox
             acceptsInput={acceptsInput}
             value={edit}
             onChange={setEdit}
-            defaultText={data.choices[index]}
+            defaultText={defaultText}
         />
     );
 }

@@ -22,29 +22,33 @@ badd +1 src/Components/createMode/useQuestionNav.ts
 badd +21 ~/repos/flashcards/src/Components/createMode/QuestionNavUtils.ts
 badd +1 src/Components/createMode/QuestionNavUtil.ts
 badd +1 package.json
-badd +134 src/components/create/Pages.tsx
-badd +269 src/utils/PageStack.ts
+badd +2 src/components/create/Pages.tsx
+badd +239 src/utils/PageStack.ts
 badd +61 ~/repos/flashcards/src/utils/KeyBinds.ts
-badd +31 src/hooks/useLpv.ts
+badd +25 src/hooks/useLpv.ts
 badd +21 ~/repos/flashcards/src/components/shared/InputBox.tsx
 badd +8 ~/repos/flashcards/src/App.tsx
-badd +12 ~/repos/flashcards/src/hooks/useNav.ts
+badd +25 ~/repos/flashcards/src/hooks/useNav.ts
 badd +1 ~/repos/flashcards/src/hooks/useStdoutDimensions.ts
 badd +1 ~/repos/flashcards/src/hooks/useWindow.tsx
 badd +1 src/hooks/useStdInput.ts
 badd +1 ~/repos/flashcards/src/hooks/useKeyBinds.ts
-badd +1 ~/repos/flashcards/src/utils/LpvUtil.ts
-badd +0 ~/repos/flashcards/src/utils/QpvUtils.ts
+badd +21 ~/repos/flashcards/src/utils/LpvUtil.ts
+badd +222 ~/repos/flashcards/src/utils/QpvUtils.ts
+badd +72 ~/repos/flashcards/src/hooks/useQpv.ts
+badd +80 ~/repos/flashcards/src/utils/Nav.ts
+badd +35 ~/repos/flashcards/src/hooks/useEqt.ts
+badd +4 ~/repos/flashcards/src/hooks/useQABoxes.ts
+badd +47 src/hooks/useAddChoice.ts
+badd +19 Session.vim
+badd +36 ~/repos/flashcards/src/hooks/useMcChoices.ts
+badd +1 ~/repos/flashcards/src/utils/useMcText.ts
 argglobal
 %argdel
-edit ~/repos/flashcards/src/utils/QpvUtils.ts
+edit ~/repos/flashcards/src/hooks/useQpv.ts
 let s:save_splitbelow = &splitbelow
 let s:save_splitright = &splitright
 set splitbelow splitright
-wincmd _ | wincmd |
-split
-1wincmd k
-wincmd w
 let &splitbelow = s:save_splitbelow
 let &splitright = s:save_splitright
 wincmd t
@@ -54,9 +58,8 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-wincmd =
 argglobal
-balt ~/repos/flashcards/src/hooks/useNav.ts
+balt ~/repos/flashcards/src/utils/useMcText.ts
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -67,35 +70,12 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 1 - ((0 * winheight(0) + 20) / 41)
+let s:l = 72 - ((31 * winheight(0) + 20) / 41)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1
-normal! 0
-wincmd w
-argglobal
-if bufexists(fnamemodify("term://~/repos/flashcards//69012:/usr/bin/zsh;\#toggleterm\#1", ":p")) | buffer term://~/repos/flashcards//69012:/usr/bin/zsh;\#toggleterm\#1 | else | edit term://~/repos/flashcards//69012:/usr/bin/zsh;\#toggleterm\#1 | endif
-if &buftype ==# 'terminal'
-  silent file term://~/repos/flashcards//69012:/usr/bin/zsh;\#toggleterm\#1
-endif
-balt ~/repos/flashcards/src/utils/LpvUtil.ts
-setlocal fdm=manual
-setlocal fde=0
-setlocal fmr={{{,}}}
-setlocal fdi=#
-setlocal fdl=0
-setlocal fml=1
-setlocal fdn=20
-setlocal fen
-let s:l = 23 - ((9 * winheight(0) + 5) / 10)
-if s:l < 1 | let s:l = 1 | endif
-keepjumps exe s:l
-normal! zt
-keepjumps 23
-normal! 056|
-wincmd w
-wincmd =
+keepjumps 72
+normal! 042|
 tabnext 1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf
