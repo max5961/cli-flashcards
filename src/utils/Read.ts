@@ -1,23 +1,23 @@
 import { Quiz } from "../types.js";
 import path from "path";
 import os from "os";
-import fs from "fs";
+import fs from "fs/promises";
 
 export default class Read {
-    static getData(): Quiz[] {
+    static async getData(): Promise<Quiz[]> {
         const dir: string = path.join(
             os.homedir(),
             ".local",
             "share",
             "flashcards",
         );
-        const files: string[] = fs.readdirSync(dir);
+        const files: string[] = await fs.readdir(dir);
 
         const quizzes: Quiz[] = [];
 
         for (const file of files) {
             const filePath = path.join(dir, file);
-            const json = fs.readFileSync(filePath, "utf-8");
+            const json = await fs.readFile(filePath, "utf-8");
             const quiz = JSON.parse(json);
             quiz.fileName = file;
             quizzes.push(quiz);

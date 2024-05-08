@@ -1,23 +1,17 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useState } from "react";
 import { useInput } from "ink";
 import { Box } from "ink";
-import { QA, QI, MC } from "../../types.js";
+import { QA, QI, MC, Question } from "../../types.js";
 import { Header } from "./Header.js";
 import { MultipleChoice } from "./MultipleChoice.js";
 import { QuestionAnswer } from "./QuestionAnswer.js";
 import { FooterKeybinds } from "./FooterKeybinds.js";
 import { QuestionInput } from "./QuestionInput.js";
+import { NormalContext } from "../../App.js";
 
-export function QuizMode({
-    Quiz,
-    normal,
-    setNormal,
-}: {
-    Quiz: (QA | MC | QI)[];
-    normal: boolean;
-    setNormal: (b: boolean) => void;
-}): React.ReactElement {
+export function QuizMode({ Quiz }: { Quiz: Question[] }): React.ReactElement {
+    const { normal, setNormal } = useContext(NormalContext)!;
     const [currIndex, setCurrIndex] = useState<number>(0);
     const [currQuestion, setCurrQuestion] = useState<MC | QA | QI>(Quiz[0]);
 

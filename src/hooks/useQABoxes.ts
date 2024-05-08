@@ -32,6 +32,7 @@ export function useQABox() {
         return "";
     }
 
+    // highlight border with red if not a valid multiple choice answer
     function getAnswerBorderColor(): string {
         if (data.type !== "mc") return getBorderColor("answer");
 
@@ -40,9 +41,10 @@ export function useQABox() {
             possibleValues.push(String.fromCharCode(65 + i));
         }
 
+        // capitalization does not matter
         if (
-            !possibleValues.includes(answerInput) &&
-            !possibleValues.includes(data.a)
+            !possibleValues.includes(answerInput.toUpperCase()) &&
+            !possibleValues.includes(data.a.toUpperCase())
         ) {
             return "red";
         } else {

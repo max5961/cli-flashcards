@@ -7,7 +7,6 @@ import { useNav } from "./useNav.js";
 import { useKeyBinds } from "./useKeyBinds.js";
 import { Command } from "../utils/KeyBinds.js";
 import { Write } from "../utils/Write.js";
-import { PageStack } from "../utils/PageStack.js";
 
 export function useQpv() {
     const { normal, setNormal } = useContext(NormalContext)!;

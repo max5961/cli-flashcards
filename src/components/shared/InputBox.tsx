@@ -4,12 +4,15 @@ import { Text } from "ink";
 
 interface InputBox {
     acceptsInput: boolean;
+    defaultText: string;
     value: string;
     onChange: (s: string) => void;
-    defaultText: string;
     textColor?: string;
 }
 
+// if acceptsInput === true means we return a dynamic TextInput component, otherwise
+// we return a static Text component.  The defaultText should represent some state
+// that the TextInput component will help to update.
 export function InputBox({
     acceptsInput,
     value,
@@ -17,11 +20,9 @@ export function InputBox({
     defaultText,
     textColor = "",
 }: InputBox): React.ReactNode {
-    // return TextInput
     if (acceptsInput) {
-        return <TextInput value={value} onChange={onChange}></TextInput>;
+        return <TextInput value={value!} onChange={onChange!}></TextInput>;
     }
 
-    // return normal Text
     return <Text color={textColor}>{defaultText}</Text>;
 }

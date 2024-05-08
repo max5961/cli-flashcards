@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import { useInput } from "ink";
 import { Box, Text } from "ink";
@@ -11,6 +11,10 @@ export function QuestionAnswer({
     question: QA;
 }): React.ReactElement {
     const [flipped, setFlipped] = useState<boolean>(false);
+
+    useEffect(() => {
+        setFlipped(false);
+    }, [question]);
 
     useInput((input: string) => {
         if (input === "f") {

@@ -106,7 +106,7 @@ function MCList({
         <Box flexDirection="column" flexGrow={1}>
             {choices.map((choice: string, index: number) => {
                 const choiceMarker = String.fromCharCode(65 + index); // [A-D]
-                const choiceTextContent = choice[choiceMarker];
+                const choiceTextContent = choice;
 
                 // highlight current selected choice
                 let color: string = "white";

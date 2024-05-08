@@ -12,7 +12,9 @@ export type Command =
     | "QUIT"
     | "CLEAR"
     | "DELETE"
-    | "UNDO";
+    | "UNDO"
+    | "GO_TO_TOP"
+    | "GO_TO_BOTTOM";
 
 abstract class KeyBinds {
     protected command: Command | null;
@@ -109,6 +111,12 @@ export class NormalKb extends KeyBinds {
             this.setCommand("ENTER_INSERT");
         }
 
+        // this makes sense for create/edit mode, but not sure about in other
+        // contexts
+        if (this.register === "e") {
+            this.setCommand("ENTER_INSERT");
+        }
+
         if (this.register === "u") {
             this.setCommand("UNDO");
         }
@@ -119,6 +127,14 @@ export class NormalKb extends KeyBinds {
 
         if (this.register === "cc") {
             this.setCommand("CLEAR");
+        }
+
+        if (this.register === "gg") {
+            this.setCommand("GO_TO_TOP");
+        }
+
+        if (this.register === "G") {
+            this.setCommand("GO_TO_BOTTOM");
         }
     }
 
