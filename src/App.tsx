@@ -1,60 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { createContext } from "react";
-import { Box, Text, useApp, useInput } from "ink";
-import { Question, Quiz } from "./types.js";
-import { CurrentPageView } from "./components/create/Pages.js";
-import Read from "./utils/Read.js";
-import useStdoutDimensions from "./hooks/useStdoutDimensions.js";
-import { QuizMode } from "./components/quiz/QuizMode.js";
-import { StartMenu } from "./components/start/StartMenu.js";
-import { ChoosePages } from "./components/choose/ChoosePages.js";
+import { Box, useApp, useInput } from "ink";
+import { Question } from "./types.js";
+import useStdoutDimensions from "./shared/hooks/useStdoutDimensions.js";
+import { QuizMode } from "./Quiz/QuizMode.js";
+import { StartMenu } from "./StartMenu/StartMenu.js";
+import { LoadGate } from "./shared/components/LoadGate.js";
 
-interface NormalContext {
+interface AppContext {
     normal: boolean;
     setNormal: (b: boolean) => void;
+    mode: WhichMode;
+    setMode: (m: WhichMode) => void;
+    questions: Question[] | null;
+    setQuestions: (q: Question[]) => void;
 }
 
-export const NormalContext = createContext<NormalContext | null>(null);
+export const AppContext = createContext<AppContext | null>(null);
 
-export type WhichMode = "QUIZ" | "EDIT" | "START";
+export type WhichMode = "QUIZ" | "CHOOSE_QUIZ" | "EDIT" | "START";
 
 export default function App(): React.ReactElement {
     const [cols, rows] = useStdoutDimensions();
     const [normal, setNormal] = useState<boolean>(true);
     const { exit } = useApp();
     const [mode, setMode] = useState<WhichMode>("START");
-    const [quiz, setQuiz] = useState<Question[] | null>(null);
-    const [quizzes, setQuizzes] = useState<Quiz[] | null>(null);
-
-    async function getQuizzes(): Promise<void> {
-        const initialQuizzes = await Read.getData();
-        setQuizzes(initialQuizzes);
-    }
-
-    function getContent(): React.ReactNode {
-        let content: React.ReactNode;
-        if (mode === "START") {
-            content = <StartMenu setMode={setMode} />;
-        } else if (mode === "QUIZ") {
-            if (!quiz) {
-                content = (
-                    <ChoosePages
-                        setMode={setMode}
-                        setQuiz={setQuiz}
-                        initialQuizzes={quizzes!}
-                    />
-                );
-            } else {
-                content = <QuizMode Quiz={quiz} />;
-            }
-        } else if (mode === "EDIT") {
-            content = <CurrentPageView initialQuizzes={quizzes!} />;
-        } else {
-            throw new Error("Invalid mode");
-        }
-
-        return content;
-    }
+    const [questions, setQuestions] = useState<Question[] | null>(null);
 
     useInput((input) => {
         if (normal && input === "q") {
@@ -62,11 +33,37 @@ export default function App(): React.ReactElement {
         }
     });
 
-    useEffect(() => {
-        getQuizzes();
-    }, []);
+    function getContent(): React.ReactNode {
+        if (mode === "START") {
+            return <StartMenu />;
+        }
+
+        if (mode === "QUIZ" && questions) {
+            return <QuizMode questions={questions} />;
+        }
+
+        if (mode === "CHOOSE_QUIZ") {
+            return <LoadGate.ChooseQuestions />;
+        }
+
+        if (mode === "EDIT") {
+            return <LoadGate.EditQuizzes />;
+        }
+
+        throw new Error("Invalid mode");
+    }
+
     return (
-        <NormalContext.Provider value={{ normal, setNormal }}>
+        <AppContext.Provider
+            value={{
+                normal,
+                setNormal,
+                mode,
+                setMode,
+                questions,
+                setQuestions,
+            }}
+        >
             <Box alignItems="center" justifyContent="center">
                 <Box
                     width={75}
@@ -74,9 +71,9 @@ export default function App(): React.ReactElement {
                     borderStyle="round"
                     padding={2}
                 >
-                    {quizzes ? getContent() : <Text>Loading data...</Text>}
+                    {getContent()}
                 </Box>
             </Box>
-        </NormalContext.Provider>
+        </AppContext.Provider>
     );
 }
