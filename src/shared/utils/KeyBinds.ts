@@ -12,7 +12,6 @@ export type Command =
     | "QUIT"
     | "CLEAR"
     | "DELETE"
-    | "UNDO"
     | "GO_TO_TOP"
     | "GO_TO_BOTTOM";
 
@@ -80,11 +79,11 @@ export class NormalKb extends KeyBinds {
 
     handleStdInput(input: string, key: Key): void {
         this.clearCommand();
-        this.handleInput(input);
+        this.handleInput(input, key);
         this.handleKeyInput(key);
     }
 
-    handleInput(input: string) {
+    handleInput(input: string, key: Key) {
         this.pushRegister(input);
 
         if (this.register === "q") {
@@ -115,10 +114,6 @@ export class NormalKb extends KeyBinds {
         // contexts
         if (this.register === "e") {
             this.setCommand("ENTER_INSERT");
-        }
-
-        if (this.register === "u") {
-            this.setCommand("UNDO");
         }
 
         if (this.register === "dd") {

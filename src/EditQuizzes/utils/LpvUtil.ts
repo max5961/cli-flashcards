@@ -44,10 +44,9 @@ export class LpvUtil {
     }
 
     writeData(copy: PageStack): void {
-        // need to clone again for changes to propagate to the bottom of the stack
-        copy.getShallowClone();
-        Write.writeData(copy);
+        copy.propagateChanges();
         this.setPageStack(copy);
+        Write.writeData(copy);
     }
 
     moveUp(): void {
@@ -82,7 +81,7 @@ export class LpvUtil {
         const top: ListPage = copy.top() as ListPage;
         top.addListItem(this.edit);
         copy.appendNextPage(this.currIndex);
-        copy.getShallowClone();
+        copy.propagateChanges();
         Write.writeData(copy);
         this.setPageStack(copy);
     }

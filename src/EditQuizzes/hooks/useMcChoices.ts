@@ -47,7 +47,7 @@ export function useMcChoices() {
             const dataCopy = QpvUtils.cloneFlexibleQuestion(data);
             dataCopy.choices.splice(toSliceIndex, 1);
             pageStackCopy.top().data = dataCopy;
-            pageStackCopy.getShallowClone();
+            pageStackCopy.propagateChanges();
 
             if (dataCopy.choices.length === 0) {
                 setCurrNode("add");

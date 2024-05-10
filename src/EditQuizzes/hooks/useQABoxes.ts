@@ -63,7 +63,7 @@ export function useQABox() {
             setAnswerInput("");
         }
 
-        if (command === "ENTER_INSERT") {
+        if (command === "ENTER_INSERT" || command === "RETURN_KEY") {
             setQuestionInput(data.q);
             setAnswerInput(data.a);
             setNormal(false);
@@ -77,7 +77,7 @@ export function useQABox() {
 
             const question: Question = QpvUtils.toQuestion(data);
             copy.top().data = question;
-            copy.getShallowClone();
+            copy.propagateChanges();
             Write.writeData(copy);
             setPageStack(copy);
             setNormal(true);

@@ -1,4 +1,12 @@
-import { Quiz, Section, Question, QA, QI, MC } from "../../types.js";
+import {
+    Quiz,
+    Section,
+    Question,
+    QA,
+    QI,
+    MC,
+    FlexibleQuestion,
+} from "../../types.js";
 type Data = Quiz[] | Quiz | Section | Question;
 type ListItems = Quiz[] | Section[] | Question[];
 export type PageType = "QUIZZES" | "QUIZ" | "SECTION" | "QUESTION";
@@ -389,7 +397,8 @@ export class PageStack {
         }
     }
 
-    shallowCloneData(): void {
+    // shallowCloneData(): void {
+    propagateChanges(): void {
         if (!this.head || !this.tail) {
             return;
         }
@@ -423,7 +432,7 @@ export class PageStack {
             throw new Error("PageStack should never be empty");
         }
 
-        this.shallowCloneData();
+        this.propagateChanges();
 
         const initialData: Quiz[] = (this.tail as QuizzesPage).data;
         const pageStackCopy = new PageStack(initialData);

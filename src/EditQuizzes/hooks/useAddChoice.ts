@@ -38,7 +38,7 @@ export function useAddChoice() {
 
             dataCopy.choices.push(edit);
             pageStackCopy.top().data = QpvUtils.toQuestion(dataCopy);
-            pageStackCopy.getShallowClone();
+            pageStackCopy.propagateChanges();
 
             if (dataCopy.choices.length >= 4) {
                 setCurrNode("D");

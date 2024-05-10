@@ -30,7 +30,7 @@ export function useEqt() {
 
         const pageStackCopy = pageStack.getShallowClone();
         pageStackCopy.top().data = QpvUtils.toQuestion(questionCopy);
-        pageStackCopy.getShallowClone();
+        pageStackCopy.propagateChanges();
         Write.writeData(pageStackCopy);
         setPageStack(pageStackCopy);
     }

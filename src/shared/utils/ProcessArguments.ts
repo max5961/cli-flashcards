@@ -2,7 +2,6 @@ import yargs, { Argv } from "yargs";
 import { hideBin } from "yargs/helpers";
 import Read from "./Read.js";
 import { Quiz, Question } from "../../types.js";
-import { execFileSync } from "child_process";
 
 export interface Config {
     postCommand: null | "string";
@@ -13,16 +12,6 @@ export interface Config {
 interface KB {
     [key: string]: string;
 }
-
-const keyBinds = {
-    up: "up-arrow | k",
-    down: "down-arrow | j",
-    left: "left-arrow | h",
-    right: "right-arrow | l",
-    "enter insert": "i",
-    clear: "cc",
-    "delete list item": "dd",
-};
 
 export class Args {
     private argv!: any;
@@ -132,8 +121,8 @@ export class Args {
         return this.config;
     }
 
-    // if no selection is passed to the cli, return null
-    // if selection generates an empty result, it will throw an error during
+    // If no selection is passed to the cli, return null
+    // If selection generates an empty result, it will throw an error during
     // the selection process
     getInitialQuestions(): Question[] | null {
         if (this.questions.length === 0) return null;
@@ -174,7 +163,7 @@ export class Args {
 
     handleListKeyBinds(): void {
         for (const key in this.keyBinds) {
-            console.log(`${key}: ${keyBinds[key]}`);
+            console.log(`${key}: ${this.keyBinds[key]}`);
             console.log();
         }
     }

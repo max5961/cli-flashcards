@@ -64,10 +64,10 @@ export function useQpv() {
             const pageStackCopy = pageStack.getShallowClone();
             const questionCopy = QpvUtils.toQuestion(initialData.current);
             pageStackCopy.top().data = questionCopy;
-            pageStackCopy.getShallowClone();
+            pageStackCopy.propagateChanges();
 
+            setPageStack(pageStackCopy);
             setData(initialData.current);
-
             Write.writeData(pageStackCopy);
         }
     }

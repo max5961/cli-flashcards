@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Question, Quiz, Section } from "../types.js";
 import { ListPage, PageStack, QuizzesPage } from "../shared/utils/PageStack.js";
 import { Window, useWindow } from "../shared/hooks/useWindow.js";
@@ -21,8 +21,14 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
     );
     const { window, currIndex, setCurrIndex } = useWindow(5);
     const { setMode, setQuestions } = useContext(AppContext)!;
+    const [invalidMessage, setInvalidMessage] = useState<string>("");
 
     const page: ListPage = pageStack.top() as ListPage;
+
+    useEffect(() => {
+        // off by one because of the 'merge all' option being at top
+        setCurrIndex(page.lastIndex);
+    }, [pageStack]);
 
     function getMergeAllText(): string {
         if (page.pageType === "QUIZZES") {
@@ -66,7 +72,37 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
         return built;
     }
 
+    function handleSelection(questions: Question[]): void {
+        if (questions.length === 0) {
+            setInvalidMessage("There are no questions in this selection");
+            return;
+        }
+
+        for (const question of questions) {
+            if (question.type !== "mc") continue;
+
+            const validLabels: string[] = [];
+            for (let i = 0; i < question.choices.length; ++i) {
+                validLabels.push(String.fromCharCode(65 + i));
+            }
+
+            if (!validLabels.includes(question.a.toUpperCase())) {
+                setInvalidMessage(
+                    `Multiple Choice question: '${question.q}' has an invalid answer`,
+                );
+                return;
+            }
+        }
+
+        setQuestions(questions);
+        setMode("QUIZ");
+    }
+
     function handleKeyBinds(command: Command | null): void {
+        if (command !== "RETURN_KEY") {
+            setInvalidMessage("");
+        }
+
         if (command === "DELETE_KEY") {
             if (page.pageType === "QUIZZES") {
                 setMode("START");
@@ -96,33 +132,33 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
             if (currIndex === 0) {
                 // load quiz will ALL quizzes
                 if (page.pageType === "QUIZZES") {
-                    const questions: Question[] = [];
-                    for (const quizFile of quizzes) {
-                        for (const section of quizFile.sections) {
-                            for (const question of section.questions) {
-                                questions.push(question);
-                            }
-                        }
-                    }
+                    const questions: Question[] = quizzes.flatMap(
+                        (quizFile) => {
+                            return quizFile.sections.flatMap((section) =>
+                                section.questions.flatMap(
+                                    (question) => question,
+                                ),
+                            );
+                        },
+                    );
 
-                    setQuestions(questions);
-                    setMode("QUIZ");
+                    handleSelection(questions);
                     return;
                 }
 
                 // load quiz with all sections in a quiz
                 if (page.pageType === "QUIZ") {
                     // need to get a quiz with all sections in a given quiz
-                    const questions: Question[] = [];
+                    // const questions: Question[] = [];
                     const sections: Section[] = page.listItems as Section[];
-                    for (const section of sections) {
-                        for (const question of section.questions) {
-                            questions.push(question);
-                        }
-                    }
-
-                    setQuestions(questions);
-                    setMode("QUIZ");
+                    const questions: Question[] = sections.flatMap(
+                        (section) => {
+                            return section.questions.flatMap(
+                                (question) => question,
+                            );
+                        },
+                    );
+                    handleSelection(questions);
                     return;
                 }
 
@@ -139,16 +175,16 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
 
             if (page.pageType === "QUIZ") {
                 // need to get a quiz with the given section in the given quiz
-                const questions: Question[] = [];
                 const section: Section = page.listItems[
                     currIndex - 1
                 ] as Section;
 
-                for (const question of section.questions) {
-                    questions.push(question);
-                }
-                setQuestions(questions);
-                setMode("QUIZ");
+                const questions: Question[] = section.questions.map(
+                    (question) => question,
+                );
+
+                handleSelection(questions);
+                return;
             }
         }
     }
@@ -157,7 +193,15 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
 
     return (
         <>
-            <TitleBox title={page.title}></TitleBox>
+            <TitleBox title={page.title}>
+                {invalidMessage === "" ? (
+                    <></>
+                ) : (
+                    <Box alignSelf="flex-end">
+                        <Text color="red">{invalidMessage}</Text>
+                    </Box>
+                )}
+            </TitleBox>
             <HorizontalLine />
             <Window
                 items={mapItems(page.listItems!)}
