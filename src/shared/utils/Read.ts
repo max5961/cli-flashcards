@@ -4,13 +4,13 @@ import os from "os";
 import fs from "fs/promises";
 
 export default class Read {
+    static getDir(): string {
+        return path.join(os.homedir(), ".local", "share", "flashcards");
+    }
+
     static async getData(): Promise<Quiz[]> {
-        const dir: string = path.join(
-            os.homedir(),
-            ".local",
-            "share",
-            "flashcards",
-        );
+        const dir: string = Read.getDir();
+
         const files: string[] = await fs.readdir(dir);
 
         const quizzes: Quiz[] = [];
@@ -24,6 +24,20 @@ export default class Read {
         }
 
         return quizzes;
+    }
+
+    static async getDataFromFile(filePath: string): Promise<string> {
+        return fs
+            .readFile(filePath, "utf-8")
+            .catch((err) => {
+                const dir = Read.getDir();
+                const joinedFilePath = path.join(dir, filePath);
+                return fs.readFile(joinedFilePath, "utf-8");
+            })
+            .catch((err) => {
+                console.log(`file '${filePath}' does not exist`);
+                process.exit();
+            });
     }
 
     static validateQuizObject(quiz: Quiz): void {

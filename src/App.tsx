@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createContext } from "react";
 import { Box, useApp, useInput } from "ink";
 import { Question } from "./types.js";
@@ -6,6 +6,8 @@ import useStdoutDimensions from "./shared/hooks/useStdoutDimensions.js";
 import { QuizMode } from "./Quiz/QuizMode.js";
 import { StartMenu } from "./StartMenu/StartMenu.js";
 import { LoadGate } from "./shared/components/LoadGate.js";
+import { Config } from "./shared/utils/ProcessArguments.js";
+import { execFile, execFileSync, spawn } from "child_process";
 
 interface AppContext {
     normal: boolean;
@@ -20,12 +22,29 @@ export const AppContext = createContext<AppContext | null>(null);
 
 export type WhichMode = "QUIZ" | "CHOOSE_QUIZ" | "EDIT" | "START";
 
-export default function App(): React.ReactElement {
-    const [cols, rows] = useStdoutDimensions();
+// initialQuestions generated from optional CLI arguments
+interface AppProps {
+    initialQuestions: Question[] | null;
+    config: Config;
+}
+
+export default function App({
+    initialQuestions,
+    config,
+}: AppProps): React.ReactElement {
     const [normal, setNormal] = useState<boolean>(true);
     const { exit } = useApp();
     const [mode, setMode] = useState<WhichMode>("START");
-    const [questions, setQuestions] = useState<Question[] | null>(null);
+    const [questions, setQuestions] = useState<Question[] | null>(
+        initialQuestions,
+    );
+
+    // if the cli generates a list of questions, enter quiz mode right away
+    useEffect(() => {
+        if (questions) {
+            setMode("QUIZ");
+        }
+    }, [questions]);
 
     useInput((input) => {
         if (normal && input === "q") {
@@ -64,7 +83,7 @@ export default function App(): React.ReactElement {
                 setQuestions,
             }}
         >
-            <Box alignItems="center" justifyContent="center">
+            <MainContainer config={config}>
                 <Box
                     width={75}
                     flexDirection="column"
@@ -73,7 +92,36 @@ export default function App(): React.ReactElement {
                 >
                     {getContent()}
                 </Box>
-            </Box>
+            </MainContainer>
         </AppContext.Provider>
+    );
+}
+
+interface MainContainerProps {
+    config: Config;
+    children: React.ReactNode;
+}
+function MainContainer({
+    config,
+    children,
+}: MainContainerProps): React.ReactElement {
+    const [cols, rows] = useStdoutDimensions();
+    if (config.fullscreen) {
+        return (
+            <Box
+                alignItems="center"
+                justifyContent="center"
+                height={rows}
+                width={cols}
+            >
+                {children}
+            </Box>
+        );
+    }
+
+    return (
+        <Box alignItems="center" justifyContent="center">
+            {children}
+        </Box>
     );
 }

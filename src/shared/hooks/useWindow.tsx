@@ -124,7 +124,7 @@ export function Window({
                     --end;
                     modified = true;
                 }
-                while (start < currIndex && end < items.length - 1) {
+                while (start < currIndex && end < items.length) {
                     ++start;
                     ++end;
                     modified = true;

@@ -21,9 +21,9 @@ badd +1 ~/repos/flashcards/src/Components/createMode/useWindow.tsx
 badd +1 src/Components/createMode/useQuestionNav.ts
 badd +21 ~/repos/flashcards/src/Components/createMode/QuestionNavUtils.ts
 badd +1 src/Components/createMode/QuestionNavUtil.ts
-badd +1 package.json
+badd +7 package.json
 badd +32 src/hooks/useLpv.ts
-badd +13 ~/repos/flashcards/src/App.tsx
+badd +48 ~/repos/flashcards/src/App.tsx
 badd +25 ~/repos/flashcards/src/hooks/useNav.ts
 badd +1 ~/repos/flashcards/src/hooks/useStdoutDimensions.ts
 badd +91 ~/repos/flashcards/src/hooks/useWindow.tsx
@@ -38,48 +38,48 @@ badd +19 Session.vim
 badd +36 ~/repos/flashcards/src/hooks/useMcChoices.ts
 badd +1 ~/repos/flashcards/src/utils/useMcText.ts
 badd +1 src/types.ts
-badd +38 ~/repos/flashcards/src/StartMenu/StartMenu.tsx
-badd +0 ~/repos/flashcards/src/old-utils/PageStack.ts
-badd +0 ~/repos/flashcards/src/old-utils/KeyBinds.ts
-badd +0 ~/repos/flashcards/src/old-utils/LpvUtil.ts
-badd +0 ~/repos/flashcards/src/old-utils/QpvUtils.ts
-badd +0 ~/repos/flashcards/src/old-utils/createList.tsx
-badd +0 ~/repos/flashcards/src/old-utils/Read.ts
+badd +36 ~/repos/flashcards/src/StartMenu/StartMenu.tsx
+badd +1 ~/repos/flashcards/src/old-utils/PageStack.ts
+badd +1 ~/repos/flashcards/src/old-utils/KeyBinds.ts
+badd +1 ~/repos/flashcards/src/old-utils/LpvUtil.ts
+badd +1 ~/repos/flashcards/src/old-utils/QpvUtils.ts
+badd +1 ~/repos/flashcards/src/old-utils/createList.tsx
+badd +1 ~/repos/flashcards/src/old-utils/Read.ts
 badd +11 ~/repos/flashcards/src/shared/hooks/useKeyBinds.ts
 badd +1 src/components/choose/ChoosePages.tsx
 badd +1 src/utils/Read.ts
 badd +3 ~/repos/flashcards/src/shared/hooks/useNav.ts
 badd +1 ~/repos/flashcards/src/shared/utils/Nav.ts
 badd +6 ~/repos/flashcards/src/shared/utils/Write.ts
-badd +1 ~/repos/flashcards/src/shared/utils/Read.ts
-badd +1 ~/repos/flashcards/src/shared/utils/ProcessArguments.ts
+badd +40 ~/repos/flashcards/src/shared/utils/Read.ts
+badd +255 ~/repos/flashcards/src/shared/utils/ProcessArguments.ts
 badd +1 ~/repos/flashcards/src/shared/utils/PageStack.ts
 badd +1 ~/repos/flashcards/src/shared/utils/PageStack.spec.ts
 badd +1 ~/repos/flashcards/src/shared/utils/KeyBinds.ts
 badd +12 ~/repos/flashcards/src/shared/hooks/useLoadData.ts
-badd +0 ~/repos/flashcards/src/EditQuizzess/Pages.tsx
-badd +0 ~/repos/flashcards/src/EditQuizzess/hooks/useAddChoice.ts
-badd +0 ~/repos/flashcards/src/EditQuizzess/hooks/useEqt.ts
-badd +0 ~/repos/flashcards/src/EditQuizzess/hooks/useLpv.ts
-badd +0 ~/repos/flashcards/src/EditQuizzess/hooks/useMcChoices.ts
-badd +0 ~/repos/flashcards/src/EditQuizzess/hooks/useMcText.ts
-badd +0 ~/repos/flashcards/src/EditQuizzess/hooks/useQABoxes.ts
-badd +0 ~/repos/flashcards/src/EditQuizzess/hooks/useQpv.ts
-badd +0 ~/repos/flashcards/src/EditQuizzess/utils/LpvUtil.ts
-badd +0 ~/repos/flashcards/src/EditQuizzess/utils/QpvUtils.ts
+badd +1 ~/repos/flashcards/src/EditQuizzess/Pages.tsx
+badd +1 ~/repos/flashcards/src/EditQuizzess/hooks/useAddChoice.ts
+badd +1 ~/repos/flashcards/src/EditQuizzess/hooks/useEqt.ts
+badd +1 ~/repos/flashcards/src/EditQuizzess/hooks/useLpv.ts
+badd +1 ~/repos/flashcards/src/EditQuizzess/hooks/useMcChoices.ts
+badd +1 ~/repos/flashcards/src/EditQuizzess/hooks/useMcText.ts
+badd +1 ~/repos/flashcards/src/EditQuizzess/hooks/useQABoxes.ts
+badd +1 ~/repos/flashcards/src/EditQuizzess/hooks/useQpv.ts
+badd +1 ~/repos/flashcards/src/EditQuizzess/utils/LpvUtil.ts
+badd +1 ~/repos/flashcards/src/EditQuizzess/utils/QpvUtils.ts
 badd +332 ~/repos/flashcards/src/EditQuizzes/EditQuizzesView.tsx
-badd +0 ~/repos/flashcards/src/Quiz/QuizMode.tsx
-badd +0 ~/repos/flashcards/src/Quiz/FooterKeybinds.tsx
-badd +0 ~/repos/flashcards/src/Quiz/MultipleChoice.tsx
-badd +0 ~/repos/flashcards/src/Quiz/QuestionAnswer.tsx
-badd +0 ~/repos/flashcards/src/Quiz/QuestionInput.tsx
+badd +1 ~/repos/flashcards/src/Quiz/QuizMode.tsx
+badd +1 ~/repos/flashcards/src/Quiz/FooterKeybinds.tsx
+badd +1 ~/repos/flashcards/src/Quiz/MultipleChoice.tsx
+badd +1 ~/repos/flashcards/src/Quiz/QuestionAnswer.tsx
+badd +1 ~/repos/flashcards/src/Quiz/QuestionInput.tsx
 badd +5 ~/repos/flashcards/src/shared/components/LoadingMessage.tsx
 badd +15 ~/repos/flashcards/src/shared/components/LoadGate.tsx
 badd +1 src/EditQuizzesView/EditQuizzesView.tsx
-badd +0 ~/repos/flashcards/src/ChooseQuestions/ChoosePages.tsx
+badd +1 ~/repos/flashcards/src/ChooseQuestions/ChoosePages.tsx
 badd +1 ~/repos/flashcards/src/ChooseQuestions/hooks/useChoosePages.ts
-badd +0 ~/repos/flashcards/src/ChooseQuestionsView/ChooseQuizView.tsx
-badd +174 ~/repos/flashcards/src/ChooseQuestions/ChooseQuestionsView.tsx
+badd +1 ~/repos/flashcards/src/ChooseQuestionsView/ChooseQuizView.tsx
+badd +1 ~/repos/flashcards/src/ChooseQuestions/ChooseQuestionsView.tsx
 badd +1 ~/repos/flashcards/src/shared/components/ShowMode.tsx
 badd +1 ~/repos/flashcards/src/EditQuizzes/hooks/useQpv.ts
 badd +3 ~/repos/flashcards/src/EditQuizzes/hooks/useQABoxes.ts
@@ -88,10 +88,15 @@ badd +3 ~/repos/flashcards/src/EditQuizzes/hooks/useMcChoices.ts
 badd +5 ~/repos/flashcards/src/EditQuizzes/hooks/useLpv.ts
 badd +2 ~/repos/flashcards/src/EditQuizzes/hooks/useEqt.ts
 badd +3 ~/repos/flashcards/src/EditQuizzes/hooks/useAddChoice.ts
-badd +24 ~/repos/flashcards/src/shared/components/Icons.tsx
+badd +19 ~/repos/flashcards/src/shared/components/Icons.tsx
+badd +33 ~/repos/flashcards/src/root.tsx
+badd +2 ~/repos/flashcards/node_modules/yargs/yargs
+badd +1 ~/repos/flashcards/node_modules/yargs/yargs.mjs
+badd +1 ~/repos/flashcards/node_modules/@types/yargs/yargs.d.ts
+badd +14 src/shared/hooks/useWindow.tsx
 argglobal
 %argdel
-edit ~/repos/flashcards/src/App.tsx
+edit ~/repos/flashcards/src/shared/utils/ProcessArguments.ts
 let s:save_splitbelow = &splitbelow
 let s:save_splitright = &splitright
 set splitbelow splitright
@@ -108,9 +113,10 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-wincmd =
+exe '1resize ' . ((&lines * 41 + 27) / 54)
+exe '2resize ' . ((&lines * 10 + 27) / 54)
 argglobal
-balt ~/repos/flashcards/src/ChooseQuestions/ChooseQuestionsView.tsx
+balt ~/repos/flashcards/src/shared/utils/Read.ts
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -121,19 +127,19 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 13 - ((9 * winheight(0) + 20) / 41)
+let s:l = 255 - ((32 * winheight(0) + 20) / 41)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 13
-normal! 09|
+keepjumps 255
+normal! 0
 wincmd w
 argglobal
 if bufexists(fnamemodify("term://~/repos/flashcards//58422:/usr/bin/zsh;\#toggleterm\#1", ":p")) | buffer term://~/repos/flashcards//58422:/usr/bin/zsh;\#toggleterm\#1 | else | edit term://~/repos/flashcards//58422:/usr/bin/zsh;\#toggleterm\#1 | endif
 if &buftype ==# 'terminal'
   silent file term://~/repos/flashcards//58422:/usr/bin/zsh;\#toggleterm\#1
 endif
-balt ~/repos/flashcards/src/App.tsx
+balt ~/repos/flashcards/src/shared/utils/ProcessArguments.ts
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -150,7 +156,8 @@ keepjumps 1
 normal! 0
 wincmd w
 2wincmd w
-wincmd =
+exe '1resize ' . ((&lines * 41 + 27) / 54)
+exe '2resize ' . ((&lines * 10 + 27) / 54)
 tabnext 1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
   silent exe 'bwipe ' . s:wipebuf
