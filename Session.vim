@@ -53,9 +53,9 @@ badd +1 ~/repos/flashcards/src/shared/utils/Nav.ts
 badd +6 ~/repos/flashcards/src/shared/utils/Write.ts
 badd +40 ~/repos/flashcards/src/shared/utils/Read.ts
 badd +5 ~/repos/flashcards/src/shared/utils/ProcessArguments.ts
-badd +400 ~/repos/flashcards/src/shared/utils/PageStack.ts
+badd +461 ~/repos/flashcards/src/shared/utils/PageStack.ts
 badd +1 ~/repos/flashcards/src/shared/utils/PageStack.spec.ts
-badd +15 ~/repos/flashcards/src/shared/utils/KeyBinds.ts
+badd +121 ~/repos/flashcards/src/shared/utils/KeyBinds.ts
 badd +12 ~/repos/flashcards/src/shared/hooks/useLoadData.ts
 badd +1 ~/repos/flashcards/src/EditQuizzess/Pages.tsx
 badd +1 ~/repos/flashcards/src/EditQuizzess/hooks/useAddChoice.ts
@@ -67,7 +67,7 @@ badd +1 ~/repos/flashcards/src/EditQuizzess/hooks/useQABoxes.ts
 badd +1 ~/repos/flashcards/src/EditQuizzess/hooks/useQpv.ts
 badd +1 ~/repos/flashcards/src/EditQuizzess/utils/LpvUtil.ts
 badd +1 ~/repos/flashcards/src/EditQuizzess/utils/QpvUtils.ts
-badd +11 ~/repos/flashcards/src/EditQuizzes/EditQuizzesView.tsx
+badd +79 ~/repos/flashcards/src/EditQuizzes/EditQuizzesView.tsx
 badd +1 ~/repos/flashcards/src/Quiz/QuizMode.tsx
 badd +1 ~/repos/flashcards/src/Quiz/FooterKeybinds.tsx
 badd +1 ~/repos/flashcards/src/Quiz/MultipleChoice.tsx
@@ -85,7 +85,7 @@ badd +64 ~/repos/flashcards/src/EditQuizzes/hooks/useQpv.ts
 badd +80 ~/repos/flashcards/src/EditQuizzes/hooks/useQABoxes.ts
 badd +3 ~/repos/flashcards/src/EditQuizzes/hooks/useMcText.ts
 badd +1 ~/repos/flashcards/src/EditQuizzes/hooks/useMcChoices.ts
-badd +12 ~/repos/flashcards/src/EditQuizzes/hooks/useLpv.ts
+badd +65 ~/repos/flashcards/src/EditQuizzes/hooks/useLpv.ts
 badd +33 ~/repos/flashcards/src/EditQuizzes/hooks/useEqt.ts
 badd +41 ~/repos/flashcards/src/EditQuizzes/hooks/useAddChoice.ts
 badd +19 ~/repos/flashcards/src/shared/components/Icons.tsx
@@ -95,11 +95,12 @@ badd +1 ~/repos/flashcards/node_modules/yargs/yargs.mjs
 badd +1 ~/repos/flashcards/node_modules/@types/yargs/yargs.d.ts
 badd +14 src/shared/hooks/useWindow.tsx
 badd +17 src/shared/components/TitleBox.tsx
-badd +84 src/EditQuizzes/utils/LpvUtil.ts
+badd +53 src/EditQuizzes/utils/LpvUtil.ts
 badd +3 src/EditQuizzes/utils/QpvUtils.ts
+badd +31 ~/repos/flashcards/src/shared/hooks/useHistory.ts
 argglobal
 %argdel
-edit ~/repos/flashcards/src/EditQuizzes/hooks/useMcChoices.ts
+edit ~/repos/flashcards/src/shared/hooks/useKeyBinds.ts
 let s:save_splitbelow = &splitbelow
 let s:save_splitright = &splitright
 set splitbelow splitright
@@ -118,7 +119,7 @@ set winminwidth=0
 set winwidth=1
 wincmd =
 argglobal
-balt ~/repos/flashcards/src/EditQuizzes/hooks/useAddChoice.ts
+balt ~/repos/flashcards/src/shared/hooks/useHistory.ts
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}
@@ -129,12 +130,12 @@ setlocal fdn=20
 setlocal fen
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 1 - ((0 * winheight(0) + 20) / 41)
+let s:l = 11 - ((10 * winheight(0) + 20) / 41)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1
-normal! 031|
+keepjumps 11
+normal! 0
 wincmd w
 argglobal
 if bufexists(fnamemodify("term://~/repos/flashcards//58422:/usr/bin/zsh;\#toggleterm\#1", ":p")) | buffer term://~/repos/flashcards//58422:/usr/bin/zsh;\#toggleterm\#1 | else | edit term://~/repos/flashcards//58422:/usr/bin/zsh;\#toggleterm\#1 | endif
@@ -150,14 +151,13 @@ setlocal fdl=0
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 1 - ((0 * winheight(0) + 5) / 10)
+let s:l = 158 - ((8 * winheight(0) + 5) / 10)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1
-normal! 0
+keepjumps 158
+normal! 034|
 wincmd w
-2wincmd w
 wincmd =
 tabnext 1
 if exists('s:wipebuf') && len(win_findbuf(s:wipebuf)) == 0 && getbufvar(s:wipebuf, '&buftype') isnot# 'terminal'
