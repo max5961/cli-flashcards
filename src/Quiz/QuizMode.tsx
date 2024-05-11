@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useReducer } from "react";
 import { useState } from "react";
 import { useInput } from "ink";
 import { Box } from "ink";
@@ -9,6 +9,38 @@ import { QuestionAnswer } from "./QuestionAnswer.js";
 import { FooterKeybinds } from "./FooterKeybinds.js";
 import { QuestionInput } from "./QuestionInput.js";
 import { AppContext } from "../App.js";
+import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
+import { Command } from "../shared/utils/KeyBinds.js";
+
+interface QuestionState {
+    question: MC | QA | QI;
+    index: number;
+    questions: (MC | QA | QI)[];
+}
+
+type QuestionActions = "PREV" | "NEXT";
+
+function questionReducer(
+    questionState: QuestionState,
+    action: { type: QuestionActions },
+): QuestionState {
+    const copy: QuestionState = Object.assign({}, questionState);
+
+    switch (action.type) {
+        case "PREV":
+            if (copy.index <= 0) break;
+            copy.index = copy.index - 1;
+            copy.question = copy.questions[copy.index];
+            break;
+        case "NEXT":
+            if (copy.index >= copy.questions.length - 1) break;
+            copy.index = copy.index + 1;
+            copy.question = copy.questions[copy.index];
+            break;
+    }
+
+    return copy;
+}
 
 export function QuizMode({
     questions,
@@ -16,47 +48,37 @@ export function QuizMode({
     questions: Question[];
 }): React.ReactElement {
     const { normal, setNormal } = useContext(AppContext)!;
-    const [currIndex, setCurrIndex] = useState<number>(0);
-    const [currQuestion, setCurrQuestion] = useState<MC | QA | QI>(
-        questions[0],
-    );
-
-    useInput((input, key) => {
-        // relevant to Question/Input questions
-        if (!normal) {
-            return;
-        }
-
-        if (input === "n" || input === "l" || key.rightArrow) {
-            if (currIndex === questions.length - 1) {
-                return;
-            } else {
-                setCurrQuestion(questions[currIndex + 1]);
-                setCurrIndex(currIndex + 1);
-            }
-        }
-
-        if (input === "b" || input === "h" || key.leftArrow) {
-            if (currIndex === 0) {
-                return;
-            } else {
-                setCurrQuestion(questions[currIndex - 1]);
-                setCurrIndex(currIndex - 1);
-            }
-        }
+    const [questionState, questionDispatch] = useReducer(questionReducer, {
+        index: 0,
+        question: questions[0],
+        questions: questions,
     });
 
+    const question: Question = questionState.question;
+
+    function handleKeyBinds(command: Command | null): void {
+        if (command === "LEFT") {
+            questionDispatch({ type: "PREV" });
+        }
+
+        if (command === "RIGHT") {
+            questionDispatch({ type: "NEXT" });
+        }
+    }
+
+    useKeyBinds(handleKeyBinds, normal);
+
     function currentCard(): React.ReactElement {
-        if (currQuestion.type === "mc") {
-            return <MultipleChoice question={currQuestion} />;
+        if (question.type === "mc") {
+            return <MultipleChoice question={question} />;
         }
-        if (currQuestion.type === "qa") {
-            return <QuestionAnswer question={currQuestion} />;
+        if (question.type === "qa") {
+            return <QuestionAnswer question={question} />;
         }
-        if (currQuestion.type === "qi") {
+        if (question.type === "qi") {
             return (
                 <QuestionInput
-                    question={currQuestion}
+                    question={question}
                     normal={normal}
                     setNormal={setNormal}
                 />
@@ -71,7 +93,10 @@ export function QuizMode({
             alignItems="center"
             justifyContent="space-between"
         >
-            <Header currIndex={currIndex} QuizLength={questions.length} />
+            <Header
+                currIndex={questionState.index + 1}
+                QuizLength={questions.length}
+            />
             {currentCard()}
             <FooterKeybinds />
         </Box>

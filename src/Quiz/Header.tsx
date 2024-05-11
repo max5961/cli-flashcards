@@ -10,7 +10,7 @@ export function Header({
 }): React.ReactElement {
     return (
         <Box width="100%" borderStyle="round" justifyContent="center">
-            <Text>{`Question: ${currIndex + 1}/${QuizLength}`}</Text>
+            <Text>{`Question: ${currIndex}/${QuizLength}`}</Text>
         </Box>
     );
 }
