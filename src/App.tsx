@@ -7,7 +7,8 @@ import { QuizMode } from "./Quiz/QuizMode.js";
 import { StartMenu } from "./StartMenu/StartMenu.js";
 import { LoadGate } from "./shared/components/LoadGate.js";
 import { Config } from "./shared/utils/ProcessArguments.js";
-import { execFile, execFileSync, spawn } from "child_process";
+import { Command } from "./shared/utils/KeyBinds.js";
+import { useKeyBinds } from "./shared/hooks/useKeyBinds.js";
 
 interface AppContext {
     normal: boolean;
@@ -71,6 +72,22 @@ export default function App({
 
         throw new Error("Invalid mode");
     }
+
+    function handleKeyBinds(command: Command | null): void {
+        if (command === "TO_START_MENU") {
+            setMode("START");
+        }
+
+        if (command === "TO_CHOOSE_MENU") {
+            setMode("CHOOSE_QUIZ");
+        }
+
+        if (command === "TO_EDIT_MENU") {
+            setMode("EDIT");
+        }
+    }
+
+    useKeyBinds(handleKeyBinds, normal);
 
     return (
         <AppContext.Provider

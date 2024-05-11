@@ -5,10 +5,12 @@ import { Command } from "../../shared/utils/KeyBinds.js";
 import { McChoice } from "../../types.js";
 import { QpvUtils } from "../utils/QpvUtils.js";
 import { Write } from "../../shared/utils/Write.js";
+import { AppContext } from "../../App.js";
 
 export function useMcChoices() {
     const { data, setData, currNode, setCurrNode } = useContext(QpvContext)!;
     const { pageStack, setPageStack } = useContext(PageContext)!;
+    const { normal } = useContext(AppContext)!;
 
     const possibleChoices: McChoice[] = ["A", "B", "C", "D"];
 
@@ -60,7 +62,7 @@ export function useMcChoices() {
         }
     }
 
-    useKeyBinds(handleKeyBinds);
+    useKeyBinds(handleKeyBinds, normal);
 
     return { data, currNode };
 }

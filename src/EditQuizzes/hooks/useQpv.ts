@@ -72,7 +72,7 @@ export function useQpv() {
         }
     }
 
-    useKeyBinds(handleKeyBinds);
+    useKeyBinds(handleKeyBinds, normal);
 
     return {
         normal,

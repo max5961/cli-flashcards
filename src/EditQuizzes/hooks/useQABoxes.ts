@@ -89,7 +89,7 @@ export function useQABox() {
     const answerBorderColor: string = getAnswerBorderColor();
     const answerAcceptsInput: boolean = acceptsInput("answer");
 
-    useKeyBinds(handleKeyBinds);
+    useKeyBinds(handleKeyBinds, normal);
 
     return {
         questionBorderColor,

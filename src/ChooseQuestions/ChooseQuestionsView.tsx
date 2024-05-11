@@ -20,7 +20,7 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
         new PageStack(quizzes),
     );
     const { window, currIndex, setCurrIndex } = useWindow(5);
-    const { setMode, setQuestions } = useContext(AppContext)!;
+    const { setMode, setQuestions, normal } = useContext(AppContext)!;
     const [invalidMessage, setInvalidMessage] = useState<string>("");
 
     const page: ListPage = pageStack.top() as ListPage;
@@ -189,7 +189,7 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
         }
     }
 
-    useKeyBinds(handleKeyBinds);
+    useKeyBinds(handleKeyBinds, normal);
 
     return (
         <>

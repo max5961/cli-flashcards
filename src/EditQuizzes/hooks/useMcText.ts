@@ -56,7 +56,7 @@ export function useMcText(index: number) {
         }
     }
 
-    useKeyBinds(handleKeyBinds);
+    useKeyBinds(handleKeyBinds, normal);
 
     return { acceptsInput, edit, setEdit, defaultText };
 }

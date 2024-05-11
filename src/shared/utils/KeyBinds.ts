@@ -13,7 +13,10 @@ export type Command =
     | "CLEAR"
     | "DELETE"
     | "GO_TO_TOP"
-    | "GO_TO_BOTTOM";
+    | "GO_TO_BOTTOM"
+    | "TO_START_MENU"
+    | "TO_CHOOSE_MENU"
+    | "TO_EDIT_MENU";
 
 abstract class KeyBinds {
     protected command: Command | null;
@@ -108,6 +111,18 @@ export class NormalKb extends KeyBinds {
 
         if (this.register === "i") {
             this.setCommand("ENTER_INSERT");
+        }
+
+        if (this.register === "1") {
+            this.setCommand("TO_START_MENU");
+        }
+
+        if (this.register === "2") {
+            this.setCommand("TO_CHOOSE_MENU");
+        }
+
+        if (this.register === "3") {
+            this.setCommand("TO_EDIT_MENU");
         }
 
         // this makes sense for create/edit mode, but not sure about in other

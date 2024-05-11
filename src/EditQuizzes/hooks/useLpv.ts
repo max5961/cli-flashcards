@@ -79,7 +79,7 @@ export function useLpv() {
         }
     }
 
-    useKeyBinds(handleKeyBinds);
+    useKeyBinds(handleKeyBinds, normal);
 
     return { page, edit, setEdit, window, currIndex, normal };
 }

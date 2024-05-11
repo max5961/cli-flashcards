@@ -5,9 +5,10 @@ import { AppContext } from "../../App.js";
 
 type HandleKeyBinds = (command: Command | null) => void;
 
-export function useKeyBinds(handleKeyBinds: HandleKeyBinds): void {
-    const { normal } = useContext(AppContext)!;
-
+export function useKeyBinds(
+    handleKeyBinds: HandleKeyBinds,
+    normal: boolean,
+): void {
     const normalKb = useRef<NormalKb>(new NormalKb());
     const insertKb = useRef<InsertKb>(new InsertKb());
 

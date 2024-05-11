@@ -53,7 +53,7 @@ export function useAddChoice() {
         }
     }
 
-    useKeyBinds(handleKeyBinds);
+    useKeyBinds(handleKeyBinds, normal);
 
     return { isFocus, acceptsInput, edit, setEdit };
 }

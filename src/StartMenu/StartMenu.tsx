@@ -10,7 +10,7 @@ import { Icon } from "../shared/components/Icons.js";
 
 export function StartMenu(): React.ReactNode {
     const [currIndex, setCurrIndex] = useState<number>(0);
-    const { setMode } = useContext(AppContext)!;
+    const { setMode, normal } = useContext(AppContext)!;
 
     function handleKeyBinds(command: Command | null): void {
         if (command === "UP") {
@@ -27,7 +27,7 @@ export function StartMenu(): React.ReactNode {
         }
     }
 
-    useKeyBinds(handleKeyBinds);
+    useKeyBinds(handleKeyBinds, normal);
 
     return (
         <>

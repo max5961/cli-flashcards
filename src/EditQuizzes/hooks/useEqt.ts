@@ -5,10 +5,12 @@ import { QpvUtils } from "../utils/QpvUtils.js";
 import { useKeyBinds } from "../../shared/hooks/useKeyBinds.js";
 import { FlexibleQuestion } from "../../types.js";
 import { Write } from "../../shared/utils/Write.js";
+import { AppContext } from "../../App.js";
 
 export function useEqt() {
     const { currNode, data, setData, pageStack, setPageStack } =
         useContext(QpvContext)!;
+    const { normal } = useContext(AppContext)!;
 
     function isWithin(): boolean {
         return currNode === "qa" || currNode === "qi" || currNode === "mc";
@@ -35,7 +37,7 @@ export function useEqt() {
         setPageStack(pageStackCopy);
     }
 
-    useKeyBinds(handleKeyBinds);
+    useKeyBinds(handleKeyBinds, normal);
 
     return isWithin();
 }
