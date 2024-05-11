@@ -106,6 +106,7 @@ export default function App({
                     flexDirection="column"
                     borderStyle="round"
                     padding={2}
+                    paddingTop={1}
                 >
                     {getContent()}
                 </Box>

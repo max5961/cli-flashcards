@@ -193,7 +193,7 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
 
     return (
         <>
-            <TitleBox title={page.title}>
+            <TitleBox title={page.title} mode="CHOOSE_QUIZ">
                 {invalidMessage === "" ? (
                     <></>
                 ) : (

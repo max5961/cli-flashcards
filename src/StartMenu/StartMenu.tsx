@@ -31,7 +31,7 @@ export function StartMenu(): React.ReactNode {
 
     return (
         <>
-            <TitleBox title="Menu" />
+            <TitleBox title="Start Menu" mode="START" />
             <HorizontalLine />
             <FocusableBox isFocus={currIndex === 0}>
                 <Icon type="QUIZ" />

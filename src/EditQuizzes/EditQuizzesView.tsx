@@ -94,7 +94,7 @@ function ListPageView(): React.ReactNode {
 
     return (
         <>
-            <TitleBox title={page.title}>
+            <TitleBox title={page.title} mode="EDIT">
                 <ShowMode normal={normal} />
             </TitleBox>
             <HorizontalLine />
@@ -148,7 +148,7 @@ function QuestionPageView(): React.ReactNode {
                     setPageStack,
                 }}
             >
-                <TitleBox title={"Edit Question"}>
+                <TitleBox title={"Edit Question"} mode="EDIT">
                     <ShowMode normal={normal} />
                 </TitleBox>
                 <HorizontalLine />
