@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createContext } from "react";
-import { Box, useApp, useInput } from "ink";
+import { Box, Text, useApp, useInput } from "ink";
 import { Question } from "./types.js";
 import useStdoutDimensions from "./shared/hooks/useStdoutDimensions.js";
 import { QuizMode } from "./Quiz/QuizMode.js";
@@ -9,6 +9,7 @@ import { LoadGate } from "./shared/components/LoadGate.js";
 import { Config } from "./shared/utils/ProcessArguments.js";
 import { Command } from "./shared/utils/KeyBinds.js";
 import { useKeyBinds } from "./shared/hooks/useKeyBinds.js";
+import { HorizontalLine } from "./shared/components/Lines.js";
 
 interface AppContext {
     normal: boolean;
@@ -87,6 +88,14 @@ export default function App({
         }
     }
 
+    let modeDesc: string = "";
+    if (mode === "EDIT") {
+        modeDesc = "Edit Mode";
+    }
+    if (mode === "CHOOSE_QUIZ") {
+        modeDesc = "Selection Mode";
+    }
+
     useKeyBinds(handleKeyBinds, normal);
 
     return (
@@ -109,6 +118,10 @@ export default function App({
                     paddingTop={1}
                 >
                     {getContent()}
+                    {modeDesc === "" ? <></> : <HorizontalLine marginTop={1} />}
+                    <Box alignSelf="flex-start">
+                        <Text dimColor>{modeDesc}</Text>
+                    </Box>
                 </Box>
             </MainContainer>
         </AppContext.Provider>

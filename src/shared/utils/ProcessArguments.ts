@@ -90,6 +90,7 @@ export class Args {
             right: "right-arrow | l",
             "enter insert": "i",
             clear: "cc",
+            "shuffle questions": "rr",
             "delete list item": "dd",
         };
     }

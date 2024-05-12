@@ -94,10 +94,9 @@ function ListPageView(): React.ReactNode {
 
     return (
         <>
-            <TitleBox title={page.title} mode="EDIT">
+            <TitleBox title={page.title}>
                 <ShowMode normal={normal} />
             </TitleBox>
-            <HorizontalLine />
             <Window
                 items={mapItems(page.listItems!)}
                 window={window}
@@ -148,10 +147,9 @@ function QuestionPageView(): React.ReactNode {
                     setPageStack,
                 }}
             >
-                <TitleBox title={"Edit Question"} mode="EDIT">
+                <TitleBox title={"Edit Question"}>
                     <ShowMode normal={normal} />
                 </TitleBox>
-                <HorizontalLine />
                 <Box flexDirection="column" justifyContent="center">
                     <EditQuestionType />
                     <QuestionContents />

@@ -16,7 +16,11 @@ export type Command =
     | "GO_TO_BOTTOM"
     | "TO_START_MENU"
     | "TO_CHOOSE_MENU"
-    | "TO_EDIT_MENU";
+    | "TO_EDIT_MENU"
+    | "RANDOMIZE"
+    | "MARK_YES"
+    | "MARK_NO"
+    | "TOGGLE_SHOW_ANSWER";
 
 abstract class KeyBinds {
     protected command: Command | null;
@@ -123,6 +127,26 @@ export class NormalKb extends KeyBinds {
 
         if (this.register === "3") {
             this.setCommand("TO_EDIT_MENU");
+        }
+
+        // Quiz Mode
+        if (this.register === "rr") {
+            this.setCommand("RANDOMIZE");
+        }
+
+        // Quiz Mode
+        if (this.register === "y") {
+            this.setCommand("MARK_YES");
+        }
+
+        // Quiz Mode
+        if (this.register === "n") {
+            this.setCommand("MARK_NO");
+        }
+
+        // Quiz Mode
+        if (this.register === "a") {
+            this.setCommand("TOGGLE_SHOW_ANSWER");
         }
 
         // this makes sense for create/edit mode, but not sure about in other

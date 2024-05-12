@@ -193,7 +193,7 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
 
     return (
         <>
-            <TitleBox title={page.title} mode="CHOOSE_QUIZ">
+            <TitleBox title={page.title}>
                 {invalidMessage === "" ? (
                     <></>
                 ) : (
@@ -202,7 +202,6 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
                     </Box>
                 )}
             </TitleBox>
-            <HorizontalLine />
             <Window
                 items={mapItems(page.listItems!)}
                 window={window}
