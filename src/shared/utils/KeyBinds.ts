@@ -79,6 +79,10 @@ export class NormalKb extends KeyBinds {
         this.register += char;
     }
 
+    getRegister(): string {
+        return this.register;
+    }
+
     setCommand(command: Command): void {
         this.clearRegister();
         this.command = command;

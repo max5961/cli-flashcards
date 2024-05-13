@@ -8,8 +8,9 @@ import { StartMenu } from "./StartMenu/StartMenu.js";
 import { LoadGate } from "./shared/components/LoadGate.js";
 import { Config } from "./shared/utils/ProcessArguments.js";
 import { Command } from "./shared/utils/KeyBinds.js";
-import { useKeyBinds } from "./shared/hooks/useKeyBinds.js";
+import { KbState, useKeyBinds } from "./shared/hooks/useKeyBinds.js";
 import { HorizontalLine } from "./shared/components/Lines.js";
+import { KeyBindState } from "./shared/components/KeyBindState.js";
 
 interface AppContext {
     normal: boolean;
@@ -96,7 +97,7 @@ export default function App({
         modeDesc = "Selection Mode";
     }
 
-    useKeyBinds(handleKeyBinds, normal);
+    const kbState: KbState = useKeyBinds(handleKeyBinds, normal);
 
     return (
         <AppContext.Provider
@@ -124,6 +125,14 @@ export default function App({
                     </Box>
                 </Box>
             </MainContainer>
+            <Box
+                alignItems="center"
+                justifyContent="flex-end"
+                height={1}
+                margin={1}
+            >
+                <KeyBindState kbState={kbState} />
+            </Box>
         </AppContext.Provider>
     );
 }
