@@ -1,12 +1,12 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { QuestionState } from "./QuizMode.js";
+import { QuizState } from "./QuizState.js";
 
 export function Header({
     questionState,
     message,
 }: {
-    questionState: QuestionState;
+    questionState: QuizState;
     message: React.ReactNode;
 }): React.ReactElement {
     return (
