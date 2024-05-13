@@ -180,6 +180,10 @@ export class QuizState {
         return copy;
     }
 
+    isMarked(): boolean {
+        return this.evalMap[this.getEvalKey()] !== undefined;
+    }
+
     toggleShowAnswer(): QuizState {
         const copy: QuizState = this.copy();
         copy.showingAnswer = !copy.showingAnswer;
@@ -188,8 +192,7 @@ export class QuizState {
 
     chooseMc(): QuizState {
         const copy: QuizState = this.copy();
-        copy.showingAnswer = false;
-        copy.highlightChoice = true;
+        copy.highlightChoice = !copy.highlightChoice;
         return copy;
     }
 }

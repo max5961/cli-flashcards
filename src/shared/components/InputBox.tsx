@@ -7,7 +7,7 @@ interface InputBox {
     defaultText: string;
     value: string;
     onChange: (s: string) => void;
-    textColor?: string;
+    defaultTextColor?: string;
 }
 
 // if acceptsInput === true means we return a dynamic TextInput component, otherwise
@@ -18,11 +18,11 @@ export function InputBox({
     value,
     onChange,
     defaultText,
-    textColor = "",
+    defaultTextColor = "",
 }: InputBox): React.ReactNode {
     if (acceptsInput) {
         return <TextInput value={value!} onChange={onChange!}></TextInput>;
     }
 
-    return <Text color={textColor}>{defaultText}</Text>;
+    return <Text color={defaultTextColor}>{defaultText}</Text>;
 }

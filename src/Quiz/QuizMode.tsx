@@ -95,7 +95,8 @@ export function QuizMode({
             return (
                 <QuestionInput
                     question={question}
-                    showingAnswer={state.showingAnswer}
+                    state={state}
+                    setState={setState}
                 />
             );
         }

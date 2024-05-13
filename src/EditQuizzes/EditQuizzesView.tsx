@@ -333,7 +333,7 @@ function AddChoice(): React.ReactNode {
                     value={edit}
                     onChange={setEdit}
                     defaultText={"Add Choice"}
-                    textColor={"green"}
+                    defaultTextColor={"green"}
                 />
             </Box>
         </Box>

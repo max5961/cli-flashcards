@@ -1,58 +1,82 @@
 import React, { useContext } from "react";
 import { useState, useEffect } from "react";
-import { useInput } from "ink";
 import { Box, Text } from "ink";
 import { HorizontalLine } from "../shared/components/Lines.js";
 import { QI } from "../types.js";
-import TextInput from "ink-text-input";
 import { AppContext } from "../App.js";
+import { InputBox } from "../shared/components/InputBox.js";
+import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
+import { Command } from "../shared/utils/KeyBinds.js";
+import { QuizState } from "./QuizState.js";
 
 export function QuestionInput({
     question,
-    showingAnswer,
+    state,
+    setState,
 }: {
     question: QI;
-    showingAnswer: boolean;
+    state: QuizState;
+    setState: (s: QuizState) => void;
 }): React.ReactElement {
     const { normal, setNormal } = useContext(AppContext)!;
     const [input, setInput] = useState<string>("");
-
-    function handleNormalText(): React.ReactElement {
-        let color: string = "white";
-
-        // If you exit insert mode with Esc, maybe you don't want to see if the
-        // answer is correct?  Only check answers when you press Enter
-        if (showingAnswer) {
-            color =
-                input.toLowerCase() === question.a.toLowerCase()
-                    ? "green"
-                    : "red";
-        }
-
-        return <Text color={color}>{input}</Text>;
-    }
-
-    // Checking input against answers is not case sensitive.  However, it would
-    // be nice if when the answer is capitalized for some special meaning and you
-    // correctly type the answer it is capitalized as a reminder regardless or
-    // your input
-    function convertInputIfCorrect(): void {
-        if (input.toLowerCase() === question.a.toLowerCase()) {
-            setInput(question.a);
-        }
-    }
-
-    if (normal && (input === "a" || input === "f")) {
-        setInput(`Answer: ${question.a}`);
-    }
+    const [defaultText, setDefaultText] = useState<string>("");
+    const [resultColor, setResultColor] = useState<"" | "green" | "red">("");
 
     useEffect(() => {
         setNormal(false);
+        setDefaultText("");
+        setInput("");
+        setResultColor("");
 
         return () => {
             setNormal(true);
         };
-    }, [setNormal]);
+    }, [question]);
+
+    function handleKeyBinds(command: Command | null): void {
+        if (command === "EXIT_INSERT") {
+            setNormal(true);
+            setDefaultText(input);
+
+            if (input === "") return;
+
+            if (input.toUpperCase() === question.a.toUpperCase()) {
+                // Intentionally setDefaultText to question.a instead of input
+                // If capitalization is important then this emphasizes that.
+                // If capitalization is NOT important, then this prevents you from
+                // writing the correct answer without caps and not getting notified
+                setDefaultText(question.a);
+                setInput(question.a);
+                setResultColor("green");
+                !state.isMarked() && setState(state.markYes());
+            } else {
+                setResultColor("red");
+                !state.isMarked() && setState(state.markNo());
+            }
+        }
+
+        if (command === "ENTER_INSERT") {
+            setNormal(false);
+            if (state.showingAnswer) {
+                setState(state.toggleShowAnswer());
+            }
+        }
+
+        if (command === "CLEAR") {
+            setInput("");
+            setNormal(false);
+            if (state.showingAnswer) {
+                setState(state.toggleShowAnswer());
+            }
+        }
+    }
+
+    useKeyBinds(handleKeyBinds, normal);
+
+    const showingAnswer: React.ReactNode = (
+        <Text>{`Answer: ${question.a}`}</Text>
+    );
 
     return (
         <Box flexDirection="column" alignItems="center" width={50}>
@@ -67,10 +91,17 @@ export function QuestionInput({
                 </Text>
             </Box>
             <HorizontalLine />
-            {normal ? (
-                handleNormalText()
+
+            {state.showingAnswer ? (
+                showingAnswer
             ) : (
-                <TextInput value={input} onChange={setInput} />
+                <InputBox
+                    acceptsInput={!normal}
+                    value={input}
+                    onChange={setInput}
+                    defaultText={defaultText}
+                    defaultTextColor={resultColor}
+                />
             )}
         </Box>
     );
