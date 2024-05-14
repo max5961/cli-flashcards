@@ -1,8 +1,7 @@
 import React from "react";
 import { render } from "ink";
 import App from "./App.js";
-import { Args, Config } from "./shared/utils/ProcessArguments.js";
-import { Question } from "./types.js";
+import { ProcessArgs, Config } from "./shared/utils/ProcessArgs.js";
 import { execFileSync } from "child_process";
 import Read from "./shared/utils/Read.js";
 
@@ -22,13 +21,11 @@ function executeBeforeExit(command: string): void {
 async function entryPoint() {
     await Read.makeDir(); // make sure directory in .local/share exists
 
-    const args: Args = new Args();
+    const args: ProcessArgs = new ProcessArgs();
 
-    await args.processSelection();
-    await args.executeUtilityFlags();
-    args.setConfigFromArgv();
-    const config: Readonly<Config> = args.getConfig();
-    const initialQuestions: Question[] | null = args.getInitialQuestions();
+    args.utilityArgs.processUtilityFlags();
+    const config: Readonly<Config> = args.configArgs.processConfigFlags();
+    const initialQuestions = await args.selectionArgs.processSelectionFlags();
 
     if (config.postCommand !== null) {
         executeBeforeExit(config.postCommand);
