@@ -44,6 +44,17 @@ export class Args {
                 implies: ["section"],
                 requiresArg: true,
             })
+            .options("repeat", {
+                describe: "Repeat a given selection of questions 'x' times",
+                type: "number",
+                implies: ["section", "file"],
+                requiresArg: true,
+            })
+            .options("shuffle", {
+                describe: "Shuffle the order of a given selection of questions",
+                type: "boolean",
+                implies: ["section", "file"],
+            })
 
             // utility
             .options("keybinds", {
@@ -206,10 +217,44 @@ export class Args {
             this.pushSelectedSections();
         }
 
+        console.log(this.argv);
+        if (this.argv.repeat && this.argv.repeat > 1) {
+            const repeatedQuestions: Question[] = [];
+            let i = this.argv.repeat;
+            while (i > 0) {
+                --i;
+                repeatedQuestions.push(...this.questions);
+            }
+            this.questions = repeatedQuestions;
+        }
+
+        if (this.argv.shuffle) {
+            this.shuffle(this.questions);
+        }
+
         if (this.questions.length === 0) {
             console.error("No questions in current selection");
             process.exit();
         }
+    }
+
+    shuffle(questions: Question[], cycles: number = 0): void {
+        if (cycles >= 25) return;
+
+        const getRandom = (s: number, e: number) => {
+            return s + Math.floor(Math.random() * (e - s));
+        };
+
+        let s = 0;
+        while (s < questions.length) {
+            const randomIndex: number = getRandom(s, questions.length);
+            const tmpEnd: Question = questions[questions.length - 1];
+            questions[questions.length - 1] = questions[randomIndex];
+            questions[randomIndex] = tmpEnd;
+            ++s;
+        }
+
+        this.shuffle(questions, ++cycles);
     }
 
     async pushAllQuizzes(): Promise<void> {
