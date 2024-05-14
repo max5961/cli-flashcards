@@ -6,7 +6,7 @@ import useStdoutDimensions from "./shared/hooks/useStdoutDimensions.js";
 import { QuizMode } from "./Quiz/QuizMode.js";
 import { StartMenu } from "./StartMenu/StartMenu.js";
 import { LoadGate } from "./shared/components/LoadGate.js";
-import { Config } from "./shared/utils/ProcessArguments.js";
+import { Config } from "./shared/utils/ProcessArgs.js";
 import { Command } from "./shared/utils/KeyBinds.js";
 import { KbState, useKeyBinds } from "./shared/hooks/useKeyBinds.js";
 import { HorizontalLine } from "./shared/components/Lines.js";

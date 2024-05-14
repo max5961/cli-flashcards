@@ -32,6 +32,13 @@ abstract class Args {
             target.push(fileData);
         }
     }
+
+    exitOnSingleValueError(value: string, flag: string) {
+        console.error(
+            `The ${flag} flag cannot combine other values with '${value}'`,
+        );
+        process.exit(1);
+    }
 }
 
 class SelectionArgs extends Args {
@@ -49,12 +56,15 @@ class SelectionArgs extends Args {
             .option("file", {
                 describe: "Choose file(s) / quiz name(s).  'all' for all files",
                 type: "array",
-                implies: ["section"], // require to be used with "file" flag
+                implies: ["section"], // require to be used with "section" flag
                 requiresArg: true,
             })
             .option("section", {
-                describe:
-                    "Choose section(s). 'all' for all sections in a given selection of file(s)",
+                describe: `
+                    Choose section(s).  
+                        'all' for all sections in a given selection of files(s)
+                        'random' for a random section in a given selection of files(s)
+                `,
                 type: "array",
                 implies: ["file"],
                 requiresArg: true,
@@ -70,12 +80,6 @@ class SelectionArgs extends Args {
                     "Shuffles the order of a given selection of questions",
                 type: "boolean",
                 implies: ["section", "file"],
-            })
-
-            // unhandled as of right now
-            .options("random", {
-                describe: "Choose a random section from a given file",
-                type: "boolean",
             })
             .parse();
     }
@@ -95,6 +99,8 @@ class SelectionArgs extends Args {
         // --section
         if (this.argv.section.includes("all")) {
             this.pushAllSections();
+        } else if (this.argv.section.includes("random")) {
+            this.pushRandomSection();
         } else {
             this.pushSelectedSections();
         }
@@ -108,6 +114,11 @@ class SelectionArgs extends Args {
                 repeatedQuestions.push(...this.questions);
             }
             this.questions = repeatedQuestions;
+        }
+
+        // --random
+        if (this.argv.random) {
+            this.pushRandomSection();
         }
 
         // --shuffle
@@ -125,6 +136,9 @@ class SelectionArgs extends Args {
     }
 
     async pushAllQuizzes(): Promise<void> {
+        if (this.argv.file.length > 1) {
+            this.exitOnSingleValueError("all", "--file");
+        }
         this.quizzes.push(...(await Read.getData()));
     }
 
@@ -133,6 +147,10 @@ class SelectionArgs extends Args {
     }
 
     pushAllSections(): void {
+        if (this.argv.section.length > 1) {
+            this.exitOnSingleValueError("all", "--section");
+        }
+
         this.questions.push(
             ...this.quizzes.flatMap((quiz) => {
                 return quiz.sections.flatMap((section) => {
@@ -156,9 +174,22 @@ class SelectionArgs extends Args {
                 console.error(
                     `Section: ${argvSection} does not belong to any selected quizzes/files`,
                 );
-                process.exit();
+                process.exit(1);
             }
         }
+    }
+
+    pushRandomSection(): void {
+        if (this.argv.section.length > 1) {
+            this.exitOnSingleValueError("random", "--section");
+        }
+
+        const sections: Question[][] = this.quizzes.flatMap((quiz) => {
+            return quiz.sections.map((section) => section.questions);
+        });
+
+        const random = () => Math.floor(Math.random() * sections.length);
+        this.questions.push(...sections[random()]);
     }
 
     shuffle(questions: Question[], cycles: number = 0): void {
