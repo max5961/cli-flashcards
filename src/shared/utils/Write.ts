@@ -6,7 +6,7 @@ import { Quiz } from "../../types.js";
 
 export class Write {
     static getDirectory(): string {
-        return path.join(os.homedir(), ".local", "share", "flashcards");
+        return path.join(os.homedir(), ".local", "share", "quild");
     }
 
     static async clearDirectory(): Promise<void> {

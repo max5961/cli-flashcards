@@ -4,6 +4,7 @@ import App from "./App.js";
 import { Args, Config } from "./shared/utils/ProcessArguments.js";
 import { Question } from "./types.js";
 import { execFileSync } from "child_process";
+import Read from "./shared/utils/Read.js";
 
 function executeBeforeExit(command: string): void {
     process.on("beforeExit", (code) => {
@@ -19,6 +20,8 @@ function executeBeforeExit(command: string): void {
 }
 
 async function entryPoint() {
+    await Read.makeDir(); // make sure directory in .local/share exists
+
     const args: Args = new Args();
 
     await args.processSelection();

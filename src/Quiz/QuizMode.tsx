@@ -55,7 +55,7 @@ export function QuizMode({
 
         if (command === "RETURN_KEY") {
             if (question.type === "mc") {
-                setState(state.chooseMc());
+                setState(state.chooseMc(question));
             }
         }
 

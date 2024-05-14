@@ -1,4 +1,4 @@
-import { Question } from "../types.js";
+import { MC, McChoice, Question } from "../types.js";
 
 export type Eval = "YES" | "NO" | undefined;
 
@@ -195,9 +195,27 @@ export class QuizState {
         return copy;
     }
 
-    chooseMc(): QuizState {
+    chooseMc(question: MC): QuizState {
         const copy: QuizState = this.copy();
         copy.highlightChoice = !copy.highlightChoice;
+
+        let correctIndex: number;
+        for (let i = 0; i < question.choices.length - 1; ++i) {
+            if (question.a.toUpperCase() === String.fromCharCode(65 + i)) {
+                correctIndex = i;
+            }
+        }
+
+        if (copy.evalMap[copy.getEvalKey()]) {
+            return copy;
+        }
+
+        if (copy.mcIndex === correctIndex!) {
+            copy.evalMap[copy.getEvalKey()] = "YES";
+        } else {
+            copy.evalMap[copy.getEvalKey()] = "NO";
+        }
+
         return copy;
     }
 }

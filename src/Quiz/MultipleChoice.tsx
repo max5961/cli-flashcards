@@ -50,7 +50,7 @@ export function Choices({
 
         if (state.showingAnswer && answerIndex === index) {
             return (
-                <FocusableBox isFocus={true} borderColor="green">
+                <FocusableBox isFocus={true} borderColor="green" key={index}>
                     <Text color="green">{textContent}</Text>
                 </FocusableBox>
             );
@@ -59,14 +59,14 @@ export function Choices({
         if (state.highlightChoice && state.mcIndex === index) {
             const color = answerIndex === index ? "green" : "red";
             return (
-                <FocusableBox isFocus={true} borderColor={color}>
+                <FocusableBox isFocus={true} borderColor={color} key={index}>
                     <Text color={color}>{textContent}</Text>
                 </FocusableBox>
             );
         }
 
         return (
-            <FocusableBox isFocus={isFocus}>
+            <FocusableBox isFocus={isFocus} key={index}>
                 <Text>{textContent}</Text>
             </FocusableBox>
         );

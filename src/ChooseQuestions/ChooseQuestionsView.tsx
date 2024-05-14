@@ -5,7 +5,6 @@ import { Window, useWindow } from "../shared/hooks/useWindow.js";
 import { FocusableBox } from "../shared/components/FocusableBox.js";
 import { Box, Text } from "ink";
 import { TitleBox } from "../shared/components/TitleBox.js";
-import { HorizontalLine } from "../shared/components/Lines.js";
 import { Command } from "../shared/utils/KeyBinds.js";
 import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
 import { AppContext } from "../App.js";
@@ -197,7 +196,7 @@ export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
                 {invalidMessage === "" ? (
                     <></>
                 ) : (
-                    <Box alignSelf="flex-end">
+                    <Box alignSelf="flex-end" marginLeft={3}>
                         <Text color="red">{invalidMessage}</Text>
                     </Box>
                 )}

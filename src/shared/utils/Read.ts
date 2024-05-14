@@ -4,8 +4,19 @@ import os from "os";
 import fs from "fs/promises";
 
 export default class Read {
+    static async makeDir(): Promise<void> {
+        const shareDir: string = path.join(os.homedir(), ".local", "share");
+        const directories: string[] = await fs.readdir(shareDir);
+        if (directories.includes("quild")) {
+            return;
+        }
+
+        const newDir = path.join(shareDir, "quild");
+        await fs.mkdir(newDir, { recursive: true });
+    }
+
     static getDir(): string {
-        return path.join(os.homedir(), ".local", "share", "flashcards");
+        return path.join(os.homedir(), ".local", "share", "quild");
     }
 
     static async getData(): Promise<Quiz[]> {
