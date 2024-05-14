@@ -1,6 +1,6 @@
 import { Question } from "../types.js";
 
-type Eval = "YES" | "NO" | "NO_EVAL";
+export type Eval = "YES" | "NO" | undefined;
 
 export class QuizState {
     // An array of ordered or shuffled pointers to Question objects in the
@@ -55,6 +55,11 @@ export class QuizState {
 
     getEvalKey(): number {
         return this.indexes[this.position];
+    }
+
+    getEval(): Eval {
+        const key = this.getEvalKey();
+        return this.evalMap[key];
     }
 
     getScore(): { [key: string]: number } {

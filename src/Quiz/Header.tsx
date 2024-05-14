@@ -1,18 +1,20 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { QuizState } from "./QuizState.js";
+import { Icon } from "../shared/components/Icons.js";
 
 export function Header({
-    questionState,
+    state,
     message,
 }: {
-    questionState: QuizState;
+    state: QuizState;
     message: React.ReactNode;
 }): React.ReactElement {
     return (
         <Box width="100%" justifyContent="space-between" alignItems="center">
-            <Text>{`Question: ${questionState.position + 1}/${questionState.indexes.length}`}</Text>
+            <Text>{`Question: ${state.position + 1}/${state.indexes.length}`}</Text>
             {message}
+            <Icon questionEval={state.getEval()} />
         </Box>
     );
 }

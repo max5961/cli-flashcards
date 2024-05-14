@@ -111,7 +111,7 @@ export function QuizMode({
             alignItems="center"
             justifyContent="space-between"
         >
-            <Header questionState={state} message={message} />
+            <Header state={state} message={message} />
             <HorizontalLine />
             <Box margin={2}>{currentCard()}</Box>
             <HorizontalLine />

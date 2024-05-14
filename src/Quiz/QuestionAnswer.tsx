@@ -1,6 +1,4 @@
-import React, { useEffect } from "react";
-import { useState } from "react";
-import { useInput } from "ink";
+import React from "react";
 import { Box, Text } from "ink";
 import { HorizontalLine } from "../shared/components/Lines.js";
 import { QA } from "../types.js";
