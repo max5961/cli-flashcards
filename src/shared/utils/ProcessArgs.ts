@@ -54,12 +54,14 @@ class SelectionArgs extends Args {
     setArgv(): void {
         this.argv = yargs(hideBin(process.argv))
             .option("file", {
+                alias: ["f"],
                 describe: "Choose file(s) / quiz name(s).  'all' for all files",
                 type: "array",
                 implies: ["section"], // require to be used with "section" flag
                 requiresArg: true,
             })
             .option("section", {
+                alias: ["s"],
                 describe: `
                     Choose section(s).  
                         'all' for all sections in a given selection of files(s)
@@ -129,7 +131,7 @@ class SelectionArgs extends Args {
         // Bad selection
         if (this.questions.length === 0) {
             console.error("No questions in current selection");
-            process.exit();
+            process.exit(1);
         }
 
         return this.questions;
@@ -234,10 +236,8 @@ class UtilityArgs extends Args {
             })
             .options("list-sections", {
                 describe:
-                    "List all available sections from one or more files.  Pass in 'all' to pass in all files as an argument",
+                    "List all available sections from one or more files.  Leave empty to pass in all files as an argument",
                 type: "array",
-                implies: ["list-files"],
-                requiresArg: true,
             })
             .parse();
     }
@@ -276,12 +276,11 @@ class UtilityArgs extends Args {
         const files: string[] = this.argv.listSections;
 
         const quizzes: Quiz[] = [];
-        if (files.includes("all")) {
-            files.splice(files.indexOf("all"), 1);
+        if (files.length === 0) {
             quizzes.push(...(await Read.getData()));
+        } else {
+            this.pushSelectedFiles(quizzes, files);
         }
-
-        this.pushSelectedFiles(quizzes, files);
 
         for (const quiz of quizzes) {
             let result: string = `File: ${quiz.fileName}`;

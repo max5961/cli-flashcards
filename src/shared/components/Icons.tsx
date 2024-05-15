@@ -1,6 +1,6 @@
 import React from "react";
 import { Text } from "ink";
-import { Eval } from "../../Quiz/QuizState.js";
+import { Eval } from "../../QuizMode/QuizState.js";
 
 interface IconProps {
     type?: "MERGE" | "QUIZ" | "EDIT" | "ADD";

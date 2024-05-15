@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../../App.js";
-import { PageContext, QpvContext } from "../EditQuizzesView.js";
+import { PageContext, QpvContext } from "../EditModeView.js";
 import { QpvNode, QpvUtils } from "../utils/QpvUtils.js";
 import { Command } from "../../shared/utils/KeyBinds.js";
 import { PageStack } from "../../shared/utils/PageStack.js";

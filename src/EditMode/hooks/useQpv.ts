@@ -1,6 +1,6 @@
 import { useContext, useRef, useState } from "react";
 import { AppContext } from "../../App.js";
-import { PageContext } from "../EditQuizzesView.js";
+import { PageContext } from "../EditModeView.js";
 import { FlexibleQuestion } from "../../types.js";
 import { QpvHandler, QpvNode, QpvUtils } from "../utils/QpvUtils.js";
 import { useNav } from "../../shared/hooks/useNav.js";

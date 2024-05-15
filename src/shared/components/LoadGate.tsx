@@ -3,8 +3,8 @@ import { useLoadData } from "../hooks/useLoadData.js";
 import { Quiz } from "../../types.js";
 import Read from "../utils/Read.js";
 import { LoadingMessage } from "./LoadingMessage.js";
-import { EditQuizzesView } from "../../EditQuizzes/EditQuizzesView.js";
-import { ChooseQuestionsView } from "../../ChooseQuestions/ChooseQuestionsView.js";
+import { EditModeView } from "../../EditMode/EditModeView.js";
+import { SelectionModeView } from "../../SelectionMode/SelectionModeView.js";
 
 function useLoadQuizData(): Quiz[] | null {
     const [quizzes, setQuizzes] = useState<Quiz[] | null>(null);
@@ -18,7 +18,7 @@ export class LoadGate {
         const quizzes: Quiz[] | null = useLoadQuizData();
 
         if (quizzes) {
-            return <EditQuizzesView quizzes={quizzes} />;
+            return <EditModeView quizzes={quizzes} />;
         } else {
             return <LoadingMessage />;
         }
@@ -28,7 +28,7 @@ export class LoadGate {
         const quizzes: Quiz[] | null = useLoadQuizData();
 
         if (quizzes) {
-            return <ChooseQuestionsView quizzes={quizzes} />;
+            return <SelectionModeView quizzes={quizzes} />;
         } else {
             return <LoadingMessage />;
         }

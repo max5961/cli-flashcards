@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../../App.js";
-import { PageContext, QpvContext } from "../EditQuizzesView.js";
+import { PageContext, QpvContext } from "../EditModeView.js";
 import { Command } from "../../shared/utils/KeyBinds.js";
 import { FlexibleQuestion, McChoice } from "../../types.js";
 import { useKeyBinds } from "../../shared/hooks/useKeyBinds.js";

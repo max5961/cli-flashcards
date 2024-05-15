@@ -49,10 +49,12 @@ export function QuestionInput({
                 setDefaultText(question.a);
                 setInput(question.a);
                 setResultColor("green");
-                !state.isMarked() && setState(state.markYes());
+                // !state.isMarked() && setState(state.markYes()); // dont update if already evaluated
+                setState(state.markYes());
             } else {
                 setResultColor("red");
-                !state.isMarked() && setState(state.markNo());
+                // !state.isMarked() && setState(state.markNo());
+                setState(state.markNo());
             }
         }
 

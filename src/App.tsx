@@ -3,7 +3,7 @@ import { createContext } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { Question } from "./types.js";
 import useStdoutDimensions from "./shared/hooks/useStdoutDimensions.js";
-import { QuizMode } from "./Quiz/QuizMode.js";
+import { QuizModeView } from "./QuizMode/QuizModeView.js";
 import { StartMenu } from "./StartMenu/StartMenu.js";
 import { LoadGate } from "./shared/components/LoadGate.js";
 import { Config } from "./shared/utils/ProcessArgs.js";
@@ -61,7 +61,7 @@ export default function App({
         }
 
         if (mode === "QUIZ" && questions) {
-            return <QuizMode questions={questions} />;
+            return <QuizModeView questions={questions} />;
         }
 
         if (mode === "CHOOSE_QUIZ") {

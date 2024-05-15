@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { PageContext, QpvContext } from "../EditQuizzesView.js";
+import { PageContext, QpvContext } from "../EditModeView.js";
 import { useKeyBinds } from "../../shared/hooks/useKeyBinds.js";
 import { Command } from "../../shared/utils/KeyBinds.js";
 import { McChoice } from "../../types.js";

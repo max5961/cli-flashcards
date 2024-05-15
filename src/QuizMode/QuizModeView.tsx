@@ -13,7 +13,7 @@ import Spinner from "ink-spinner";
 import { HorizontalLine } from "../shared/components/Lines.js";
 import { QuizState } from "./QuizState.js";
 
-export function QuizMode({
+export function QuizModeView({
     questions,
 }: {
     questions: Readonly<Question[]>;

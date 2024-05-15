@@ -14,7 +14,7 @@ interface CqvProps {
     quizzes: Quiz[];
 }
 
-export function ChooseQuestionsView({ quizzes }: CqvProps): React.ReactNode {
+export function SelectionModeView({ quizzes }: CqvProps): React.ReactNode {
     const [pageStack, setPageStack] = useState<PageStack>(
         new PageStack(quizzes),
     );

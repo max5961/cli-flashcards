@@ -29,7 +29,7 @@ interface EditPagesProps {
     quizzes: Quiz[];
 }
 
-export function EditQuizzesView({ quizzes }: EditPagesProps): React.ReactNode {
+export function EditModeView({ quizzes }: EditPagesProps): React.ReactNode {
     const [pageStack, setPageStack] = useState<PageStack>(
         new PageStack(quizzes),
     );

@@ -1,4 +1,4 @@
-import { MC, McChoice, Question } from "../types.js";
+import { MC, Question } from "../types.js";
 
 export type Eval = "YES" | "NO" | undefined;
 
@@ -206,9 +206,10 @@ export class QuizState {
             }
         }
 
-        if (copy.evalMap[copy.getEvalKey()]) {
-            return copy;
-        }
+        // Don't update if already evaluated
+        // if (copy.evalMap[copy.getEvalKey()]) {
+        //     return copy;
+        // }
 
         if (copy.mcIndex === correctIndex!) {
             copy.evalMap[copy.getEvalKey()] = "YES";

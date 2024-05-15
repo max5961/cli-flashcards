@@ -23,7 +23,7 @@ async function entryPoint() {
 
     const args: ProcessArgs = new ProcessArgs();
 
-    args.utilityArgs.processUtilityFlags();
+    await args.utilityArgs.processUtilityFlags();
     const config: Readonly<Config> = args.configArgs.processConfigFlags();
     const initialQuestions = await args.selectionArgs.processSelectionFlags();
 
