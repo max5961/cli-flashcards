@@ -114,7 +114,7 @@ export class QuizState {
         this.shuffleIndexes(originalStart, ++cycles);
     }
 
-    randomize(): QuizState {
+    shuffle(): QuizState {
         const copy: QuizState = this.copy();
         copy.shuffleIndexes(copy.position + 1);
         return copy;
@@ -200,16 +200,11 @@ export class QuizState {
         copy.highlightChoice = !copy.highlightChoice;
 
         let correctIndex: number;
-        for (let i = 0; i < question.choices.length - 1; ++i) {
+        for (let i = 0; i < question.choices.length; ++i) {
             if (question.a.toUpperCase() === String.fromCharCode(65 + i)) {
                 correctIndex = i;
             }
         }
-
-        // Don't update if already evaluated
-        // if (copy.evalMap[copy.getEvalKey()]) {
-        //     return copy;
-        // }
 
         if (copy.mcIndex === correctIndex!) {
             copy.evalMap[copy.getEvalKey()] = "YES";

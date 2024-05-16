@@ -17,7 +17,7 @@ export type Command =
     | "TO_START_MENU"
     | "TO_CHOOSE_MENU"
     | "TO_EDIT_MENU"
-    | "RANDOMIZE"
+    | "SHUFFLE"
     | "MARK_YES"
     | "MARK_NO"
     | "TOGGLE_SHOW_ANSWER";
@@ -135,11 +135,11 @@ export class NormalKb extends KeyBinds {
 
         // Quiz Mode
         if (this.register === "rr") {
-            this.setCommand("RANDOMIZE");
+            this.setCommand("SHUFFLE");
         }
 
         // Quiz Mode
-        if (this.register === "y") {
+        if (this.register === "y" || this.register === " ") {
             this.setCommand("MARK_YES");
         }
 

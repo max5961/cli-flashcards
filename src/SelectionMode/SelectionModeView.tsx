@@ -80,6 +80,13 @@ export function SelectionModeView({ quizzes }: CqvProps): React.ReactNode {
         for (const question of questions) {
             if (question.type !== "mc") continue;
 
+            if (question.choices.length > 4) {
+                setInvalidMessage(
+                    `Multiple Choice question: '${question.q}' exceeds maximum options length of 4`,
+                );
+                return;
+            }
+
             const validLabels: string[] = [];
             for (let i = 0; i < question.choices.length; ++i) {
                 validLabels.push(String.fromCharCode(65 + i));

@@ -145,7 +145,7 @@ class SelectionArgs extends Args {
     }
 
     async pushSelectedQuizzes(): Promise<void> {
-        this.pushSelectedFiles(this.quizzes, this.argv.file);
+        await this.pushSelectedFiles(this.quizzes, this.argv.file);
     }
 
     pushAllSections(): void {
@@ -279,7 +279,7 @@ class UtilityArgs extends Args {
         if (files.length === 0) {
             quizzes.push(...(await Read.getData()));
         } else {
-            this.pushSelectedFiles(quizzes, files);
+            await this.pushSelectedFiles(quizzes, files);
         }
 
         for (const quiz of quizzes) {

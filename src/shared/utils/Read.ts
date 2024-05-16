@@ -32,89 +32,89 @@ export default class Read {
             const quiz = JSON.parse(json);
             quiz.fileName = file;
             quizzes.push(quiz);
+            Read.validateData(quiz);
         }
 
         return quizzes;
     }
 
     static async getDataFromFile(filePath: string): Promise<string> {
-        return fs
-            .readFile(filePath, "utf-8")
-            .catch((err) => {
-                const dir = Read.getDir();
-                const joinedFilePath = path.join(dir, filePath);
-                return fs.readFile(joinedFilePath, "utf-8");
-            })
-            .catch((err) => {
-                console.log(`file '${filePath}' does not exist`);
-                process.exit();
-            });
+        if (!path.isAbsolute(filePath)) {
+            filePath = path.join(Read.getDir(), filePath);
+        }
+
+        const json = await fs.readFile(filePath, "utf-8");
+        if (Read.validateData(JSON.parse(json))) {
+            return json;
+        }
+
+        throw new Error(`${filePath}: Unhandled error`);
     }
 
-    static validateQuizObject(quiz: Quiz): void {
-        if (!quiz.sections) {
-            throw new Error("JSON Object must include a sections array");
+    // prettier-ignore
+    static validateData(quiz: any): boolean {
+        const logExit = (msg: string) => {
+            console.log(JSON.stringify(quiz));
+            console.error(msg);
+            process.exit(1);
+        };
+
+        const logWarning = (msg: string, obj: Object) => {
+            console.log("WARNING: ");
+            console.log(msg);
+            console.log(obj);
         }
 
-        if (!Array.isArray(quiz.sections)) {
-            throw new Error("sections property must be an array");
+        // check for presence and correct type, allow empty strings as property names
+        const valid = (property: any, type: string) => {
+            if (type === "array") {
+                return property && Array.isArray(property);
+            }
+            return (property === "" || property) && typeof property === type;
         }
+
+        if (!valid(quiz.fileName, "string")) logExit("Missing or invalid 'fileName' property");
+        if (!valid(quiz.sections, "array")) logExit("Missing or invalid 'sections' array");
 
         for (const section of quiz.sections) {
-            if (!section.name) {
-                throw new Error("Missing section name");
-            }
-
-            if (!section.questions) {
-                throw new Error("Missing questions array in section");
-            }
-
-            if (!Array.isArray(section.questions)) {
-                throw new Error("questions property must be an array");
-            }
+            if (!valid(section.name, "string")) logExit("Missing or invalid section 'name' property");
+            if (!valid(section.questions, "array")) logExit(`Missing or invalid 'questions' array in ${section.name}`);
 
             for (const question of section.questions) {
-                if (
-                    question.type !== "qa" &&
-                    question.type !== "qi" &&
-                    question.type !== "mc"
-                ) {
-                    throw new Error(
-                        "type property must be either 'qa', 'qi', or 'mc'",
-                    );
+                if (!valid(question.type, "string")) logExit("Missing or invalid Question 'type' property")
+
+                if ( question.type !== "mc" && question.type !== "qa" && question.type !== "qi") {
+                    logExit(`Question has invalid type.  Must be 'mc' | 'qa' | 'qi'`);
                 }
 
-                if (!question.q || !question.a) {
-                    throw new Error("Missing q and a properties");
-                }
+                if (!valid(question.q, "string")) logExit("Missing or invalid Question 'q' property");
+                if (!valid(question.a, "string")) logExit("Missing or invalid Question 'a' property");
+
+                if (question.type !== "mc" && question.choices) {
+                    logExit("Question 'choices' array can only exist on multiple choice questions");
+                } 
 
                 if (question.type === "mc") {
-                    if (!question.choices) {
-                        throw new Error("Missing choices array");
+                    if (!valid(question.choices, "array")) logExit("Missing or invalid Question 'choices' array");
+                    if (question.choices.length > 4) logExit("Question 'choices' array cannot exceed 4 options");
+
+                    for (const choice of question.choices) {
+                        if (typeof choice !== "string") logExit("Each question in the Question 'choices' array must be of type 'string'")
                     }
 
-                    if (!Array.isArray(question.choices)) {
-                        throw new Error("choices property must be an array");
+                    // check if valid answer exists
+                    let isValid = false;
+                    for (let i = 0; i < question.choices.length; ++i) {
+                        if (question.a.toUpperCase() === String.fromCharCode(65 + i)) {
+                            isValid = true;
+                        }
                     }
-
-                    if (question.choices.length > 4) {
-                        throw new Error(
-                            "choices array exceeds maximum length of 4",
-                        );
-                    }
-
-                    if (
-                        question.a.toUpperCase() !== "A" &&
-                        question.a.toUpperCase() !== "B" &&
-                        question.a.toUpperCase() !== "C" &&
-                        question.a.toUpperCase() !== "D"
-                    ) {
-                        throw new Error(
-                            "Invalid answer for multiple choice.  (should be either 'A', 'B', 'C', or 'D')",
-                        );
-                    }
+                    if (!isValid) logWarning("Invalid multiple choice answer.  Must be A-D or a-d", question);
+                    
                 }
             }
         }
+
+        return true;
     }
 }

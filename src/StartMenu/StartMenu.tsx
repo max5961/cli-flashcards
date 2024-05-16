@@ -5,7 +5,6 @@ import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
 import { Command } from "../shared/utils/KeyBinds.js";
 import { AppContext } from "../App.js";
 import { TitleBox } from "../shared/components/TitleBox.js";
-import { HorizontalLine } from "../shared/components/Lines.js";
 import { Icon } from "../shared/components/Icons.js";
 
 export function StartMenu(): React.ReactNode {
