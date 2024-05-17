@@ -12,6 +12,7 @@ import { Command } from "../shared/utils/KeyBinds.js";
 import Spinner from "ink-spinner";
 import { HorizontalLine } from "../shared/components/Lines.js";
 import { QuizState } from "./QuizState.js";
+import { CompletedPage } from "./CompletedPage.js";
 
 export function QuizModeView({
     questions,
@@ -21,6 +22,7 @@ export function QuizModeView({
     const { normal } = useContext(AppContext)!;
     const [message, setMessage] = useState<React.ReactNode>(<></>);
     const [state, setState] = useState<QuizState>(new QuizState(questions, {}));
+    const [completed, setCompleted] = useState<boolean>(false);
 
     const question: Question = state.getQuestion(questions);
 
@@ -30,6 +32,9 @@ export function QuizModeView({
         }
 
         if (command === "RIGHT") {
+            if (state.position >= questions.length - 1) {
+                setCompleted(true);
+            }
             setState(state.nextQuestion());
         }
 
@@ -104,6 +109,22 @@ export function QuizModeView({
     }
 
     const score = state.getScore();
+
+    if (completed) {
+        const incorrect: Question[] = state.indexes
+            .filter((index: number) => {
+                return state.evalMap[index] === "NO";
+            })
+            .map((index: number) => questions[index]);
+
+        const notEval: Question[] = state.indexes
+            .filter((index: number) => {
+                return !state.evalMap[index];
+            })
+            .map((index: number) => questions[index]);
+
+        return <CompletedPage state={state} redo={{ incorrect, notEval }} />;
+    }
 
     return (
         <Box
