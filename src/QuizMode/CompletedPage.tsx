@@ -1,11 +1,12 @@
 import React, { useContext, useState } from "react";
 import { QuizState } from "./QuizState.js";
-import { Box, Text } from "ink";
+import { Box, Text, useApp } from "ink";
 import { HorizontalLine } from "../shared/components/Lines.js";
 import { Question } from "../types.js";
 import { Command } from "../shared/utils/KeyBinds.js";
 import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
 import { AppContext } from "../App.js";
+import { FocusableText } from "../shared/components/Focusable.js";
 
 interface Redo {
     incorrect: Question[];
@@ -27,6 +28,8 @@ export function CompletedPage({ state, redo }: Props): React.ReactNode {
     });
 
     const [optName, setOptName] = useState<OptName>(opts[0].name);
+
+    const { exit } = useApp();
 
     const score = state.getScore();
     const evalCount: number = score.yes + score.no;
@@ -69,6 +72,10 @@ export function CompletedPage({ state, redo }: Props): React.ReactNode {
             if (optName === "TO_START") {
                 setMode("START");
             }
+
+            if (optName === "QUIT") {
+                exit();
+            }
         }
     }
 
@@ -89,7 +96,13 @@ export function CompletedPage({ state, redo }: Props): React.ReactNode {
 }
 
 type GetEl = (currIndex: number) => React.ReactNode;
-type OptName = "INCORRECT" | "NOT_EVAL" | "BOTH" | "TO_START" | "RETAKE";
+type OptName =
+    | "INCORRECT"
+    | "NOT_EVAL"
+    | "BOTH"
+    | "TO_START"
+    | "RETAKE"
+    | "QUIT";
 interface Opt {
     name: OptName;
     getEl: GetEl;
@@ -101,15 +114,18 @@ function getNextOptions(redo: Redo): Opt[] {
     let both: Opt | null = null;
     let toStart: Opt;
     let reTake: Opt;
+    let quit: Opt;
 
     let index: number = 0;
     if (redo.incorrect.length) {
         incorrect = {
             name: "INCORRECT",
             getEl: (currIndex: number) => (
-                <ListItem isFocus={currIndex === index} key={index++}>
-                    <Text>Retake Incorrect</Text>
-                </ListItem>
+                <FocusableText
+                    isFocus={currIndex === index}
+                    textContent={"Retake Incorrect"}
+                    key={index++}
+                />
             ),
         };
     }
@@ -118,9 +134,11 @@ function getNextOptions(redo: Redo): Opt[] {
         notEval = {
             name: "NOT_EVAL",
             getEl: (currIndex: number) => (
-                <ListItem isFocus={currIndex === index} key={index++}>
-                    <Text>Retake No Eval</Text>
-                </ListItem>
+                <FocusableText
+                    isFocus={currIndex === index}
+                    textContent={"Retake No Eval"}
+                    key={index++}
+                />
             ),
         };
     }
@@ -129,9 +147,11 @@ function getNextOptions(redo: Redo): Opt[] {
         both = {
             name: "BOTH",
             getEl: (currIndex: number) => (
-                <ListItem isFocus={currIndex === index} key={index++}>
-                    <Text>Retake Incorrect & No Eval</Text>
-                </ListItem>
+                <FocusableText
+                    isFocus={currIndex === index}
+                    textContent={"Retake Incorrect & No Eval"}
+                    key={index++}
+                />
             ),
         };
     }
@@ -139,44 +159,43 @@ function getNextOptions(redo: Redo): Opt[] {
     reTake = {
         name: "RETAKE",
         getEl: (currIndex: number) => (
-            <ListItem isFocus={currIndex === index} key={index++}>
-                <Text>Retake All</Text>
-            </ListItem>
+            <FocusableText
+                isFocus={currIndex === index}
+                textContent={"Retake All"}
+                key={index++}
+            />
         ),
     };
 
     toStart = {
         name: "TO_START",
         getEl: (currIndex: number) => (
-            <ListItem isFocus={currIndex === index} key={index++}>
-                <Text>Start Menu</Text>
-            </ListItem>
+            <FocusableText
+                isFocus={currIndex === index}
+                textContent={"Start Menu"}
+                key={index++}
+            />
         ),
     };
 
-    const items: (Opt | null)[] = [incorrect, notEval, both, reTake, toStart];
+    quit = {
+        name: "QUIT",
+        getEl: (currIndex: number) => (
+            <FocusableText
+                isFocus={currIndex === index}
+                textContent={"Quit"}
+                key={index++}
+            />
+        ),
+    };
+
+    const items: (Opt | null)[] = [
+        incorrect,
+        notEval,
+        both,
+        reTake,
+        toStart,
+        quit,
+    ];
     return items.filter((item): item is Opt => item !== null);
-}
-
-function ListItem({
-    isFocus,
-    children,
-}: {
-    isFocus: boolean;
-    children: React.ReactNode;
-}): React.ReactNode {
-    function focusElement(): React.ReactNode {
-        if (isFocus) {
-            return <Text color="blue">{"> "}</Text>;
-        } else {
-            return <Text>{"  "}</Text>;
-        }
-    }
-
-    return (
-        <Box>
-            {focusElement()}
-            {children}
-        </Box>
-    );
 }

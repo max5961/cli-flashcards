@@ -95,7 +95,7 @@ export abstract class ListPage extends Page {
     abstract removeListItem(index: number): void;
     abstract addListItem(name: string): void;
     abstract setListItemName(index: number, name: string): void;
-    abstract nameExists(name: string): boolean;
+    abstract nameExists(name: string, index: number): boolean;
 }
 
 export class QuizzesPage extends ListPage {
@@ -149,8 +149,9 @@ export class QuizzesPage extends ListPage {
         this.lastIndex = index;
     }
 
-    nameExists(name: string): boolean {
+    nameExists(name: string, index: number): boolean {
         const fileNames: string[] = this.listItems.map((quiz) => quiz.fileName);
+        fileNames.splice(index, 1);
         return fileNames.includes(name);
     }
 }
@@ -215,10 +216,11 @@ export class QuizPage extends ListPage {
         this.lastIndex = index;
     }
 
-    nameExists(name: string): boolean {
+    nameExists(name: string, index: number): boolean {
         const sectionNames: string[] = this.listItems.map(
             (section) => section.name,
         );
+        sectionNames.splice(index, 1);
         return sectionNames.includes(name);
     }
 }
@@ -287,10 +289,11 @@ export class SectionPage extends ListPage {
         this.lastIndex = index;
     }
 
-    nameExists(name: string): boolean {
+    nameExists(name: string, index: number): boolean {
         const questionNames: string[] = this.listItems.map(
             (question) => question.q,
         );
+        questionNames.splice(index, 1);
         return questionNames.includes(name);
     }
 }

@@ -5,7 +5,7 @@ import { FlexibleQuestion, QuestionTypes, Quiz } from "../types.js";
 import { Window } from "../shared/hooks/useWindow.js";
 import { Page, PageStack } from "../shared/utils/PageStack.js";
 import { InputBox } from "../shared/components/InputBox.js";
-import { FocusableBox } from "../shared/components/FocusableBox.js";
+import { FocusableBox } from "../shared/components/Focusable.js";
 import { TitleBox } from "../shared/components/TitleBox.js";
 import { ShowMode } from "../shared/components/ShowMode.js";
 import { QpvNode } from "./utils/QpvUtils.js";

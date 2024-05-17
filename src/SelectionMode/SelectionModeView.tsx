@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { Question, Quiz, Section } from "../types.js";
 import { ListPage, PageStack, QuizzesPage } from "../shared/utils/PageStack.js";
 import { Window, useWindow } from "../shared/hooks/useWindow.js";
-import { FocusableBox } from "../shared/components/FocusableBox.js";
+import { FocusableBox } from "../shared/components/Focusable.js";
 import { Box, Text } from "ink";
 import { TitleBox } from "../shared/components/TitleBox.js";
 import { Command } from "../shared/utils/KeyBinds.js";

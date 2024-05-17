@@ -83,7 +83,7 @@ export class LpvUtil {
     createQuestionAndEnter(): void {
         const copy: PageStack = this.getStackCopy();
         const top: ListPage = copy.top() as ListPage;
-        if (top.nameExists(this.edit)) {
+        if (top.nameExists(this.edit, this.currIndex)) {
             this.setMessage("Name already exists!");
             return;
         }
@@ -147,7 +147,7 @@ export class LpvUtil {
 
         const copy: PageStack = this.getStackCopy();
         const top: ListPage = copy.top() as ListPage;
-        if (top.nameExists(this.edit)) {
+        if (top.nameExists(this.edit, this.currIndex)) {
             this.setMessage("Name already exists!");
             return;
         }
@@ -162,7 +162,7 @@ export class LpvUtil {
 
         const copy: PageStack = this.getStackCopy();
         const top: ListPage = copy.top() as ListPage;
-        if (top.nameExists(this.edit)) {
+        if (top.nameExists(this.edit, this.currIndex)) {
             this.setMessage("Name already exists!");
             return;
         }

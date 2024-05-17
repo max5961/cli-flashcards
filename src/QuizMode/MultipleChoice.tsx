@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Text } from "ink";
 import { MC } from "../types.js";
 import { HorizontalLine } from "../shared/components/Lines.js";
-import { FocusableBox } from "../shared/components/FocusableBox.js";
+import { FocusableBox } from "../shared/components/Focusable.js";
 import { QuizState } from "./QuizState.js";
 
 export function MultipleChoice({
