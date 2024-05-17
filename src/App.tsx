@@ -19,6 +19,7 @@ interface AppContext {
     setMode: (m: WhichMode) => void;
     questions: Question[] | null;
     setQuestions: (q: Question[]) => void;
+    newQuiz: (q: Question[]) => void;
 }
 
 export const AppContext = createContext<AppContext | null>(null);
@@ -37,10 +38,17 @@ export default function App({
 }: AppProps): React.ReactElement {
     const [normal, setNormal] = useState<boolean>(true);
     const { exit } = useApp();
+    const [quizKey, setQuizKey] = useState<number>(0);
     const [mode, setMode] = useState<WhichMode>("START");
     const [questions, setQuestions] = useState<Question[] | null>(
         initialQuestions,
     );
+
+    function newQuiz(questions: Question[]): void {
+        setMode("QUIZ");
+        setQuestions(questions);
+        setQuizKey(quizKey + 1);
+    }
 
     // if the cli generates a list of questions, enter quiz mode right away
     useEffect(() => {
@@ -61,7 +69,7 @@ export default function App({
         }
 
         if (mode === "QUIZ" && questions) {
-            return <QuizModeView questions={questions} />;
+            return <QuizModeView questions={questions} key={quizKey} />;
         }
 
         if (mode === "CHOOSE_QUIZ") {
@@ -108,6 +116,7 @@ export default function App({
                 setMode,
                 questions,
                 setQuestions,
+                newQuiz,
             }}
         >
             <MainContainer config={config}>

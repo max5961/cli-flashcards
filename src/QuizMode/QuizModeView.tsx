@@ -123,7 +123,12 @@ export function QuizModeView({
             })
             .map((index: number) => questions[index]);
 
-        return <CompletedPage state={state} redo={{ incorrect, notEval }} />;
+        return (
+            <CompletedPage
+                state={state}
+                redo={{ incorrect, notEval, questions }}
+            />
+        );
     }
 
     return (
