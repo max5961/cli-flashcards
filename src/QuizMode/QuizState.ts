@@ -94,8 +94,12 @@ export class QuizState {
     }
 
     // shuffles a portion of the indexes array
-    shuffleIndexes(s: number, cycles: number = 0): void {
-        if (cycles >= 25) return;
+    shuffleIndexes(
+        s: number,
+        questions: Readonly<Question[]>,
+        cycles: number = 0,
+    ): void {
+        if (cycles >= 50) return;
         const originalStart = s;
 
         const getRandom = (s: number, e: number) => {
@@ -103,20 +107,37 @@ export class QuizState {
         };
 
         const nums: number[] = this.indexes;
-        while (s < nums.length) {
+        let sameBorders: boolean = false;
+        while (s < nums.length || sameBorders) {
             const randomIndex: number = getRandom(s, nums.length);
             const tmpEnd: number = nums[nums.length - 1];
+
+            // prevents duplicates being placed next to each other
+            if (
+                questions[tmpEnd] === questions[nums[randomIndex - 1]] ||
+                questions[tmpEnd] === questions[nums[randomIndex + 1]]
+            ) {
+                continue;
+            }
+
+            if (
+                questions[nums[nums.length - 2]] ===
+                questions[nums[randomIndex]]
+            ) {
+                continue;
+            }
+
             nums[nums.length - 1] = nums[randomIndex];
             nums[randomIndex] = tmpEnd;
             ++s;
         }
 
-        this.shuffleIndexes(originalStart, ++cycles);
+        this.shuffleIndexes(originalStart, questions, ++cycles);
     }
 
-    shuffle(): QuizState {
+    shuffle(questions: Readonly<Question[]>): QuizState {
         const copy: QuizState = this.copy();
-        copy.shuffleIndexes(copy.position + 1);
+        copy.shuffleIndexes(copy.position + 1, questions);
         return copy;
     }
 

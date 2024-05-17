@@ -60,7 +60,7 @@ export function QuizModeView({
         }
 
         if (command === "SHUFFLE") {
-            setState(state.shuffle());
+            setState(state.shuffle(questions));
             const randomizing: React.ReactNode = (
                 <Text>
                     <Text color="cyan">

@@ -39,6 +39,11 @@ abstract class Args {
         );
         process.exit(1);
     }
+
+    exitWithErrorMessage(msg: string) {
+        console.error(msg);
+        process.exit(1);
+    }
 }
 
 class SelectionArgs extends Args {
@@ -109,6 +114,11 @@ class SelectionArgs extends Args {
 
         // --repeat
         if (this.argv.repeat && this.argv.repeat > 1) {
+            if (this.questions.length <= 1) {
+                // prettier-ignore
+                this.exitWithErrorMessage("Cannot repeat a selection which has only 1 question");
+            }
+
             const repeatedQuestions: Question[] = [];
             let i = this.argv.repeat;
             while (i > 0) {
@@ -130,8 +140,7 @@ class SelectionArgs extends Args {
 
         // Bad selection
         if (this.questions.length === 0) {
-            console.error("No questions in current selection");
-            process.exit(1);
+            this.exitWithErrorMessage("No questions in current selection");
         }
 
         return this.questions;
@@ -195,7 +204,7 @@ class SelectionArgs extends Args {
     }
 
     shuffle(questions: Question[], cycles: number = 0): void {
-        if (cycles >= 25) return;
+        if (cycles >= 50) return;
 
         const getRandom = (s: number, e: number) => {
             return s + Math.floor(Math.random() * (e - s));
@@ -205,6 +214,20 @@ class SelectionArgs extends Args {
         while (s < questions.length) {
             const randomIndex: number = getRandom(s, questions.length);
             const tmpEnd: Question = questions[questions.length - 1];
+
+            // prevents duplicates being placed next to each other
+            if (questions[questions.length - 2] === questions[randomIndex]) {
+                continue;
+            }
+
+            if (
+                // prettier-ignore
+                questions[randomIndex - 1] === questions[questions.length - 1] ||
+                questions[randomIndex + 1] === questions[questions.length - 1]
+            ) {
+                continue;
+            }
+
             questions[questions.length - 1] = questions[randomIndex];
             questions[randomIndex] = tmpEnd;
             ++s;
