@@ -52,7 +52,8 @@ export function EditModeView({ quizzes }: EditPagesProps): React.ReactNode {
 }
 
 function ListPageView(): React.ReactNode {
-    const { page, edit, setEdit, window, currIndex, normal } = useLpv();
+    const { page, edit, setEdit, window, currIndex, normal, message } =
+        useLpv();
 
     function mapItems(items: any[]): React.ReactNode[] {
         const components: React.ReactNode[] = [];
@@ -95,6 +96,7 @@ function ListPageView(): React.ReactNode {
     return (
         <>
             <TitleBox title={page.title}>
+                <Text color="red">{message}</Text>
                 <ShowMode normal={normal} />
             </TitleBox>
             <Window

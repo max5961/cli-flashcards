@@ -3,7 +3,7 @@ import { AppContext } from "../../App.js";
 import { PageContext, QpvContext } from "../EditModeView.js";
 import { QpvNode, QpvUtils } from "../utils/QpvUtils.js";
 import { Command } from "../../shared/utils/KeyBinds.js";
-import { PageStack } from "../../shared/utils/PageStack.js";
+import { ListPage, PageStack } from "../../shared/utils/PageStack.js";
 import { Question } from "../../types.js";
 import { Write } from "../../shared/utils/Write.js";
 import { useKeyBinds } from "../../shared/hooks/useKeyBinds.js";

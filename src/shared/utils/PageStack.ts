@@ -1,12 +1,4 @@
-import {
-    Quiz,
-    Section,
-    Question,
-    QA,
-    QI,
-    MC,
-    FlexibleQuestion,
-} from "../../types.js";
+import { Quiz, Section, Question, QA, QI, MC } from "../../types.js";
 type Data = Quiz[] | Quiz | Section | Question;
 type ListItems = Quiz[] | Section[] | Question[];
 export type PageType = "QUIZZES" | "QUIZ" | "SECTION" | "QUESTION";
@@ -103,6 +95,7 @@ export abstract class ListPage extends Page {
     abstract removeListItem(index: number): void;
     abstract addListItem(name: string): void;
     abstract setListItemName(index: number, name: string): void;
+    abstract nameExists(name: string): boolean;
 }
 
 export class QuizzesPage extends ListPage {
@@ -154,6 +147,11 @@ export class QuizzesPage extends ListPage {
         this.listItems[index].fileName = name;
         this.data = this.listItems;
         this.lastIndex = index;
+    }
+
+    nameExists(name: string): boolean {
+        const fileNames: string[] = this.listItems.map((quiz) => quiz.fileName);
+        return fileNames.includes(name);
     }
 }
 
@@ -215,6 +213,13 @@ export class QuizPage extends ListPage {
         this.listItems[index].name = name;
         this.data.sections = this.listItems;
         this.lastIndex = index;
+    }
+
+    nameExists(name: string): boolean {
+        const sectionNames: string[] = this.listItems.map(
+            (section) => section.name,
+        );
+        return sectionNames.includes(name);
     }
 }
 
@@ -280,6 +285,13 @@ export class SectionPage extends ListPage {
         this.listItems[index].q = name;
         this.data.questions = this.listItems;
         this.lastIndex = index;
+    }
+
+    nameExists(name: string): boolean {
+        const questionNames: string[] = this.listItems.map(
+            (question) => question.q,
+        );
+        return questionNames.includes(name);
     }
 }
 

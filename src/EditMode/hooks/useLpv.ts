@@ -12,6 +12,7 @@ export function useLpv() {
     const { pageStack, setPageStack } = useContext(PageContext)!;
     const [edit, setEdit] = useState<string>("");
     const { window, currIndex, setCurrIndex } = useWindow(5);
+    const [message, setMessage] = useState<string>("");
 
     useEffect(() => {
         setCurrIndex(page.lastIndex);
@@ -22,6 +23,8 @@ export function useLpv() {
     const lpvUtil: LpvUtil = new LpvUtil({
         pageStack,
         setPageStack,
+        message,
+        setMessage,
         page,
         currIndex,
         setCurrIndex,
@@ -33,6 +36,7 @@ export function useLpv() {
     });
 
     function handleKeyBinds(command: Command | null): void {
+        setMessage("");
         if (!command) return;
 
         if (command === "DOWN") {
@@ -81,5 +85,5 @@ export function useLpv() {
 
     useKeyBinds(handleKeyBinds, normal);
 
-    return { page, edit, setEdit, window, currIndex, normal };
+    return { page, edit, setEdit, window, currIndex, normal, message };
 }

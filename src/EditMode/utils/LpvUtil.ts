@@ -7,6 +7,8 @@ interface State {
     setPageStack: (ps: PageStack) => void;
     page: ListPage;
     currIndex: number;
+    message: string;
+    setMessage: (s: string) => void;
     setCurrIndex: (n: number) => void;
     normal: boolean;
     setNormal: (b: boolean) => void;
@@ -22,6 +24,8 @@ export class LpvUtil {
     private page!: ListPage;
     private currIndex!: number;
     private setCurrIndex!: (n: number) => void;
+    private message!: string;
+    private setMessage!: (s: string) => void;
     private normal!: boolean;
     private setNormal!: (b: boolean) => void;
     private edit!: string;
@@ -79,6 +83,11 @@ export class LpvUtil {
     createQuestionAndEnter(): void {
         const copy: PageStack = this.getStackCopy();
         const top: ListPage = copy.top() as ListPage;
+        if (top.nameExists(this.edit)) {
+            this.setMessage("Name already exists!");
+            return;
+        }
+
         top.addListItem(this.edit);
         copy.appendNextPage(this.currIndex);
         copy.propagateChanges();
@@ -138,6 +147,11 @@ export class LpvUtil {
 
         const copy: PageStack = this.getStackCopy();
         const top: ListPage = copy.top() as ListPage;
+        if (top.nameExists(this.edit)) {
+            this.setMessage("Name already exists!");
+            return;
+        }
+
         top.setListItemName(this.currIndex, this.edit);
 
         this.writeData(copy);
@@ -148,6 +162,11 @@ export class LpvUtil {
 
         const copy: PageStack = this.getStackCopy();
         const top: ListPage = copy.top() as ListPage;
+        if (top.nameExists(this.edit)) {
+            this.setMessage("Name already exists!");
+            return;
+        }
+
         top.addListItem(this.edit);
 
         this.writeData(copy);
