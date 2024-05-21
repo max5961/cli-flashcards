@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext } from "react";
+import React, { useState, useContext, createContext, useRef } from "react";
 import { Box, Text } from "ink";
 import { HorizontalLine } from "../shared/components/Lines.js";
 import { QuestionTypes, Quiz } from "../types.js";
@@ -12,6 +12,7 @@ import { QpvNode, QpvUtil } from "./QpvUtil.js";
 import { QpvState, useQpv } from "./useQpv.js";
 import { useLpv } from "./useLpv.js";
 import { Icon } from "../shared/components/Icons.js";
+import { ErrorMessage } from "../shared/components/ErrorMessage.js";
 
 interface PageContext {
     pageStack: PageStack;
@@ -22,12 +23,17 @@ export const PageContext = createContext<PageContext | null>(null);
 
 interface EditPagesProps {
     quizzes: Quiz[];
+    preStack?: PageStack | null;
 }
 
-export function EditModeView({ quizzes }: EditPagesProps): React.ReactNode {
+export function EditModeView({
+    quizzes,
+    preStack = null,
+}: EditPagesProps): React.ReactNode {
     const [pageStack, setPageStack] = useState<PageStack>(
-        new PageStack(quizzes),
+        preStack ? preStack : new PageStack(quizzes),
     );
+    // new PageStack(quizzes),
 
     const page: Page = pageStack.top();
 
@@ -91,7 +97,7 @@ function ListPageView(): React.ReactNode {
     return (
         <>
             <TitleBox title={page.title}>
-                <Text color="red">{message}</Text>
+                <ErrorMessage isError={message !== ""} message={message} />
                 <ShowMode normal={normal} />
             </TitleBox>
             <Window
@@ -249,6 +255,8 @@ function QandABoxes(): React.ReactNode {
             flexDirection="column"
             alignItems="center"
             isFocus={state.currNode === "question"}
+            paddingLeft={2}
+            paddingRight={2}
         >
             <Box>
                 <Text dimColor>Question: </Text>
@@ -286,6 +294,8 @@ function QandABoxes(): React.ReactNode {
                 alignItems="center"
                 flexDirection="column"
                 isFocus={state.currNode === "answer"}
+                paddingLeft={2}
+                paddingRight={2}
             >
                 {answerBoxChildren}
             </FocusableBox>
@@ -299,6 +309,8 @@ function QandABoxes(): React.ReactNode {
                 borderColor="red"
                 defaultBorderColor="red"
                 isFocus={state.currNode === "answer"}
+                paddingLeft={2}
+                paddingRight={2}
             >
                 {answerBoxChildren}
             </FocusableBox>

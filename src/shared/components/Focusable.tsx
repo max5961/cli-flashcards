@@ -14,6 +14,8 @@ interface FocusableBoxProps {
         | "column-reverse"
         | undefined;
     alignItems?: "center" | "flex-start" | "flex-end" | "stretch";
+    paddingLeft?: number;
+    paddingRight?: number;
 }
 
 export function FocusableBox({
@@ -24,6 +26,8 @@ export function FocusableBox({
     width = "100%",
     flexDirection = "row",
     alignItems = "center",
+    paddingLeft = 1,
+    paddingRight = 1,
 }: FocusableBoxProps): React.ReactNode {
     return (
         <Box
@@ -33,6 +37,8 @@ export function FocusableBox({
             width={width}
             flexDirection={flexDirection}
             alignItems={alignItems}
+            paddingLeft={paddingLeft}
+            paddingRight={paddingRight}
         >
             {children}
         </Box>

@@ -10,6 +10,8 @@ import { Config } from "./shared/utils/ProcessArgs.js";
 import { KbState } from "./shared/hooks/useKeyBinds.js";
 import { HorizontalLine } from "./shared/components/Lines.js";
 import { KeyBindState } from "./shared/components/KeyBindState.js";
+import { EditModeView } from "./EditMode/EditModeView.js";
+import { PageStack } from "./shared/utils/PageStack.js";
 
 interface AppContext {
     normal: boolean;
@@ -20,11 +22,12 @@ interface AppContext {
     questions: Question[] | null;
     setQuestions: (q: Question[]) => void;
     newQuiz: (q: Question[]) => void;
+    setPreStack: (s: PageStack) => void;
 }
 
 export const AppContext = createContext<AppContext | null>(null);
 
-export type WhichMode = "QUIZ" | "CHOOSE_QUIZ" | "EDIT" | "START";
+export type WhichMode = "QUIZ" | "CHOOSE_QUIZ" | "EDIT" | "START" | "FIX";
 
 // initialQuestions generated from optional CLI arguments
 interface AppProps {
@@ -42,6 +45,7 @@ export default function App({
     const [questions, setQuestions] = useState<Question[] | null>(
         initialQuestions,
     );
+    const [preStack, setPreStack] = useState<PageStack | null>(null);
 
     const [kbState, setKbState] = useState<KbState>({
         command: null,
@@ -78,6 +82,10 @@ export default function App({
             return <LoadGate.EditQuizzes />;
         }
 
+        if (mode === "FIX") {
+            return <EditModeView quizzes={[]} preStack={preStack!} />;
+        }
+
         throw new Error("Invalid mode");
     }
 
@@ -100,6 +108,7 @@ export default function App({
                 questions,
                 setQuestions,
                 newQuiz,
+                setPreStack,
             }}
         >
             <MainContainer config={config}>

@@ -1,5 +1,5 @@
 import React from "react";
-import { Text } from "ink";
+import { Box, Text } from "ink";
 import { Eval } from "../../QuizMode/QuizState.js";
 
 interface IconProps {
@@ -9,19 +9,19 @@ interface IconProps {
 
 export function Icon({ type, questionEval = undefined }: IconProps) {
     if (type === "MERGE") {
-        return <Text color="cyanBright">{"  "}</Text>;
+        return <Text color="cyanBright">{"   "}</Text>;
     }
 
     if (type === "QUIZ") {
-        return <Text color="cyanBright">{"  "}</Text>;
+        return <Text color="cyanBright">{"   "}</Text>;
     }
 
     if (type === "EDIT") {
-        return <Text color="yellow">{"  "}</Text>;
+        return <Text color="yellow">{"   "}</Text>;
     }
 
     if (type === "ADD") {
-        return <Text color="green">{"  "}</Text>;
+        return <Text color="green">{"   "}</Text>;
     }
 
     if (questionEval === "YES") {

@@ -7,8 +7,10 @@ import { Box, Text } from "ink";
 import { TitleBox } from "../shared/components/TitleBox.js";
 import { Command } from "../shared/utils/KeyBinds.js";
 import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
-import { AppContext } from "../App.js";
+import { AppContext, WhichMode } from "../App.js";
 import { Icon } from "../shared/components/Icons.js";
+import { ErrorMessage } from "../shared/components/ErrorMessage.js";
+import Read from "../shared/utils/Read.js";
 
 interface CqvProps {
     quizzes: Quiz[];
@@ -19,8 +21,10 @@ export function SelectionModeView({ quizzes }: CqvProps): React.ReactNode {
         new PageStack(quizzes),
     );
     const { window, currIndex, setCurrIndex } = useWindow(5);
-    const { setMode, setQuestions, normal } = useContext(AppContext)!;
-    const [invalidMessage, setInvalidMessage] = useState<string>("");
+    const { setMode, setQuestions, setPreStack, normal } =
+        useContext(AppContext)!;
+    const [errorMessage, setInvalidMessage] = useState<string>("");
+    const [invalidQuestion, setInvalidQuestion] = useState<string>("");
 
     const page: ListPage = pageStack.top() as ListPage;
 
@@ -80,13 +84,6 @@ export function SelectionModeView({ quizzes }: CqvProps): React.ReactNode {
         for (const question of questions) {
             if (question.type !== "mc") continue;
 
-            if (question.choices.length > 4) {
-                setInvalidMessage(
-                    `Multiple Choice question: '${question.q}' exceeds maximum options length of 4`,
-                );
-                return;
-            }
-
             const validLabels: string[] = [];
             for (let i = 0; i < question.choices.length; ++i) {
                 validLabels.push(String.fromCharCode(65 + i));
@@ -94,8 +91,9 @@ export function SelectionModeView({ quizzes }: CqvProps): React.ReactNode {
 
             if (!validLabels.includes(question.a.toUpperCase())) {
                 setInvalidMessage(
-                    `Multiple Choice question: '${question.q}' has an invalid answer`,
+                    `Multiple Choice question: '${question.q}' has an invalid answer. (y to fix)`,
                 );
+                setInvalidQuestion(question.q);
                 return;
             }
         }
@@ -107,6 +105,7 @@ export function SelectionModeView({ quizzes }: CqvProps): React.ReactNode {
     function handleKeyBinds(command: Command | null): void {
         if (command !== "RETURN_KEY") {
             setInvalidMessage("");
+            setInvalidQuestion("");
         }
 
         if (command === "DELETE_KEY") {
@@ -193,6 +192,10 @@ export function SelectionModeView({ quizzes }: CqvProps): React.ReactNode {
                 return;
             }
         }
+
+        if (command === "MARK_YES" && errorMessage.length) {
+            fixQuestion(invalidQuestion, setPreStack, setMode);
+        }
     }
 
     useKeyBinds(handleKeyBinds, normal);
@@ -200,13 +203,10 @@ export function SelectionModeView({ quizzes }: CqvProps): React.ReactNode {
     return (
         <>
             <TitleBox title={page.title}>
-                {invalidMessage === "" ? (
-                    <></>
-                ) : (
-                    <Box alignSelf="flex-end" marginLeft={3}>
-                        <Text color="red">{invalidMessage}</Text>
-                    </Box>
-                )}
+                <ErrorMessage
+                    isError={errorMessage !== ""}
+                    message={errorMessage}
+                />
             </TitleBox>
             <Window
                 items={mapItems(page.listItems!)}
@@ -220,4 +220,32 @@ export function SelectionModeView({ quizzes }: CqvProps): React.ReactNode {
             />
         </>
     );
+}
+
+// not the best solution, but it works
+async function fixQuestion(
+    toFix: string,
+    setPreStack: (s: PageStack) => void,
+    setMode: (m: WhichMode) => void,
+): Promise<void> {
+    const data: Quiz[] = await Read.getData();
+    const pageStack: PageStack = new PageStack(data);
+
+    for (let i = 0; i < data.length; ++i) {
+        const quiz: Quiz = data[i];
+        for (let j = 0; j < quiz.sections.length; ++j) {
+            const section: Section = quiz.sections[j];
+            for (let k = 0; k < section.questions.length; ++k) {
+                const question: Question = section.questions[k];
+                if (question.q === toFix) {
+                    pageStack.appendNextPage(i);
+                    pageStack.appendNextPage(j);
+                    pageStack.appendNextPage(k);
+                }
+            }
+        }
+    }
+
+    setPreStack(pageStack);
+    setMode("FIX");
 }
