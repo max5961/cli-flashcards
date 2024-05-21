@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { useInput } from "ink";
 import { Command, InsertKb, NormalKb } from "../utils/KeyBinds.js";
+import { AppContext, WhichMode } from "../../App.js";
 
 type HandleKeyBinds = (command: Command | null) => void;
 
@@ -9,17 +10,10 @@ export interface KbState {
     command: Command | null;
 }
 
-export function useKeyBinds(
-    handleKeyBinds: HandleKeyBinds,
-    normal: boolean,
-): KbState {
+export function useKeyBinds(handleKeyBinds: HandleKeyBinds, normal: boolean) {
+    const { setMode, setKbState } = useContext(AppContext)!;
     const normalKb = useRef<NormalKb>(new NormalKb());
     const insertKb = useRef<InsertKb>(new InsertKb());
-
-    const [kbState, setKbState] = useState<KbState>({
-        command: null,
-        register: "",
-    });
 
     useInput((input, key) => {
         let normalCommand: Command | null = null;
@@ -34,6 +28,8 @@ export function useKeyBinds(
         }
 
         const command: Command | null = normalCommand || insertCommand || null;
+
+        handleGlobalCommands(command, setMode);
         handleKeyBinds(command);
 
         setKbState({
@@ -41,6 +37,25 @@ export function useKeyBinds(
             command: command,
         });
     });
+}
 
-    return kbState;
+function handleGlobalCommands(
+    command: Command | null,
+    setMode: (m: WhichMode) => void,
+): void {
+    if (command === "QUIT") {
+        process.exit(0);
+    }
+
+    if (command === "TO_START_MENU") {
+        setMode("START");
+    }
+
+    if (command === "TO_CHOOSE_MENU") {
+        setMode("CHOOSE_QUIZ");
+    }
+
+    if (command === "TO_EDIT_MENU") {
+        setMode("EDIT");
+    }
 }

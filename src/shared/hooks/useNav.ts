@@ -10,16 +10,15 @@ export function useNav<T, Data>(
     const initialNav: Nav<T> = new Nav<T>(getInitializer(data));
 
     const [nav, setNav] = useState<Nav<T>>(initialNav);
-    const [currNode, setCurrNode] = useState<T>(nav.getCurrNode());
 
     useEffect(() => {
         const nextNav = new Nav<T>(getInitializer(data));
+        const currNode: T = nextNav.getCurrNode();
         if (nextNav.returnIfValid(currNode)) {
             nextNav.goTo(currNode);
         }
-        setCurrNode(nextNav.getCurrNode());
         setNav(nextNav);
     }, [data]);
 
-    return { nav, currNode, setCurrNode };
+    return { nav };
 }

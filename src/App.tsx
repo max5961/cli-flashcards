@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { createContext } from "react";
-import { Box, Text, useApp, useInput } from "ink";
+import { Box, Text } from "ink";
 import { Question } from "./types.js";
 import useStdoutDimensions from "./shared/hooks/useStdoutDimensions.js";
 import { QuizModeView } from "./QuizMode/QuizModeView.js";
 import { StartMenu } from "./StartMenu/StartMenu.js";
 import { LoadGate } from "./shared/components/LoadGate.js";
 import { Config } from "./shared/utils/ProcessArgs.js";
-import { Command } from "./shared/utils/KeyBinds.js";
-import { KbState, useKeyBinds } from "./shared/hooks/useKeyBinds.js";
+import { KbState } from "./shared/hooks/useKeyBinds.js";
 import { HorizontalLine } from "./shared/components/Lines.js";
 import { KeyBindState } from "./shared/components/KeyBindState.js";
 
 interface AppContext {
     normal: boolean;
     setNormal: (b: boolean) => void;
+    setKbState: (k: KbState) => void;
     mode: WhichMode;
     setMode: (m: WhichMode) => void;
     questions: Question[] | null;
@@ -37,12 +37,16 @@ export default function App({
     config,
 }: AppProps): React.ReactElement {
     const [normal, setNormal] = useState<boolean>(true);
-    const { exit } = useApp();
     const [quizKey, setQuizKey] = useState<number>(0);
     const [mode, setMode] = useState<WhichMode>("START");
     const [questions, setQuestions] = useState<Question[] | null>(
         initialQuestions,
     );
+
+    const [kbState, setKbState] = useState<KbState>({
+        command: null,
+        register: "",
+    });
 
     function newQuiz(questions: Question[]): void {
         setMode("QUIZ");
@@ -56,12 +60,6 @@ export default function App({
             setMode("QUIZ");
         }
     }, [questions]);
-
-    useInput((input) => {
-        if (normal && input === "q") {
-            exit();
-        }
-    });
 
     function getContent(): React.ReactNode {
         if (mode === "START") {
@@ -83,20 +81,6 @@ export default function App({
         throw new Error("Invalid mode");
     }
 
-    function handleKeyBinds(command: Command | null): void {
-        if (command === "TO_START_MENU") {
-            setMode("START");
-        }
-
-        if (command === "TO_CHOOSE_MENU") {
-            setMode("CHOOSE_QUIZ");
-        }
-
-        if (command === "TO_EDIT_MENU") {
-            setMode("EDIT");
-        }
-    }
-
     let modeDesc: string = "";
     if (mode === "EDIT") {
         modeDesc = "Edit Mode";
@@ -105,13 +89,12 @@ export default function App({
         modeDesc = "Selection Mode";
     }
 
-    const kbState: KbState = useKeyBinds(handleKeyBinds, normal);
-
     return (
         <AppContext.Provider
             value={{
                 normal,
                 setNormal,
+                setKbState,
                 mode,
                 setMode,
                 questions,

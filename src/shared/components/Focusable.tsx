@@ -6,6 +6,14 @@ interface FocusableBoxProps {
     children: React.ReactNode;
     borderColor?: string;
     defaultBorderColor?: string;
+    width?: string;
+    flexDirection?:
+        | "row"
+        | "column"
+        | "row-reverse"
+        | "column-reverse"
+        | undefined;
+    alignItems?: "center" | "flex-start" | "flex-end" | "stretch";
 }
 
 export function FocusableBox({
@@ -13,12 +21,18 @@ export function FocusableBox({
     children,
     borderColor = "blue",
     defaultBorderColor = "",
+    width = "100%",
+    flexDirection = "row",
+    alignItems = "center",
 }: FocusableBoxProps): React.ReactNode {
     return (
         <Box
             borderStyle={isFocus ? "bold" : "round"}
             borderColor={isFocus ? borderColor : defaultBorderColor}
             flexGrow={1}
+            width={width}
+            flexDirection={flexDirection}
+            alignItems={alignItems}
         >
             {children}
         </Box>
