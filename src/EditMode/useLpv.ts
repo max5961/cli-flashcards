@@ -1,11 +1,11 @@
-import { LpvUtil } from "../utils/LpvUtil.js";
 import { useContext, useEffect, useState } from "react";
-import { ListPage } from "../../shared/utils/PageStack.js";
-import { useWindow } from "../../shared/hooks/useWindow.js";
-import { PageContext } from "../EditModeView.js";
-import { AppContext } from "../../App.js";
-import { useKeyBinds } from "../../shared/hooks/useKeyBinds.js";
-import { Command } from "../../shared/utils/KeyBinds.js";
+import { LpvUtil } from "./LpvUtil.js";
+import { ListPage } from "../shared/utils/PageStack.js";
+import { useWindow } from "../shared/hooks/useWindow.js";
+import { PageContext } from "./EditModeView.js";
+import { AppContext } from "../App.js";
+import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
+import { Command } from "../shared/utils/KeyBinds.js";
 
 export function useLpv() {
     const { normal, setNormal, setMode } = useContext(AppContext)!;

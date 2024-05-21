@@ -1,6 +1,7 @@
-import { Question, FlexibleQuestion } from "../../types.js";
-import { Nav, Opt } from "../../shared/utils/Nav.js";
-import { PageStack } from "../../shared/utils/PageStack.js";
+import { Question, FlexibleQuestion } from "../types.js";
+import { Nav, Opt } from "../shared/utils/Nav.js";
+import { PageStack } from "../shared/utils/PageStack.js";
+import { QpvState } from "./useQpv.js";
 
 export type QpvNode =
     | "qa"
@@ -15,65 +16,7 @@ export type QpvNode =
     | "C"
     | "D";
 
-interface QpvState {
-    data: FlexibleQuestion;
-    setData: (fq: FlexibleQuestion) => void;
-    pageStack: PageStack;
-    setPageStack: (ps: PageStack) => void;
-    normal: boolean;
-    setNormal: (b: boolean) => void;
-    nav: Nav<QpvNode>;
-    currNode: QpvNode;
-    setCurrNode: (qpvNode: QpvNode) => void;
-}
-
-export class QpvHandler {
-    private data!: FlexibleQuestion;
-    private setData!: (fq: FlexibleQuestion) => void;
-    private pageStack!: PageStack;
-    private setPageStack!: (ps: PageStack) => void;
-    private normal!: boolean;
-    private setNormal!: (b: boolean) => void;
-    private nav!: Nav<QpvNode>;
-    private currNode!: QpvNode;
-    private setCurrNode!: (qpvNode: QpvNode) => void;
-
-    constructor(state: QpvState) {
-        Object.assign(this, state);
-    }
-
-    handleMove(direction: "UP" | "DOWN" | "LEFT" | "RIGHT"): void {
-        if (direction === "UP") {
-            this.nav.moveUp();
-        } else if (direction === "DOWN") {
-            this.nav.moveDown();
-        } else if (direction === "LEFT") {
-            this.nav.moveLeft();
-        } else if (direction === "RIGHT") {
-            this.nav.moveRight();
-        } else {
-            throw new Error("Invalid direction provided");
-        }
-
-        this.setCurrNode(this.nav.getCurrNode());
-    }
-
-    backPrevPage(): void {
-        const copy: PageStack = this.pageStack.getShallowClone();
-        copy.pop();
-        this.setPageStack(copy);
-    }
-
-    handleEnterInsert(): void {
-        this.setNormal(false);
-    }
-
-    handleExitInsert(): void {
-        this.setNormal(true);
-    }
-}
-
-export class QpvUtils {
+export class QpvUtil {
     // Creating a separate FlexibleQuestion type allows to persist MC choices data
     // even when cycling question type options in the GUI
     static toFlexibleQuestion(question: Question): FlexibleQuestion {
@@ -91,12 +34,9 @@ export class QpvUtils {
         };
     }
 
-    // Only including one type would force you to create a dummy choices array
-    // if you chose to edit the raw JSON, so we need to convert back to the
-    // regular Question type
     static toQuestion(flexibleQuestion: FlexibleQuestion): Question {
         if (flexibleQuestion.type === "mc") {
-            return QpvUtils.cloneFlexibleQuestion(flexibleQuestion) as Question;
+            return QpvUtil.cloneFlexibleQuestion(flexibleQuestion) as Question;
         }
 
         return {
@@ -117,8 +57,46 @@ export class QpvUtils {
 
     static getFlexibleData(pageStack: PageStack): FlexibleQuestion {
         const data: Question = pageStack.top().data as Question;
-        return QpvUtils.toFlexibleQuestion(data);
+        return QpvUtil.toFlexibleQuestion(data);
     }
+
+    static copyState(state: QpvState): QpvState {
+        const stateCopy: QpvState = {
+            ...state,
+            data: Object.assign({}, state.data),
+        };
+        stateCopy.data.choices = stateCopy.data.choices.slice();
+        return stateCopy;
+    }
+
+    static isWithinMc(currNode: QpvNode): boolean {
+        return (
+            currNode === "A" ||
+            currNode === "B" ||
+            currNode === "C" ||
+            currNode === "D"
+        );
+    }
+
+    static getMcIndex(currNode: QpvNode): number {
+        return ["A", "B", "C", "D"].indexOf(currNode);
+    }
+
+    static getMcText(currNode: QpvNode, state: QpvState): string {
+        if (!QpvUtil.isWithinMc(currNode))
+            throw new Error("Invalid function call");
+
+        return state.data.choices[QpvUtil.getMcIndex(currNode)];
+    }
+
+    static isWithinEqt(state: QpvState): boolean {
+        return (
+            state.currNode === "qa" ||
+            state.currNode === "qi" ||
+            state.currNode === "mc"
+        );
+    }
+
     static getNavInit(flexibleQuestion: FlexibleQuestion) {
         return (nav: Nav<QpvNode>): void => {
             // qa, qi, mc are options to modify the Question type
@@ -153,7 +131,7 @@ export class QpvUtils {
             // cancel
             cancel.setUp(question);
 
-            QpvUtils.linkMultipleChoiceNodes(nav, flexibleQuestion);
+            QpvUtil.linkMultipleChoiceNodes(nav, flexibleQuestion);
 
             // initialize Nav to start by pointing at the question node
             nav.goTo("question");

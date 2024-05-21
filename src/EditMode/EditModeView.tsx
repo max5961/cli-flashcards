@@ -8,10 +8,10 @@ import { InputBox } from "../shared/components/InputBox.js";
 import { FocusableBox } from "../shared/components/Focusable.js";
 import { TitleBox } from "../shared/components/TitleBox.js";
 import { ShowMode } from "../shared/components/ShowMode.js";
-import { QpvNode } from "./utils/QpvUtils.js";
-import { useLpv } from "./hooks/useLpv.js";
+import { QpvNode, QpvUtil } from "./QpvUtil.js";
+import { QpvState, useQpv } from "./useQpv.js";
+import { useLpv } from "./useLpv.js";
 import { Icon } from "../shared/components/Icons.js";
-import { QpvState, useQpv } from "./hooks/useQpv.js";
 
 interface PageContext {
     pageStack: PageStack;
@@ -115,22 +115,13 @@ interface QpvContext {
     setAnswerInput: SetInput;
     setMcInput: SetInput;
     setAddInput: SetInput;
-    getMcText: (q: QpvNode) => string;
-    getMcIndex: (q: QpvNode) => number;
 }
 
 export const QpvContext = createContext<QpvContext | null>(null);
 
 function QuestionPageView(): React.ReactNode {
-    const {
-        state,
-        setQuestionInput,
-        setAnswerInput,
-        setMcInput,
-        setAddInput,
-        getMcText,
-        getMcIndex,
-    } = useQpv();
+    const { state, setQuestionInput, setAnswerInput, setMcInput, setAddInput } =
+        useQpv();
 
     return (
         <>
@@ -141,8 +132,6 @@ function QuestionPageView(): React.ReactNode {
                     setAnswerInput,
                     setMcInput,
                     setAddInput,
-                    getMcText,
-                    getMcIndex,
                 }}
             >
                 <TitleBox title={"Edit Question"}>
@@ -357,10 +346,10 @@ function MCBoxes(): React.ReactNode {
 }
 
 function McText({ index }: { index: number }): React.ReactNode {
-    const { state, getMcIndex, setMcInput } = useContext(QpvContext)!;
+    const { state, setMcInput } = useContext(QpvContext)!;
 
     const acceptsInput: boolean =
-        !state.normal && getMcIndex(state.currNode) === index;
+        !state.normal && QpvUtil.getMcIndex(state.currNode) === index;
     const defaultText: string = state.data.choices[index];
 
     return (

@@ -1,6 +1,6 @@
-import { WhichMode } from "../../App.js";
-import { Write } from "../../shared/utils/Write.js";
-import { ListPage, PageStack } from "../../shared/utils/PageStack.js";
+import { WhichMode } from "../App.js";
+import { Write } from "../shared/utils/Write.js";
+import { ListPage, PageStack } from "../shared/utils/PageStack.js";
 
 interface State {
     pageStack: PageStack;
