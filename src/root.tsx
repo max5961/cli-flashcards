@@ -20,13 +20,17 @@ function executeBeforeExit(command: string): void {
 
 async function entryPoint() {
     await Read.makeDir(); // make sure directory in .local/share exists
-    await Read.getData(); // initial check for error-free json data
 
     const args: ProcessArgs = new ProcessArgs();
 
     await args.utilityArgs.processUtilityFlags();
     const config: Readonly<Config> = args.configArgs.processConfigFlags();
     const initialQuestions = await args.selectionArgs.processSelectionFlags();
+
+    if (!initialQuestions) {
+        // processSelectionFlags checks selected files but does not check all files
+        await Read.getData();
+    }
 
     if (config.postCommand !== null) {
         executeBeforeExit(config.postCommand);

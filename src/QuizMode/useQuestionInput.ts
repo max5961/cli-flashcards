@@ -73,7 +73,10 @@ export function useQuestionInput(
             setQiState(copy);
         }
 
-        if (command === "ENTER_INSERT") {
+        if (
+            command === "ENTER_INSERT" ||
+            (normal && command === "RETURN_KEY")
+        ) {
             setQiState({
                 ...qiState,
             });

@@ -2,6 +2,7 @@ import yargs, { Argv } from "yargs";
 import { hideBin } from "yargs/helpers";
 import Read from "./Read.js";
 import { Quiz, Question } from "../../types.js";
+import { keyBindsText } from "./keyBindsText.js";
 
 export class ProcessArgs {
     public selectionArgs: SelectionArgs;
@@ -242,7 +243,7 @@ class UtilityArgs extends Args {
 
     constructor() {
         super();
-        this.keyBinds = `<keybinds placeholder>`;
+        this.keyBinds = keyBindsText; // from import
     }
 
     setArgv(): void {
