@@ -27,10 +27,14 @@ async function entryPoint() {
     const config: Readonly<Config> = args.configArgs.processConfigFlags();
     const initialQuestions = await args.selectionArgs.processSelectionFlags();
 
-    if (!initialQuestions) {
-        // processSelectionFlags checks selected files but does not check all files
-        await Read.getData();
-    }
+    // processSelectionFlags checks selected files but does not check all files
+    // Could also not include this.  If you enter the app with no selection
+    // it will already check all files anyways.  If you enter the app with a selection
+    // and the entire selection is okay, then everything will work good until
+    // you try to enter SelectionMode or EditMode
+    // if (!initialQuestions) {
+    //     await Read.getData();
+    // }
 
     if (config.postCommand !== null) {
         executeBeforeExit(config.postCommand);

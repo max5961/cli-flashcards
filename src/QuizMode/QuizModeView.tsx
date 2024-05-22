@@ -1,92 +1,42 @@
-import React, { useContext } from "react";
-import { useState } from "react";
+import React from "react";
 import { Box, Text } from "ink";
-import { Question } from "../types.js";
-import { Header } from "./Header.js";
-import { MultipleChoice } from "./MultipleChoice.js";
-import { QuestionAnswer } from "./QuestionAnswer.js";
-import { QuestionInput } from "./QuestionInput.js";
-import { AppContext } from "../App.js";
-import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
-import { Command } from "../shared/utils/KeyBinds.js";
+import { MC, QA, QI, Question } from "../types.js";
 import Spinner from "ink-spinner";
 import { HorizontalLine } from "../shared/components/Lines.js";
 import { QuizState } from "./QuizState.js";
-import { CompletedPage } from "./CompletedPage.js";
+import { useQuestionInput } from "./useQuestionInput.js";
+import { FocusableBox } from "../shared/components/Focusable.js";
+import { InputBox } from "../shared/components/InputBox.js";
+import { Icon } from "../shared/components/Icons.js";
+import { RetakeQuestions, useCompletedPage } from "./useCompletedPage.js";
+import { useQuizMode } from "./useQuizMode.js";
 
 export function QuizModeView({
     questions,
 }: {
     questions: Readonly<Question[]>;
 }): React.ReactElement {
-    const { normal } = useContext(AppContext)!;
-    const [message, setMessage] = useState<React.ReactNode>(<></>);
-    const [state, setState] = useState<QuizState>(new QuizState(questions, {}));
-    const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
+    const { message, quizCompleted, getRetakeQuestions, state, setState } =
+        useQuizMode(questions);
+
+    // If completed quiz, return early and render CompletedPage
+    if (quizCompleted) {
+        return <CompletedPage state={state} redo={getRetakeQuestions()} />;
+    }
+
+    let messageComponent: React.ReactNode = <></>;
+    if (message === "SHUFFLE") {
+        <Text>
+            <Text color="cyan">
+                <Spinner type="dots" />
+            </Text>
+            {" Shuffling next questions"}
+        </Text>;
+    }
 
     const question: Question = state.getQuestion(questions);
 
-    function handleKeyBinds(command: Command | null): void {
-        if (command === "LEFT") {
-            setState(state.prevQuestion());
-        }
-
-        if (command === "RIGHT") {
-            if (state.position >= questions.length - 1) {
-                setQuizCompleted(true);
-            }
-            setState(state.nextQuestion());
-        }
-
-        if (command === "UP") {
-            setState(state.moveFocusUp(questions));
-        }
-
-        if (command === "DOWN") {
-            setState(state.moveFocusDown(questions));
-        }
-
-        if (command === "MARK_NO") {
-            setState(state.markNo());
-        }
-
-        if (command === "MARK_YES") {
-            setState(state.markYes());
-        }
-
-        if (command === "TOGGLE_SHOW_ANSWER") {
-            if (normal) {
-                setState(state.toggleShowAnswer());
-            }
-        }
-
-        if (command === "RETURN_KEY") {
-            if (question.type === "mc") {
-                setState(state.chooseMc(question));
-            }
-        }
-
-        if (command === "SHUFFLE") {
-            setState(state.shuffle(questions));
-            const randomizing: React.ReactNode = (
-                <Text>
-                    <Text color="cyan">
-                        <Spinner type="dots" />
-                    </Text>
-                    {" Shuffling next questions"}
-                </Text>
-            );
-
-            setMessage(randomizing);
-            setTimeout(() => {
-                setMessage(<></>);
-            }, 1000);
-        }
-    }
-
-    useKeyBinds(handleKeyBinds, normal);
-
-    function getCurrQuestion(): React.ReactElement {
+    function getContent(): React.ReactElement {
         if (question.type === "mc") {
             return <MultipleChoice question={question} state={state} />;
         }
@@ -112,36 +62,15 @@ export function QuizModeView({
 
     const score = state.getScore();
 
-    if (quizCompleted) {
-        const incorrect: Question[] = state.indexes
-            .filter((index: number) => {
-                return state.evalMap[index] === "NO";
-            })
-            .map((index: number) => questions[index]);
-
-        const notEval: Question[] = state.indexes
-            .filter((index: number) => {
-                return !state.evalMap[index];
-            })
-            .map((index: number) => questions[index]);
-
-        return (
-            <CompletedPage
-                state={state}
-                redo={{ incorrect, notEval, questions }}
-            />
-        );
-    }
-
     return (
         <Box
             flexDirection="column"
             alignItems="center"
             justifyContent="space-between"
         >
-            <Header state={state} message={message} />
+            <Header state={state} messageComponent={messageComponent} />
             <HorizontalLine />
-            <Box margin={2}>{getCurrQuestion()}</Box>
+            <Box margin={2}>{getContent()}</Box>
             <HorizontalLine />
             <Box
                 width="100%"
@@ -152,6 +81,192 @@ export function QuizModeView({
                 <Text dimColor>{`Incorrect: ${score.no}`}</Text>
                 <Text dimColor>{`Unanswered/Skipped: ${score.noEval}`}</Text>
             </Box>
+        </Box>
+    );
+}
+
+export function Header({
+    state,
+    messageComponent,
+}: {
+    state: QuizState;
+    messageComponent: React.ReactNode | null;
+}): React.ReactElement {
+    return (
+        <Box width="100%" justifyContent="space-between" alignItems="center">
+            <Text>{`Question: ${state.position + 1}/${state.indexes.length}`}</Text>
+            {messageComponent}
+            <Icon questionEval={state.getEval()} />
+        </Box>
+    );
+}
+
+function QuestionAnswer({
+    showingAnswer,
+    question,
+}: {
+    question: QA;
+    showingAnswer: boolean;
+}): React.ReactElement {
+    return (
+        <Box flexDirection="column" alignItems="center" width={50}>
+            <Box width="100%" justifyContent="center">
+                <Text color="yellow" dimColor>
+                    {showingAnswer ? "Answer" : "Question"}
+                </Text>
+            </Box>
+            <HorizontalLine />
+            <Text>{showingAnswer ? question.a : question.q}</Text>
+        </Box>
+    );
+}
+
+function QuestionInput({
+    question,
+    state,
+    setState,
+}: {
+    question: QI;
+    state: QuizState;
+    setState: (s: QuizState) => void;
+}): React.ReactElement {
+    const { normal, qiState, setInputText } = useQuestionInput(
+        question,
+        state,
+        setState,
+    );
+
+    return (
+        <Box flexDirection="column" alignItems="center" width={50}>
+            <Box
+                width="100%"
+                justifyContent="space-between"
+                alignItems="center"
+            >
+                <Box borderStyle="round">
+                    <Box>
+                        <Text>{normal ? "--NORMAL--" : "--INSERT--"}</Text>
+                    </Box>
+                </Box>
+                <Text dimColor>Enter Answer</Text>
+            </Box>
+            <Box width="100%" justifyContent="center">
+                <Text color="yellow" dimColor>
+                    {question.q}
+                </Text>
+            </Box>
+            <HorizontalLine />
+
+            {state.showingAnswer ? (
+                <AnswerText answer={question.a} />
+            ) : (
+                <InputBox
+                    acceptsInput={!normal}
+                    value={qiState.inputText}
+                    onChange={setInputText}
+                    defaultText={qiState.defaultText}
+                    defaultTextColor={qiState.resultColor}
+                />
+            )}
+        </Box>
+    );
+}
+
+function AnswerText({ answer }: { answer: string }): React.ReactNode {
+    return (
+        <Box>
+            <Text dimColor>{`Answer: ${answer}`}</Text>
+        </Box>
+    );
+}
+
+function MultipleChoice({
+    question,
+    state,
+}: {
+    question: MC;
+    state: QuizState;
+}): React.ReactNode {
+    return (
+        <Box justifyContent="center" flexDirection="column" width={50}>
+            <Box alignSelf="center">
+                <Text color="yellow" dimColor>
+                    {question.q}
+                </Text>
+            </Box>
+            <HorizontalLine />
+            <Choices question={question} state={state} />
+        </Box>
+    );
+}
+
+export function Choices({
+    question,
+    state,
+}: {
+    question: MC;
+    state: QuizState;
+}): React.ReactNode {
+    function getAnswerIndex(): number {
+        const answer: string = question.a.toUpperCase();
+        let index: number;
+        for (let i = 0; i < question.choices.length; ++i) {
+            if (String.fromCharCode(65 + i) === answer) {
+                index = i;
+            }
+        }
+        return index!;
+    }
+
+    return question.choices.map((choice: string, index: number) => {
+        const isFocus: boolean = index === state.mcIndex;
+        const textContent: string = `${String.fromCharCode(65 + index)}: ${choice}`;
+        const answerIndex = getAnswerIndex();
+
+        if (state.showingAnswer && answerIndex === index) {
+            return (
+                <FocusableBox isFocus={true} borderColor="green" key={index}>
+                    <Text color="green">{textContent}</Text>
+                </FocusableBox>
+            );
+        }
+
+        if (state.highlightChoice && state.mcIndex === index) {
+            const color = answerIndex === index ? "green" : "red";
+            return (
+                <FocusableBox isFocus={true} borderColor={color} key={index}>
+                    <Text color={color}>{textContent}</Text>
+                </FocusableBox>
+            );
+        }
+
+        return (
+            <FocusableBox isFocus={isFocus} key={index}>
+                <Text>{textContent}</Text>
+            </FocusableBox>
+        );
+    });
+}
+
+interface CmpPageProps {
+    state: QuizState;
+    redo: RetakeQuestions;
+}
+
+function CompletedPage({ state, redo }: CmpPageProps): React.ReactNode {
+    const { optComponents, percentCorrectText, percentEvalText } =
+        useCompletedPage(state, redo);
+
+    return (
+        <Box flexDirection="column">
+            <Box alignSelf="center">
+                <Text color="cyan">Quiz Completed!</Text>
+            </Box>
+            <HorizontalLine />
+            <Text>{`Score From Evaluated:    ${percentCorrectText}`}</Text>
+            <Text>{`Questions Evaluated:     ${percentEvalText}`}</Text>
+            <HorizontalLine />
+            {optComponents}
         </Box>
     );
 }

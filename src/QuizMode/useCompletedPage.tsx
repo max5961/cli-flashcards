@@ -13,16 +13,16 @@ interface CmpState {
     optName: OptName;
 }
 
-interface Redo {
+export interface RetakeQuestions {
     incorrect: Question[];
     notEval: Question[];
-    questions: Readonly<Question[]>; // all questions from original quiz
+    allQuestions: Readonly<Question[]>; // all questions from original quiz
 }
 
-export function useCompletedPage(state: QuizState, redo: Redo) {
+export function useCompletedPage(state: QuizState, retake: RetakeQuestions) {
     const { newQuiz, setMode } = useContext(AppContext)!;
 
-    const opts: Opt[] = getNextOptions(redo);
+    const opts: Opt[] = getNextOptions(retake);
 
     const [cmpState, setCmpState] = useState<CmpState>({
         currIdx: 0,
@@ -72,19 +72,19 @@ export function useCompletedPage(state: QuizState, redo: Redo) {
 
         if (command === "RETURN_KEY") {
             if (cmpState.optName === "INCORRECT") {
-                newQuiz(redo.incorrect);
+                newQuiz(retake.incorrect);
             }
 
             if (cmpState.optName === "NOT_EVAL") {
-                newQuiz(redo.notEval);
+                newQuiz(retake.notEval);
             }
 
             if (cmpState.optName === "BOTH") {
-                newQuiz([...redo.incorrect, ...redo.notEval]);
+                newQuiz([...retake.incorrect, ...retake.notEval]);
             }
 
             if (cmpState.optName === "RETAKE") {
-                newQuiz([...redo.questions]);
+                newQuiz([...retake.allQuestions]);
             }
 
             if (cmpState.optName === "TO_START") {
@@ -115,11 +115,11 @@ interface Opt {
     getComp: GetComp;
 }
 
-function getNextOptions(redo: Redo): Opt[] {
+function getNextOptions(retake: RetakeQuestions): Opt[] {
     const options: Opt[] = [];
 
     let index: number = 0;
-    if (redo.incorrect.length) {
+    if (retake.incorrect.length) {
         options.push({
             name: "INCORRECT",
             getComp: (currIndex: number) => (
@@ -132,7 +132,7 @@ function getNextOptions(redo: Redo): Opt[] {
         });
     }
 
-    if (redo.notEval.length) {
+    if (retake.notEval.length) {
         options.push({
             name: "NOT_EVAL",
             getComp: (currIndex: number) => (
@@ -145,7 +145,7 @@ function getNextOptions(redo: Redo): Opt[] {
         });
     }
 
-    if (redo.notEval.length && redo.incorrect.length) {
+    if (retake.notEval.length && retake.incorrect.length) {
         options.push({
             name: "BOTH",
             getComp: (currIndex: number) => (
