@@ -20,6 +20,7 @@ function executeBeforeExit(command: string): void {
 
 async function entryPoint() {
     await Read.makeDir(); // make sure directory in .local/share exists
+    await Read.getData(); // initial check for error-free json data
 
     const args: ProcessArgs = new ProcessArgs();
 

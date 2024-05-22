@@ -29,6 +29,11 @@ export default class Read {
         for (const file of files) {
             const filePath = path.join(dir, file);
             const json = await fs.readFile(filePath, "utf-8");
+            if (!json.length) {
+                console.error(`Error: File '${file}' is empty`);
+                process.exit(1);
+            }
+
             const quiz = JSON.parse(json);
             quiz.fileName = file;
             quizzes.push(quiz);

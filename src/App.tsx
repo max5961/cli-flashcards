@@ -90,7 +90,7 @@ export default function App({
     }
 
     let modeDesc: string = "";
-    if (mode === "EDIT") {
+    if (mode === "EDIT" || mode === "FIX") {
         modeDesc = "Edit Mode";
     }
     if (mode === "CHOOSE_QUIZ") {
