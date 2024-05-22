@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { FocusableBox } from "../shared/components/Focusable.js";
-import { Text, useInput } from "ink";
+import { Text } from "ink";
 import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
 import { Command } from "../shared/utils/KeyBinds.js";
 import { AppContext } from "../App.js";

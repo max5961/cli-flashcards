@@ -114,8 +114,13 @@ export default class Read {
                             isValid = true;
                         }
                     }
-                    if (!isValid) logWarning("Invalid multiple choice answer.  Must be A-D or a-d", question);
-                    
+                    if (!isValid) {
+                        logWarning("Invalid Multiple Choice answer or choices.", question);
+                        console.error("If there are 4 choices, answer must be A-D or a-d");
+                        console.error("If there are 3 choices, answer must be A-C or a-c");
+                        console.error("If there are 2 choices, answer must be A-B or a-b");
+                        console.error("If there is 1 choice, answer must be A or a");
+                    }
                 }
             }
         }

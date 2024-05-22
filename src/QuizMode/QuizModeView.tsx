@@ -22,7 +22,7 @@ export function QuizModeView({
     const { normal } = useContext(AppContext)!;
     const [message, setMessage] = useState<React.ReactNode>(<></>);
     const [state, setState] = useState<QuizState>(new QuizState(questions, {}));
-    const [completed, setCompleted] = useState<boolean>(false);
+    const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
 
     const question: Question = state.getQuestion(questions);
 
@@ -33,7 +33,7 @@ export function QuizModeView({
 
         if (command === "RIGHT") {
             if (state.position >= questions.length - 1) {
-                setCompleted(true);
+                setQuizCompleted(true);
             }
             setState(state.nextQuestion());
         }
@@ -55,7 +55,9 @@ export function QuizModeView({
         }
 
         if (command === "TOGGLE_SHOW_ANSWER") {
-            setState(state.toggleShowAnswer());
+            if (normal) {
+                setState(state.toggleShowAnswer());
+            }
         }
 
         if (command === "RETURN_KEY") {
@@ -84,7 +86,7 @@ export function QuizModeView({
 
     useKeyBinds(handleKeyBinds, normal);
 
-    function currentCard(): React.ReactElement {
+    function getCurrQuestion(): React.ReactElement {
         if (question.type === "mc") {
             return <MultipleChoice question={question} state={state} />;
         }
@@ -110,7 +112,7 @@ export function QuizModeView({
 
     const score = state.getScore();
 
-    if (completed) {
+    if (quizCompleted) {
         const incorrect: Question[] = state.indexes
             .filter((index: number) => {
                 return state.evalMap[index] === "NO";
@@ -139,7 +141,7 @@ export function QuizModeView({
         >
             <Header state={state} message={message} />
             <HorizontalLine />
-            <Box margin={2}>{currentCard()}</Box>
+            <Box margin={2}>{getCurrQuestion()}</Box>
             <HorizontalLine />
             <Box
                 width="100%"
