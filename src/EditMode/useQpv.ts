@@ -168,20 +168,6 @@ function handleNavKeyBinds(dep: Dep, command: Command | null): void {
         pageStackCopy.pop();
         setPageStack(pageStackCopy);
     }
-
-    if (state.currNode === "cancel" && command === "RETURN_KEY") {
-        const pageStackCopy = pageStack.getShallowClone();
-        const questionCopy = QpvUtil.toQuestion(initialData.current!);
-        pageStackCopy.top().data = questionCopy;
-        pageStackCopy.propagateChanges();
-
-        setPageStack(pageStackCopy);
-        const stateCopy: QpvState = QpvUtil.copyState(state);
-        stateCopy.data = initialData.current!;
-        setState(stateCopy);
-
-        Write.writeData(pageStackCopy);
-    }
 }
 
 // cancel button
@@ -194,6 +180,7 @@ function handleCancelKeyBinds(dep: Dep, command: Command | null): void {
 
     const stateCopy: QpvState = QpvUtil.copyState(state);
     stateCopy.data = initialData.current!;
+    stateCopy.answerInput = stateCopy.data.a;
 
     const pageStackCopy: PageStack = pageStack.getShallowClone();
     const questionCopy = QpvUtil.toQuestion(initialData.current!);

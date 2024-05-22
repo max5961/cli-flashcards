@@ -15,7 +15,10 @@ export class Write {
 
         for (const file of files) {
             const filePath = path.join(directory, file);
-            fs.unlink(filePath);
+            try {
+                await fs.access(filePath);
+                await fs.unlink(filePath);
+            } catch {}
         }
     }
 
