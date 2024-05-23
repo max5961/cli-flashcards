@@ -53,13 +53,13 @@ export function EditModeView({
 }
 
 function ListPageView(): React.ReactNode {
-    const { page, edit, setEdit, window, currIndex, normal, message } =
-        useLpv();
+    const { state, page, setEdit, window } = useLpv();
 
     function mapItems(items: any[]): React.ReactNode[] {
         const components: React.ReactNode[] = [];
-        const isFocus = (i: number): boolean => i === currIndex;
-        const acceptsInput = (i: number): boolean => !normal && isFocus(i);
+        const isFocus = (i: number): boolean => i === state.currIndex;
+        const acceptsInput = (i: number): boolean =>
+            !state.normal && isFocus(i);
 
         for (let i = 0; i < items.length; ++i) {
             components.push(
@@ -68,7 +68,7 @@ function ListPageView(): React.ReactNode {
                         <Icon type="EDIT" />
                         <InputBox
                             acceptsInput={acceptsInput(i)}
-                            value={edit}
+                            value={state.edit}
                             onChange={setEdit}
                             defaultText={page.getItemDesc(i)}
                         ></InputBox>
@@ -84,7 +84,7 @@ function ListPageView(): React.ReactNode {
                 <Icon type="ADD" />
                 <InputBox
                     acceptsInput={acceptsInput(i)}
-                    value={edit}
+                    value={state.edit}
                     onChange={setEdit}
                     defaultText={page.addItemText}
                 ></InputBox>
@@ -97,13 +97,16 @@ function ListPageView(): React.ReactNode {
     return (
         <>
             <TitleBox title={page.title}>
-                <ErrorMessage isError={message !== ""} message={message} />
-                <ShowMode normal={normal} />
+                <ErrorMessage
+                    isError={state.message !== ""}
+                    message={state.message}
+                />
+                <ShowMode normal={state.normal} />
             </TitleBox>
             <Window
                 items={mapItems(page.listItems!)}
                 window={window}
-                currIndex={currIndex}
+                currIndex={state.currIndex}
                 scrollColor="#009293"
                 scrollBorder="round"
                 scrollMiddle={false}
