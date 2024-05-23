@@ -126,9 +126,16 @@ interface QpvContext {
 export const QpvContext = createContext<QpvContext | null>(null);
 
 function QuestionPageView(): React.ReactNode {
-    const { state, setQuestionInput, setAnswerInput, setMcInput, setAddInput } =
-        useQpv();
+    const {
+        state,
+        errMsg,
+        setQuestionInput,
+        setAnswerInput,
+        setMcInput,
+        setAddInput,
+    } = useQpv();
 
+    const isError = errMsg.length > 0;
     return (
         <>
             <QpvContext.Provider
@@ -141,6 +148,7 @@ function QuestionPageView(): React.ReactNode {
                 }}
             >
                 <TitleBox title={"Edit Question"}>
+                    <ErrorMessage isError={isError} message={errMsg} />
                     <ShowMode normal={state.normal} />
                 </TitleBox>
                 <Box flexDirection="column" justifyContent="center">

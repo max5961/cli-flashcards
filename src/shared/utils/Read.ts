@@ -21,13 +21,14 @@ export default class Read {
 
     static async getData(): Promise<Quiz[]> {
         const dir: string = Read.getDir();
-
         const files: string[] = await fs.readdir(dir);
-
         const quizzes: Quiz[] = [];
 
         for (const file of files) {
             const filePath = path.join(dir, file);
+            const stat = await fs.stat(filePath);
+            if (stat.isDirectory() || file === ".git") continue;
+
             const json = await fs.readFile(filePath, "utf-8");
             if (!json.length) {
                 console.error(`Error: File '${file}' is empty`);
@@ -116,10 +117,6 @@ export default class Read {
                     }
                     if (!isValid) {
                         logWarning("Invalid Multiple Choice answer or choices.", question);
-                        console.log("If there are 4 choices, answer must be A-D or a-d");
-                        console.log("If there are 3 choices, answer must be A-C or a-c");
-                        console.log("If there are 2 choices, answer must be A-B or a-b");
-                        console.log("If there is 1 choice, answer must be A or a");
                     }
                 }
             }

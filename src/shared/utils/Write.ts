@@ -16,6 +16,8 @@ export class Write {
         for (const file of files) {
             const filePath = path.join(directory, file);
             try {
+                const stat = await fs.stat(filePath);
+                if (stat.isDirectory() || file === ".git") continue;
                 await fs.access(filePath);
                 await fs.unlink(filePath);
             } catch {}

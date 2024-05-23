@@ -7,7 +7,7 @@ import { useNav } from "../shared/hooks/useNav.js";
 import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
 import { Command } from "../shared/utils/KeyBinds.js";
 import { Write } from "../shared/utils/Write.js";
-import { PageStack } from "../shared/utils/PageStack.js";
+import { PageStack, SectionPage } from "../shared/utils/PageStack.js";
 
 interface Dep {
     state: QpvState;
@@ -16,6 +16,8 @@ interface Dep {
     setPageStack: (s: PageStack) => void;
     nav: Nav<QpvNode>;
     initialData: React.RefObject<FlexibleQuestion>;
+    setErrMsg: (s: string) => void;
+    applyChanges: (stateCopy: QpvState) => void;
 }
 
 export interface QpvState {
@@ -45,6 +47,8 @@ export function useQpv() {
         mcInput: "",
         addInput: "",
     });
+
+    const [errMsg, setErrMsg] = useState<string>("");
 
     const { nav } = useNav<QpvNode, FlexibleQuestion>(
         state.data,
@@ -90,16 +94,34 @@ export function useQpv() {
         });
     }
 
+    // update state and write changes to file
+    function applyChanges(stateCopy: QpvState): void {
+        const newQuestion: Question = QpvUtil.toQuestion(stateCopy.data);
+        const pageStackCopy: PageStack = pageStack.getShallowClone();
+        pageStackCopy.top().data = newQuestion;
+        pageStackCopy.propagateChanges();
+
+        setPageStack(pageStackCopy);
+        setState(stateCopy);
+        Write.writeData(pageStackCopy);
+    }
+
     const dependencies: Dep = {
         state,
         setState,
+        applyChanges,
         pageStack,
         setPageStack,
         nav,
         initialData,
+        setErrMsg,
     };
 
     function handleKeyBinds(command: Command | null): void {
+        if (errMsg.length) {
+            setErrMsg("");
+        }
+
         if (!command) return;
         handleNavKeyBinds(dependencies, command);
         handleCancelKeyBinds(dependencies, command);
@@ -113,15 +135,17 @@ export function useQpv() {
 
     return {
         state,
+        errMsg,
         setQuestionInput,
         setAnswerInput,
         setMcInput,
         setAddInput,
+        applyChanges,
     };
 }
 // navigation keybinds
 function handleNavKeyBinds(dep: Dep, command: Command | null): void {
-    const { state, setState, pageStack, setPageStack, nav, initialData } = dep;
+    const { state, setState, pageStack, setPageStack, nav } = dep;
     const stateCopy: QpvState = QpvUtil.copyState(state);
 
     if (command === "UP") {
@@ -172,7 +196,7 @@ function handleNavKeyBinds(dep: Dep, command: Command | null): void {
 
 // cancel button
 function handleCancelKeyBinds(dep: Dep, command: Command | null): void {
-    const { state, setState, pageStack, setPageStack, initialData } = dep;
+    const { state, applyChanges, initialData } = dep;
 
     if (state.currNode !== "cancel" || command !== "RETURN_KEY") {
         return;
@@ -181,40 +205,24 @@ function handleCancelKeyBinds(dep: Dep, command: Command | null): void {
     const stateCopy: QpvState = QpvUtil.copyState(state);
     stateCopy.data = initialData.current!;
     stateCopy.answerInput = stateCopy.data.a;
-
-    const pageStackCopy: PageStack = pageStack.getShallowClone();
-    const questionCopy = QpvUtil.toQuestion(initialData.current!);
-    pageStackCopy.top().data = questionCopy;
-    pageStackCopy.propagateChanges();
-
-    setPageStack(pageStackCopy);
-    setState(stateCopy);
-    Write.writeData(pageStackCopy);
+    applyChanges(stateCopy);
 }
 
 // multiple choice keybinds
 function handleMcKeyBinds(dep: Dep, command: Command | null): void {
-    const { state, setState, pageStack, setPageStack, nav } = dep;
+    const { state, setState, applyChanges, nav } = dep;
 
     // if currNode is not choice
     if (!QpvUtil.isWithinMc(state.currNode)) return;
 
     if (command === "DELETE_ITEM") {
-        // handle mc delete
         const toSliceIndex: number = QpvUtil.getMcIndex(state.currNode);
         const isLastItem: boolean =
             toSliceIndex === state.data.choices.length - 1;
 
-        const pageStackCopy = pageStack.getShallowClone();
-        const dataCopy = QpvUtil.cloneFlexibleQuestion(state.data);
-        dataCopy.choices.splice(toSliceIndex, 1);
-        pageStackCopy.top().data = dataCopy;
-        pageStackCopy.propagateChanges();
-
         const stateCopy: QpvState = QpvUtil.copyState(state);
-        stateCopy.data = dataCopy;
-
-        if (dataCopy.choices.length === 0) {
+        stateCopy.data.choices.splice(toSliceIndex, 1);
+        if (stateCopy.data.choices.length === 0) {
             nav.goTo("add");
             stateCopy.currNode = nav.getCurrNode();
         } else if (isLastItem) {
@@ -222,14 +230,10 @@ function handleMcKeyBinds(dep: Dep, command: Command | null): void {
             stateCopy.currNode = nav.getCurrNode();
         }
 
-        setPageStack(pageStackCopy);
-        setState(stateCopy);
-
-        Write.writeData(pageStackCopy);
+        applyChanges(stateCopy);
     }
 
     if (command === "CLEAR_TEXT") {
-        // handle mc clear
         const stateCopy: QpvState = QpvUtil.copyState(state);
         stateCopy.mcInput = "";
         stateCopy.normal = false;
@@ -237,7 +241,6 @@ function handleMcKeyBinds(dep: Dep, command: Command | null): void {
     }
 
     if (command === "ENTER_INSERT") {
-        // handle mc enter insert
         const stateCopy: QpvState = QpvUtil.copyState(state);
 
         const mcIndex: number = QpvUtil.getMcIndex(state.currNode);
@@ -250,62 +253,54 @@ function handleMcKeyBinds(dep: Dep, command: Command | null): void {
     }
 
     if (command === "EXIT_INSERT") {
-        // handle mc exit insert
         const stateCopy: QpvState = QpvUtil.copyState(state);
-        const dataCopy: FlexibleQuestion = QpvUtil.cloneFlexibleQuestion(
-            stateCopy.data,
-        );
         const index: number = QpvUtil.getMcIndex(state.currNode);
-        dataCopy.choices[index] = state.mcInput;
-
-        stateCopy.data = dataCopy;
+        stateCopy.data.choices[index] = state.mcInput;
         stateCopy.normal = true;
-
-        const pageStackCopy: PageStack = pageStack.getShallowClone();
-        pageStackCopy.top().data = QpvUtil.toQuestion(dataCopy);
-        pageStackCopy.getShallowClone();
-
-        setPageStack(pageStackCopy);
-        setState(stateCopy);
-
-        Write.writeData(pageStackCopy);
+        applyChanges(stateCopy);
     }
 }
 
 // edit question type keybinds
 function handleEqtKeyBinds(dep: Dep, command: Command | null): void {
-    const { state, setState, pageStack, setPageStack } = dep;
+    const { state, applyChanges } = dep;
 
     if (!QpvUtil.isWithinEqt(state) || command !== "RETURN_KEY") {
         return;
     }
 
     const stateCopy: QpvState = QpvUtil.copyState(state);
-    const questionCopy: FlexibleQuestion = QpvUtil.cloneFlexibleQuestion(
-        stateCopy.data,
-    );
-    questionCopy.type = state.currNode as QuestionTypes;
-    stateCopy.data = questionCopy;
-
-    const pageStackCopy = pageStack.getShallowClone();
-    pageStackCopy.top().data = QpvUtil.toQuestion(questionCopy);
-    pageStackCopy.propagateChanges();
-    Write.writeData(pageStackCopy);
-
-    setPageStack(pageStackCopy);
-    setState(stateCopy);
+    stateCopy.data.type = state.currNode as QuestionTypes;
+    applyChanges(stateCopy);
 }
 
 // question / answer box keybinds
 function handleQAKeyBinds(dep: Dep, command: Command | null): void {
-    const { state, setState, pageStack, setPageStack } = dep;
+    const { state, setState, applyChanges, pageStack, setErrMsg, initialData } =
+        dep;
+
+    function isDuplicate(): boolean {
+        const questions: SectionPage = pageStack.top().prev as SectionPage;
+        const questionNames = questions.listItems
+            .map((q) => q.q)
+            .filter((q) => q !== initialData.current!.q && q !== state.data.q);
+        return questionNames.includes(state.questionInput);
+    }
+
+    function handleDuplicate(): void {
+        setState({
+            ...state,
+            data: { ...state.data, q: "" },
+            normal: true,
+        });
+        setErrMsg("Question name already exists");
+    }
 
     if (state.currNode !== "question" && state.currNode !== "answer") {
         return;
     }
 
     if (command === "CLEAR_TEXT") {
-        // handle qa clear
         const stateCopy: QpvState = QpvUtil.copyState(state);
         stateCopy.answerInput = "";
         stateCopy.questionInput = "";
@@ -314,7 +309,6 @@ function handleQAKeyBinds(dep: Dep, command: Command | null): void {
     }
 
     if (command === "ENTER_INSERT" || command === "RETURN_KEY") {
-        // handle qa enter insert
         const stateCopy: QpvState = QpvUtil.copyState(state);
         stateCopy.questionInput = stateCopy.data.q;
         stateCopy.answerInput = stateCopy.data.a;
@@ -323,8 +317,10 @@ function handleQAKeyBinds(dep: Dep, command: Command | null): void {
     }
 
     if (command === "EXIT_INSERT") {
-        // handle qa exit insert
-        const pagesCopy: PageStack = pageStack.getShallowClone();
+        if (isDuplicate()) {
+            handleDuplicate();
+            return;
+        }
 
         const stateCopy: QpvState = QpvUtil.copyState(state);
         stateCopy.normal = true;
@@ -335,19 +331,13 @@ function handleQAKeyBinds(dep: Dep, command: Command | null): void {
             stateCopy.data.a = state.answerInput;
         }
 
-        const question: Question = QpvUtil.toQuestion(stateCopy.data);
-        pagesCopy.top().data = question;
-        pagesCopy.propagateChanges();
-        Write.writeData(pagesCopy);
-
-        setPageStack(pagesCopy);
-        setState(stateCopy);
+        applyChanges(stateCopy);
     }
 }
 
 // add choice keybinds
 function handleAddKeyBinds(dep: Dep, command: Command | null): void {
-    const { state, setState, pageStack, setPageStack } = dep;
+    const { state, setState, applyChanges } = dep;
 
     if (state.currNode !== "add") {
         return;
@@ -366,35 +356,22 @@ function handleAddKeyBinds(dep: Dep, command: Command | null): void {
 
     if (command === "EXIT_INSERT") {
         const stateCopy: QpvState = QpvUtil.copyState(state);
+        stateCopy.normal = true;
 
-        // do nothing if no input
+        // do nothing besides exit insert if no input
         if (stateCopy.addInput === "") {
-            stateCopy.normal = true;
             setState(stateCopy);
             return;
         }
 
-        const pageStackCopy: PageStack = pageStack.getShallowClone();
-        const dataCopy: FlexibleQuestion = QpvUtil.cloneFlexibleQuestion(
-            stateCopy.data,
-        );
-
-        dataCopy.choices.push(state.addInput);
-        stateCopy.data = dataCopy;
-        stateCopy.normal = true;
+        stateCopy.data.choices.push(state.addInput);
         stateCopy.addInput = "";
 
-        pageStackCopy.top().data = QpvUtil.toQuestion(dataCopy);
-        pageStackCopy.propagateChanges();
-
-        if (dataCopy.choices.length >= 4) {
-            // nav will reset to state.currNode on any data change
+        if (stateCopy.data.choices.length >= 4) {
+            // nav will reset to state.currNode on any state.data change
             stateCopy.currNode = "D";
         }
 
-        setPageStack(pageStackCopy);
-        setState(stateCopy);
-
-        Write.writeData(pageStackCopy);
+        applyChanges(stateCopy);
     }
 }
