@@ -1,26 +1,31 @@
 import { Key } from "ink";
 
 export type Command =
+    | "QUIT"
     | "UP"
     | "DOWN"
     | "LEFT"
     | "RIGHT"
-    | "DELETE_KEY"
-    | "RETURN_KEY"
     | "ENTER_INSERT"
     | "EXIT_INSERT"
-    | "QUIT"
-    | "CLEAR"
-    | "DELETE"
-    | "GO_TO_TOP"
-    | "GO_TO_BOTTOM"
-    | "TO_START_MENU"
-    | "TO_CHOOSE_MENU"
-    | "TO_EDIT_MENU"
-    | "SHUFFLE"
+    | "GO_TO_START_MENU"
+    | "GO_TO_SELECTION_VIEW"
+    | "GO_TO_EDIT_VIEW"
+    | "GO_TO_QUIZ_VIEW"
     | "MARK_YES"
     | "MARK_NO"
-    | "TOGGLE_SHOW_ANSWER";
+    | "TOGGLE_SHOW_ANSWER"
+    | "SHUFFLE_QUESTIONS"
+    | "NEXT_QUESTION"
+    | "PREV_QUESTION"
+    | "CLEAR_TEXT"
+    | "DELETE_ITEM"
+    | "GO_TO_TOP_OF_LIST"
+    | "GO_TO_BOTTOM_OF_LIST"
+    | "NEXT_PAGE"
+    | "PREV_PAGE"
+    | "RETURN_KEY"
+    | "DELETE_KEY";
 
 abstract class KeyBinds {
     protected command: Command | null;
@@ -122,20 +127,20 @@ export class NormalKb extends KeyBinds {
         }
 
         if (this.register === "1") {
-            this.setCommand("TO_START_MENU");
+            this.setCommand("GO_TO_START_MENU");
         }
 
         if (this.register === "2") {
-            this.setCommand("TO_CHOOSE_MENU");
+            this.setCommand("GO_TO_SELECTION_VIEW");
         }
 
         if (this.register === "3") {
-            this.setCommand("TO_EDIT_MENU");
+            this.setCommand("GO_TO_EDIT_VIEW");
         }
 
         // Quiz Mode
-        if (this.register === "rr") {
-            this.setCommand("SHUFFLE");
+        if (this.register === "S") {
+            this.setCommand("SHUFFLE_QUESTIONS");
         }
 
         // Quiz Mode
@@ -153,26 +158,20 @@ export class NormalKb extends KeyBinds {
             this.setCommand("TOGGLE_SHOW_ANSWER");
         }
 
-        // this makes sense for create/edit mode, but not sure about in other
-        // contexts
-        if (this.register === "e") {
-            this.setCommand("ENTER_INSERT");
-        }
-
         if (this.register === "dd") {
-            this.setCommand("DELETE");
+            this.setCommand("DELETE_ITEM");
         }
 
         if (this.register === "cc") {
-            this.setCommand("CLEAR");
+            this.setCommand("CLEAR_TEXT");
         }
 
         if (this.register === "gg") {
-            this.setCommand("GO_TO_TOP");
+            this.setCommand("GO_TO_TOP_OF_LIST");
         }
 
         if (this.register === "G") {
-            this.setCommand("GO_TO_BOTTOM");
+            this.setCommand("GO_TO_BOTTOM_OF_LIST");
         }
     }
 

@@ -199,7 +199,7 @@ function handleMcKeyBinds(dep: Dep, command: Command | null): void {
     // if currNode is not choice
     if (!QpvUtil.isWithinMc(state.currNode)) return;
 
-    if (command === "DELETE") {
+    if (command === "DELETE_ITEM") {
         // handle mc delete
         const toSliceIndex: number = QpvUtil.getMcIndex(state.currNode);
         const isLastItem: boolean =
@@ -228,7 +228,7 @@ function handleMcKeyBinds(dep: Dep, command: Command | null): void {
         Write.writeData(pageStackCopy);
     }
 
-    if (command === "CLEAR") {
+    if (command === "CLEAR_TEXT") {
         // handle mc clear
         const stateCopy: QpvState = QpvUtil.copyState(state);
         stateCopy.mcInput = "";
@@ -304,7 +304,7 @@ function handleQAKeyBinds(dep: Dep, command: Command | null): void {
         return;
     }
 
-    if (command === "CLEAR") {
+    if (command === "CLEAR_TEXT") {
         // handle qa clear
         const stateCopy: QpvState = QpvUtil.copyState(state);
         stateCopy.answerInput = "";
@@ -354,7 +354,7 @@ function handleAddKeyBinds(dep: Dep, command: Command | null): void {
     }
 
     if (
-        command === "CLEAR" ||
+        command === "CLEAR_TEXT" ||
         command === "ENTER_INSERT" ||
         command === "RETURN_KEY"
     ) {

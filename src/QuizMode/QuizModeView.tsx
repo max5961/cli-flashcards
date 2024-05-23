@@ -26,12 +26,14 @@ export function QuizModeView({
 
     let messageComponent: React.ReactNode = <></>;
     if (message === "SHUFFLE") {
-        <Text>
-            <Text color="cyan">
-                <Spinner type="dots" />
+        messageComponent = (
+            <Text>
+                <Text color="cyan">
+                    <Spinner type="dots" />
+                </Text>
+                {" Shuffling next questions"}
             </Text>
-            {" Shuffling next questions"}
-        </Text>;
+        );
     }
 
     const question: Question = state.getQuestion(questions);
@@ -260,7 +262,9 @@ function CompletedPage({ state, redo }: CmpPageProps): React.ReactNode {
     return (
         <Box flexDirection="column">
             <Box alignSelf="center">
-                <Text color="cyan">Quiz Completed!</Text>
+                <Text color="yellow" dimColor>
+                    Quiz Completed!
+                </Text>
             </Box>
             <HorizontalLine />
             <Text>{`Score From Evaluated:    ${percentCorrectText}`}</Text>

@@ -27,7 +27,7 @@ interface AppContext {
 
 export const AppContext = createContext<AppContext | null>(null);
 
-export type WhichMode = "QUIZ" | "CHOOSE_QUIZ" | "EDIT" | "START" | "FIX";
+export type WhichMode = "QUIZ" | "SELECT" | "EDIT" | "START" | "FIX";
 
 // initialQuestions generated from optional CLI arguments
 interface AppProps {
@@ -74,7 +74,7 @@ export default function App({
             return <QuizModeView questions={questions} key={quizKey} />;
         }
 
-        if (mode === "CHOOSE_QUIZ") {
+        if (mode === "SELECT") {
             return <LoadGate.ChooseQuestions />;
         }
 
@@ -93,7 +93,7 @@ export default function App({
     if (mode === "EDIT" || mode === "FIX") {
         modeDesc = "Edit Mode";
     }
-    if (mode === "CHOOSE_QUIZ") {
+    if (mode === "SELECT") {
         modeDesc = "Selection Mode";
     }
 

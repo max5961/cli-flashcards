@@ -87,7 +87,7 @@ export function useQuestionInput(
             }
         }
 
-        if (command === "CLEAR") {
+        if (command === "CLEAR_TEXT") {
             setQiState({
                 ...qiState,
                 inputText: "",

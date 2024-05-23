@@ -119,11 +119,11 @@ export function useSelectionMode(quizzes: Quiz[]) {
             currIndex > 0 && setCurrIndex(currIndex - 1);
         }
 
-        if (command === "GO_TO_TOP") {
+        if (command === "GO_TO_TOP_OF_LIST") {
             setCurrIndex(0);
         }
 
-        if (command === "GO_TO_BOTTOM") {
+        if (command === "GO_TO_BOTTOM_OF_LIST") {
             setCurrIndex(page.listItems.length);
         }
 

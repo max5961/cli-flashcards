@@ -21,7 +21,7 @@ export function StartMenu(): React.ReactNode {
         }
 
         if (command === "RETURN_KEY") {
-            currIndex === 0 && setMode("CHOOSE_QUIZ");
+            currIndex === 0 && setMode("SELECT");
             currIndex === 1 && setMode("EDIT");
         }
     }

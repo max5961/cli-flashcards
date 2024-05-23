@@ -47,11 +47,11 @@ export function useLpv() {
             lpvUtil.moveUp();
         }
 
-        if (command === "GO_TO_TOP") {
+        if (command === "GO_TO_TOP_OF_LIST") {
             setCurrIndex(0);
         }
 
-        if (command === "GO_TO_BOTTOM") {
+        if (command === "GO_TO_BOTTOM_OF_LIST") {
             setCurrIndex(page.listItems.length);
         }
 
@@ -64,7 +64,7 @@ export function useLpv() {
             lpvUtil.backPrevPage();
         }
 
-        if (command === "DELETE") {
+        if (command === "DELETE_ITEM") {
             lpvUtil.deleteListItem();
         }
 
@@ -72,7 +72,7 @@ export function useLpv() {
             lpvUtil.enterInsert();
         }
 
-        if (command === "CLEAR") {
+        if (command === "CLEAR_TEXT") {
             lpvUtil.enterInsertClear();
         }
 

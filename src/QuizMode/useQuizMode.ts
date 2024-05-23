@@ -75,7 +75,7 @@ export function useQuizMode(questions: Readonly<Question[]>) {
             }
         }
 
-        if (command === "SHUFFLE") {
+        if (command === "SHUFFLE_QUESTIONS") {
             setState(state.shuffle(questions));
             setMessage("SHUFFLE");
             setTimeout(() => {

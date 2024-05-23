@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useRef } from "react";
 import { useInput } from "ink";
 import { Command, InsertKb, NormalKb } from "../utils/KeyBinds.js";
 import { AppContext, WhichMode } from "../../App.js";
@@ -47,15 +47,15 @@ function handleGlobalCommands(
         process.exit(0);
     }
 
-    if (command === "TO_START_MENU") {
+    if (command === "GO_TO_START_MENU") {
         setMode("START");
     }
 
-    if (command === "TO_CHOOSE_MENU") {
-        setMode("CHOOSE_QUIZ");
+    if (command === "GO_TO_SELECTION_VIEW") {
+        setMode("SELECT");
     }
 
-    if (command === "TO_EDIT_MENU") {
+    if (command === "GO_TO_EDIT_VIEW") {
         setMode("EDIT");
     }
 }
