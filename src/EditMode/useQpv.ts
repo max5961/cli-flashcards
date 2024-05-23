@@ -358,15 +358,22 @@ function handleAddKeyBinds(dep: Dep, command: Command | null): void {
         command === "ENTER_INSERT" ||
         command === "RETURN_KEY"
     ) {
-        const copy: QpvState = QpvUtil.copyState(state);
-        copy.addInput = "";
-        copy.normal = false;
-        setState(copy);
+        const stateCopy: QpvState = QpvUtil.copyState(state);
+        stateCopy.addInput = "";
+        stateCopy.normal = false;
+        setState(stateCopy);
     }
 
     if (command === "EXIT_INSERT") {
-        // handle add exit insert
         const stateCopy: QpvState = QpvUtil.copyState(state);
+
+        // do nothing if no input
+        if (stateCopy.addInput === "") {
+            stateCopy.normal = true;
+            setState(stateCopy);
+            return;
+        }
+
         const pageStackCopy: PageStack = pageStack.getShallowClone();
         const dataCopy: FlexibleQuestion = QpvUtil.cloneFlexibleQuestion(
             stateCopy.data,
