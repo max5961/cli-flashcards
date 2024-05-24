@@ -56,7 +56,6 @@ export function SelectionModeView({ quizzes }: CqvProps): React.ReactNode {
                 items={mapItems(page.listItems!)}
                 window={window}
                 currIndex={currIndex}
-                scrollColor="#009293"
                 scrollBorder="round"
                 scrollMiddle={false}
                 scrollPosition="right"

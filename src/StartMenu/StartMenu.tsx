@@ -9,7 +9,7 @@ import { Icon } from "../shared/components/Icons.js";
 
 export function StartMenu(): React.ReactNode {
     const [currIndex, setCurrIndex] = useState<number>(0);
-    const { setMode, normal } = useContext(AppContext)!;
+    const { setMode } = useContext(AppContext)!;
 
     function handleKeyBinds(command: Command | null): void {
         if (command === "UP") {
@@ -26,18 +26,18 @@ export function StartMenu(): React.ReactNode {
         }
     }
 
-    useKeyBinds(handleKeyBinds, normal);
+    useKeyBinds(handleKeyBinds, true);
 
     return (
         <>
             <TitleBox title="Start Menu" />
             <FocusableBox isFocus={currIndex === 0}>
                 <Icon type="QUIZ" />
-                <Text>Choose Quiz</Text>
+                <Text>Select Quiz</Text>
             </FocusableBox>
             <FocusableBox isFocus={currIndex === 1}>
                 <Icon type="EDIT" />
-                <Text>Edit Quizzes</Text>
+                <Text>Edit and Create Quizzes</Text>
             </FocusableBox>
         </>
     );

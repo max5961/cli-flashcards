@@ -1,10 +1,10 @@
 import { MC, Question } from "../types.js";
 
-export type Eval = "YES" | "NO" | undefined;
+export type Eval = "YES" | "NO" | "UNANSWERED";
 
 export class QuizState {
     // An array of ordered or shuffled pointers to Question objects in the
-    // questions array. This way the questions array is never mutated and we can
+    // questions array. This way the questions array is never mutated and can
     // easily link state to Question objects through the eval map
     public indexes: number[];
 
@@ -59,7 +59,8 @@ export class QuizState {
 
     getEval(): Eval {
         const key = this.getEvalKey();
-        return this.evalMap[key];
+        if (this.evalMap[key]) return this.evalMap[key];
+        return "UNANSWERED";
     }
 
     getScore(): { [key: string]: number } {
@@ -112,7 +113,7 @@ export class QuizState {
             const randomIndex: number = getRandom(s, nums.length);
             const tmpEnd: number = nums[nums.length - 1];
 
-            // prevents duplicates being placed next to each other
+            // prevents duplicates being placed next to each other (relevant if the cli uses the repeat flag)
             if (
                 questions[tmpEnd] === questions[nums[randomIndex - 1]] ||
                 questions[tmpEnd] === questions[nums[randomIndex + 1]]

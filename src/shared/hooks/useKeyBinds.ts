@@ -1,5 +1,5 @@
 import { useContext, useRef } from "react";
-import { useInput } from "ink";
+import { useApp, useInput } from "ink";
 import { Command, InsertKb, NormalKb } from "../utils/KeyBinds.js";
 import { AppContext, WhichMode } from "../../App.js";
 
@@ -12,6 +12,7 @@ export interface KbState {
 
 export function useKeyBinds(handleKeyBinds: HandleKeyBinds, normal: boolean) {
     const { setMode, setKbState } = useContext(AppContext)!;
+    const { exit } = useApp();
     const normalKb = useRef<NormalKb>(new NormalKb());
     const insertKb = useRef<InsertKb>(new InsertKb());
 
@@ -29,7 +30,7 @@ export function useKeyBinds(handleKeyBinds: HandleKeyBinds, normal: boolean) {
 
         const command: Command | null = normalCommand || insertCommand || null;
 
-        handleGlobalCommands(command, setMode);
+        handleGlobalCommands(command, exit, setMode);
         handleKeyBinds(command);
 
         setKbState({
@@ -41,10 +42,11 @@ export function useKeyBinds(handleKeyBinds: HandleKeyBinds, normal: boolean) {
 
 function handleGlobalCommands(
     command: Command | null,
+    exit: () => void,
     setMode: (m: WhichMode) => void,
 ): void {
     if (command === "QUIT") {
-        process.exit(0);
+        exit();
     }
 
     if (command === "GO_TO_START_MENU") {

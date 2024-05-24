@@ -6,6 +6,7 @@ import { useWindow } from "../shared/hooks/useWindow.js";
 import { Command } from "../shared/utils/KeyBinds.js";
 import Read from "../shared/utils/Read.js";
 import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
+import { useApp } from "ink";
 
 export interface InvalidState {
     errorMessage: string;
@@ -17,13 +18,14 @@ export function useSelectionMode(quizzes: Quiz[]) {
         new PageStack(quizzes),
     );
     const { window, currIndex, setCurrIndex } = useWindow(5);
-    const { setMode, setQuestions, setPreStack, normal } =
-        useContext(AppContext)!;
+    const { setMode, setQuestions, setPreStack } = useContext(AppContext)!;
 
     const [invalid, setInvalid] = useState<InvalidState>({
         errorMessage: "",
         invalidQuestion: "",
     });
+
+    const { exit } = useApp();
 
     const page: ListPage = pageStack.top() as ListPage;
 
@@ -72,7 +74,7 @@ export function useSelectionMode(quizzes: Quiz[]) {
         setPreStack: (s: PageStack) => void,
         setMode: (m: WhichMode) => void,
     ): Promise<void> {
-        const data: Quiz[] = await Read.getData();
+        const data: Quiz[] = await Read.getData(exit);
         const pageStack: PageStack = new PageStack(data);
 
         for (let i = 0; i < data.length; ++i) {
@@ -148,7 +150,6 @@ export function useSelectionMode(quizzes: Quiz[]) {
                 // load quiz with all sections in a quiz
                 if (page.pageType === "QUIZ") {
                     // need to get a quiz with all sections in a given quiz
-                    // const questions: Question[] = [];
                     const sections: Section[] = page.listItems as Section[];
                     const questions: Question[] = sections.flatMap(
                         (section) => {
@@ -173,7 +174,7 @@ export function useSelectionMode(quizzes: Quiz[]) {
             }
 
             if (page.pageType === "QUIZ") {
-                // need to get a quiz with the given section in the given quiz
+                // select all questions in the given section in the given quiz
                 const section: Section = page.listItems[
                     currIndex - 1
                 ] as Section;
@@ -192,7 +193,7 @@ export function useSelectionMode(quizzes: Quiz[]) {
         }
     }
 
-    useKeyBinds(handleKeyBinds, normal);
+    useKeyBinds(handleKeyBinds, true);
 
     function getMergeAllText(): string {
         if (page.pageType === "QUIZZES") {

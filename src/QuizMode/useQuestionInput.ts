@@ -1,7 +1,6 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { QI } from "../types.js";
 import { QuizState } from "./QuizState.js";
-import { AppContext } from "../App.js";
 import { Command } from "../shared/utils/KeyBinds.js";
 import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
 
@@ -12,13 +11,19 @@ interface QIState {
     resultColor: ResultColor;
 }
 
-export function useQuestionInput(
-    question: QI,
-    state: QuizState,
-    setState: (qs: QuizState) => void,
-) {
-    const { normal, setNormal } = useContext(AppContext)!;
-
+export function useQuestionInput({
+    question,
+    state,
+    setState,
+    normal,
+    setNormal,
+}: {
+    question: QI;
+    state: QuizState;
+    setState: (qs: QuizState) => void;
+    normal: boolean;
+    setNormal: (b: boolean) => void;
+}) {
     const [qiState, setQiState] = useState<QIState>({
         inputText: "",
         defaultText: "",
@@ -35,9 +40,9 @@ export function useQuestionInput(
         setNormal(false);
 
         return () => {
-            setQiState({
-                ...qiState,
-            });
+            // setQiState({
+            //     ...qiState,
+            // });
             setNormal(true);
         };
     }, [question]);
@@ -55,10 +60,10 @@ export function useQuestionInput(
             copy.defaultText = qiState.inputText;
 
             if (qiState.inputText.toUpperCase() === question.a.toUpperCase()) {
-                // Intentionally setDefaultText to question.a instead of input
-                // If capitalization is important then this emphasizes that.
-                // If capitalization is NOT important, then this prevents you from
-                // writing the correct answer without caps and not getting notified
+                // Intentionally setDefaultText to question.a instead of input. If capitalization
+                // is important then this emphasizes that. If capitalization is NOT important, then
+                // this prevents you from writing the correct answer without perfect capitalization
+                // and not getting notified
                 copy.defaultText = question.a;
                 copy.inputText = question.a;
                 copy.resultColor = "green";
@@ -69,8 +74,8 @@ export function useQuestionInput(
                 setState(state.markNo());
             }
 
-            setNormal(true);
             setQiState(copy);
+            setNormal(true);
         }
 
         if (
@@ -101,5 +106,5 @@ export function useQuestionInput(
 
     useKeyBinds(handleKeyBinds, normal);
 
-    return { normal, qiState, setInputText };
+    return { qiState, setInputText, normal };
 }

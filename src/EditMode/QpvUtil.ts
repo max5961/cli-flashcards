@@ -1,9 +1,9 @@
-import { Question, FlexibleQuestion } from "../types.js";
-import { Nav, Opt } from "../shared/utils/Nav.js";
+import { Question, FlexibleQuestion, MC, McChoice } from "../types.js";
+import { Nav, NavNode } from "./QpvNav.js";
 import { PageStack } from "../shared/utils/PageStack.js";
 import { QpvState } from "./useQpv.js";
 
-export type QpvNode =
+export type QpvNodeId =
     | "qa"
     | "qi"
     | "mc"
@@ -69,7 +69,7 @@ export class QpvUtil {
         return stateCopy;
     }
 
-    static isWithinMc(currNode: QpvNode): boolean {
+    static isWithinMc(currNode: QpvNodeId): boolean {
         return (
             currNode === "A" ||
             currNode === "B" ||
@@ -78,11 +78,11 @@ export class QpvUtil {
         );
     }
 
-    static getMcIndex(currNode: QpvNode): number {
+    static getMcIndex(currNode: QpvNodeId): number {
         return ["A", "B", "C", "D"].indexOf(currNode);
     }
 
-    static getMcText(currNode: QpvNode, state: QpvState): string {
+    static getMcText(currNode: QpvNodeId, state: QpvState): string {
         if (!QpvUtil.isWithinMc(currNode))
             throw new Error("Invalid function call");
 
@@ -98,9 +98,9 @@ export class QpvUtil {
     }
 
     static getNavInit(flexibleQuestion: FlexibleQuestion) {
-        return (nav: Nav<QpvNode>): void => {
+        return (nav: Nav<QpvNodeId>): void => {
             // qa, qi, mc are options to modify the Question type
-            const qa = nav.addNode("qa");
+            const qa: NavNode<QpvNodeId> = nav.addNode("qa");
             const qi = nav.addNode("qi");
             const mc = nav.addNode("mc");
             const question = nav.addNode("question");
@@ -131,71 +131,24 @@ export class QpvUtil {
             // cancel
             cancel.setUp(question);
 
-            QpvUtil.linkMultipleChoiceNodes(nav, flexibleQuestion);
+            flexibleQuestion.type === "mc" &&
+                QpvUtil.addMcNodes(nav, flexibleQuestion as MC);
 
             // initialize Nav to start by pointing at the question node
             nav.goTo("question");
         };
     }
 
-    static linkMultipleChoiceNodes(
-        nav: Nav<QpvNode>,
-        questionData: Question,
-    ): void {
-        if (questionData.type !== "mc") {
-            return;
+    static addMcNodes(nav: Nav<QpvNodeId>, question: MC): void {
+        let prev: ["answer", "question"] | McChoice[] = ["answer", "question"];
+        for (let i = 0; i < question.choices.length; ++i) {
+            const name: McChoice = String.fromCharCode(65 + i) as McChoice;
+            nav.insertNode(name, prev);
+            prev = [name];
         }
 
-        // Create Opt Nodes and push to an array then use array to set pointers
-        const choices: Opt<QpvNode>[] = [];
-        for (let i = 0; i < questionData.choices.length; ++i) {
-            const name = String.fromCharCode(65 + i) as QpvNode;
-            const choice: Opt<QpvNode> = nav.addNode(name);
-            choices.push(choice);
-        }
-
-        for (let i = 0; i < choices.length; ++i) {
-            if (i === 0) {
-                nav.getNode("question").setDown(choices[i]);
-                nav.getNode("answer").setDown(choices[i]);
-                choices[i].setUp(nav.getNode("question"));
-            }
-
-            if (choices[i + 1]) {
-                choices[i].setDown(choices[i + 1]);
-            }
-
-            if (choices[i - 1]) {
-                choices[i].setUp(choices[i - 1]);
-            }
-        }
-
-        // 4 is the maximum number of MC choices (unlink add Node)
-        if (choices.length >= 4) {
-            const lastChoice = choices[choices.length - 1];
-            const cancel = nav.getNode("cancel");
-            lastChoice.setDown(cancel);
-            cancel.setUp(lastChoice);
-
-            // else set adds up pointer to last choice
-        } else if (choices.length) {
-            const add: Opt<QpvNode> = nav.addNode("add");
-            const cancel = nav.getNode("cancel");
-            const lastChoice = choices[choices.length - 1];
-            lastChoice.setDown(add);
-            add.setUp(lastChoice);
-            add.setDown(cancel);
-            cancel.setUp(add);
-
-            // there are not any choices
-        } else {
-            const add: Opt<QpvNode> = nav.addNode("add");
-            const cancel = nav.getNode("cancel");
-            cancel.setUp(add);
-            add.setDown(cancel);
-            add.setUp(nav.getNode("question"));
-            nav.getNode("question").setDown(add);
-            nav.getNode("answer").setDown(add);
+        if (question.choices.length < 4) {
+            nav.insertNode("add", prev);
         }
     }
 }

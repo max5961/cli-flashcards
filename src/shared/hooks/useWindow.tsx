@@ -1,6 +1,6 @@
-import React, { useRef } from "react";
+import React from "react";
 import { useState, useEffect } from "react";
-import { Box, measureElement } from "ink";
+import { Box } from "ink";
 
 export interface WindowState {
     start: number;

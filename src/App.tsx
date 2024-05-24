@@ -14,8 +14,6 @@ import { EditModeView } from "./EditMode/EditModeView.js";
 import { PageStack } from "./shared/utils/PageStack.js";
 
 interface AppContext {
-    normal: boolean;
-    setNormal: (b: boolean) => void;
     setKbState: (k: KbState) => void;
     mode: WhichMode;
     setMode: (m: WhichMode) => void;
@@ -39,7 +37,6 @@ export default function App({
     initialQuestions,
     config,
 }: AppProps): React.ReactElement {
-    const [normal, setNormal] = useState<boolean>(true);
     const [quizKey, setQuizKey] = useState<number>(0);
     const [mode, setMode] = useState<WhichMode>("START");
     const [questions, setQuestions] = useState<Question[] | null>(
@@ -100,8 +97,6 @@ export default function App({
     return (
         <AppContext.Provider
             value={{
-                normal,
-                setNormal,
                 setKbState,
                 mode,
                 setMode,

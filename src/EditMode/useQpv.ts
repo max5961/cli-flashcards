@@ -1,9 +1,8 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { PageContext } from "./EditModeView.js";
 import { FlexibleQuestion, Question, QuestionTypes } from "../types.js";
-import { QpvNode, QpvUtil } from "./QpvUtil.js";
-import { Nav } from "../shared/utils/Nav.js";
-import { useNav } from "../shared/hooks/useNav.js";
+import { QpvNodeId, QpvUtil } from "./QpvUtil.js";
+import { Nav, useNav } from "./QpvNav.js";
 import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
 import { Command } from "../shared/utils/KeyBinds.js";
 import { Write } from "../shared/utils/Write.js";
@@ -14,7 +13,7 @@ interface Dep {
     setState: (s: QpvState) => void;
     pageStack: PageStack;
     setPageStack: (s: PageStack) => void;
-    nav: Nav<QpvNode>;
+    nav: Nav<QpvNodeId>;
     initialData: React.RefObject<FlexibleQuestion>;
     setErrMsg: (s: string) => void;
     applyChanges: (stateCopy: QpvState) => void;
@@ -22,7 +21,7 @@ interface Dep {
 
 export interface QpvState {
     data: FlexibleQuestion;
-    currNode: QpvNode;
+    currNode: QpvNodeId;
     normal: boolean;
     questionInput: string;
     answerInput: string;
@@ -50,7 +49,7 @@ export function useQpv() {
 
     const [errMsg, setErrMsg] = useState<string>("");
 
-    const { nav } = useNav<QpvNode, FlexibleQuestion>(
+    const { nav } = useNav<QpvNodeId, FlexibleQuestion>(
         state.data,
         QpvUtil.getNavInit,
     );

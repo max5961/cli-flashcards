@@ -8,22 +8,83 @@ export class ProcessArgs {
     public selectionArgs: SelectionArgs;
     public configArgs: ConfigArgs;
     public utilityArgs: UtilityArgs;
+    public argv!: any;
 
     constructor() {
-        this.selectionArgs = new SelectionArgs();
-        this.configArgs = new ConfigArgs();
-        this.utilityArgs = new UtilityArgs();
+        this.setArgv();
+        this.selectionArgs = new SelectionArgs(this.argv);
+        this.configArgs = new ConfigArgs(this.argv);
+        this.utilityArgs = new UtilityArgs(this.argv);
+    }
+
+    setArgv(): void {
+        // --help won't print these together if they are in separate classes
+        this.argv = yargs(hideBin(process.argv))
+            // selection args
+            .option("file", {
+                alias: ["f"],
+                describe: "Choose file(s) / quiz name(s).  'all' for all files",
+                type: "array",
+                implies: ["section"], // require to be used with "section" flag
+                requiresArg: true,
+            })
+            .option("section", {
+                alias: ["s"],
+                describe:
+                    "Choose section(s).  Pass 'all' for all sections in a given selection of files(s). Pass 'random' for a random section in a given selection of files(s)",
+                type: "array",
+                implies: ["file"],
+                requiresArg: true,
+            })
+            .options("repeat", {
+                describe: "Repeat a given selection of questions 'x' times",
+                type: "number",
+                implies: ["section", "file"],
+                requiresArg: true,
+            })
+            .options("shuffle", {
+                describe:
+                    "Shuffles the order of a given selection of questions",
+                type: "boolean",
+                implies: ["section", "file"],
+            })
+            // utility
+            .options("keybinds", {
+                describe: "List keybinds",
+                type: "boolean",
+                default: false,
+            })
+            .options("list-files", {
+                describe: "Show all files",
+                type: "boolean",
+                requiresArg: false,
+            })
+            .options("list-sections", {
+                describe:
+                    "List all available sections from one or more files.  Leave empty to pass in all files as an argument",
+                type: "array",
+            })
+            // config
+            .option("fullscreen", {
+                describe: "Application runs using entire terminal screen",
+                type: "boolean",
+                default: true,
+            })
+            .options("post-command", {
+                describe: "A command to be ran post exiting the application",
+                type: "string",
+                requiresArg: true,
+            })
+            .parse();
     }
 }
 
 abstract class Args {
     protected argv!: any;
 
-    constructor() {
-        this.setArgv();
+    constructor(argv: any) {
+        this.argv = argv;
     }
-
-    abstract setArgv(): void;
 
     async pushSelectedFiles(target: Quiz[], selected: string[]): Promise<void> {
         for (const file of selected) {
@@ -51,45 +112,10 @@ class SelectionArgs extends Args {
     private questions: Question[];
     private quizzes: Quiz[];
 
-    constructor() {
-        super();
+    constructor(argv: any) {
+        super(argv);
         this.questions = [];
         this.quizzes = [];
-    }
-
-    setArgv(): void {
-        this.argv = yargs(hideBin(process.argv))
-            .option("file", {
-                alias: ["f"],
-                describe: "Choose file(s) / quiz name(s).  'all' for all files",
-                type: "array",
-                implies: ["section"], // require to be used with "section" flag
-                requiresArg: true,
-            })
-            .option("section", {
-                alias: ["s"],
-                describe: `
-                    Choose section(s).  
-                        'all' for all sections in a given selection of files(s)
-                        'random' for a random section in a given selection of files(s)
-                `,
-                type: "array",
-                implies: ["file"],
-                requiresArg: true,
-            })
-            .options("repeat", {
-                describe: "Repeat a given selection of questions 'x' times",
-                type: "number",
-                implies: ["section", "file"],
-                requiresArg: true,
-            })
-            .options("shuffle", {
-                describe:
-                    "Shuffles the order of a given selection of questions",
-                type: "boolean",
-                implies: ["section", "file"],
-            })
-            .parse();
     }
 
     // returning null tells the app to enter the StartMenu
@@ -201,7 +227,20 @@ class SelectionArgs extends Args {
         });
 
         const random = () => Math.floor(Math.random() * sections.length);
-        this.questions.push(...sections[random()]);
+
+        const set = new Set<number>();
+        while (set.size < sections.length) {
+            let rand: number = random();
+            while (set.has(rand)) {
+                rand = random();
+            }
+            set.add(rand);
+            if (!sections[rand].length) continue;
+            this.questions.push(...sections[rand]);
+            return;
+        }
+        console.error("All sections are empty");
+        process.exit(1);
     }
 
     shuffle(questions: Question[], cycles: number = 0): void {
@@ -241,29 +280,9 @@ class SelectionArgs extends Args {
 class UtilityArgs extends Args {
     private keyBinds: string;
 
-    constructor() {
-        super();
+    constructor(argv: any) {
+        super(argv);
         this.keyBinds = kbFlagStdout;
-    }
-
-    setArgv(): void {
-        this.argv = yargs(hideBin(process.argv))
-            .options("keybinds", {
-                describe: "List keybinds",
-                type: "boolean",
-                default: false,
-            })
-            .options("list-files", {
-                describe: "Show all files",
-                type: "boolean",
-                requiresArg: false,
-            })
-            .options("list-sections", {
-                describe:
-                    "List all available sections from one or more files.  Leave empty to pass in all files as an argument",
-                type: "array",
-            })
-            .parse();
     }
 
     // execute any utility flags, then process.exit()
@@ -324,27 +343,12 @@ export interface Config {
 class ConfigArgs extends Args {
     private config: Config;
 
-    constructor() {
-        super();
+    constructor(argv: any) {
+        super(argv);
         this.config = {
             postCommand: null,
             fullscreen: true,
         };
-    }
-
-    setArgv(): void {
-        this.argv = yargs(hideBin(process.argv))
-            .option("fullscreen", {
-                describe: "Application runs using entire terminal screen",
-                type: "boolean",
-                default: true,
-            })
-            .options("post-command", {
-                describe: "A command to be ran post exiting the application",
-                type: "string",
-                requiresArg: true,
-            })
-            .parse();
     }
 
     processConfigFlags(): Config {

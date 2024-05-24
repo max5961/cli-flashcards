@@ -10,8 +10,8 @@ interface InputBox {
     defaultTextColor?: string;
 }
 
-// if acceptsInput === true means we return a dynamic TextInput component, otherwise
-// we return a static Text component.  The defaultText should represent some state
+// acceptsInput === true means return a dynamic TextInput component, otherwise
+// return a static Text component.  The defaultText should represent some state
 // that the TextInput component will help to update.
 export function InputBox({
     acceptsInput,
@@ -21,7 +21,7 @@ export function InputBox({
     defaultTextColor = "",
 }: InputBox): React.ReactNode {
     if (acceptsInput) {
-        return <TextInput value={value!} onChange={onChange!}></TextInput>;
+        return <TextInput value={value} onChange={onChange}></TextInput>;
     }
 
     return <Text color={defaultTextColor}>{defaultText}</Text>;

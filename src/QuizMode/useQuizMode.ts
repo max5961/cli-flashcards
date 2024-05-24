@@ -1,5 +1,4 @@
-import { useContext, useState } from "react";
-import { AppContext } from "../App.js";
+import { useState } from "react";
 import { QuizState } from "./QuizState.js";
 import { Question } from "../types.js";
 import { Command } from "../shared/utils/KeyBinds.js";
@@ -8,7 +7,7 @@ import { RetakeQuestions } from "./useCompletedPage.js";
 
 type Message = null | "SHUFFLE";
 export function useQuizMode(questions: Readonly<Question[]>) {
-    const { normal } = useContext(AppContext)!;
+    const [normal, setNormal] = useState<boolean>(true);
     const [message, setMessage] = useState<Message>(null);
     const [state, setState] = useState<QuizState>(new QuizState(questions, {}));
     const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
@@ -86,5 +85,13 @@ export function useQuizMode(questions: Readonly<Question[]>) {
 
     useKeyBinds(handleKeyBinds, normal);
 
-    return { message, quizCompleted, getRetakeQuestions, state, setState };
+    return {
+        message,
+        quizCompleted,
+        getRetakeQuestions,
+        state,
+        setState,
+        normal,
+        setNormal,
+    };
 }

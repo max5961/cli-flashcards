@@ -1,10 +1,10 @@
 import React from "react";
-import { Box, Text } from "ink";
+import { Text } from "ink";
 import { Eval } from "../../QuizMode/QuizState.js";
 
 interface IconProps {
     type?: "MERGE" | "QUIZ" | "EDIT" | "ADD";
-    questionEval?: Eval; // "YES" | "NO" | undefined
+    questionEval?: Eval;
 }
 
 export function Icon({ type, questionEval = undefined }: IconProps) {
@@ -32,7 +32,7 @@ export function Icon({ type, questionEval = undefined }: IconProps) {
         return <Text color="red">{"[  ]"}</Text>;
     }
 
-    if (questionEval === undefined) {
+    if (questionEval === "UNANSWERED") {
         return <Text dimColor>{"[   ]"}</Text>;
     }
 

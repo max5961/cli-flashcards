@@ -122,7 +122,7 @@ export class NormalKb extends KeyBinds {
             this.setCommand("RIGHT");
         }
 
-        if (this.register === "i") {
+        if (this.register === "i" || this.register === "e") {
             this.setCommand("ENTER_INSERT");
         }
 
@@ -138,22 +138,18 @@ export class NormalKb extends KeyBinds {
             this.setCommand("GO_TO_EDIT_VIEW");
         }
 
-        // Quiz Mode
         if (this.register === "S") {
             this.setCommand("SHUFFLE_QUESTIONS");
         }
 
-        // Quiz Mode
         if (this.register === "y" || this.register === " ") {
             this.setCommand("MARK_YES");
         }
 
-        // Quiz Mode
         if (this.register === "n") {
             this.setCommand("MARK_NO");
         }
 
-        // Quiz Mode
         if (this.register === "a") {
             this.setCommand("TOGGLE_SHOW_ANSWER");
         }

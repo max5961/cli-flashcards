@@ -16,8 +16,15 @@ export function QuizModeView({
 }: {
     questions: Readonly<Question[]>;
 }): React.ReactElement {
-    const { message, quizCompleted, getRetakeQuestions, state, setState } =
-        useQuizMode(questions);
+    const {
+        message,
+        quizCompleted,
+        getRetakeQuestions,
+        state,
+        setState,
+        normal,
+        setNormal,
+    } = useQuizMode(questions);
 
     // If completed quiz, return early and render CompletedPage
     if (quizCompleted) {
@@ -56,6 +63,8 @@ export function QuizModeView({
                     question={question}
                     state={state}
                     setState={setState}
+                    normal={normal}
+                    setNormal={setNormal}
                 />
             );
         }
@@ -127,16 +136,22 @@ function QuestionInput({
     question,
     state,
     setState,
+    normal,
+    setNormal,
 }: {
     question: QI;
     state: QuizState;
     setState: (s: QuizState) => void;
+    normal: boolean;
+    setNormal: (b: boolean) => void;
 }): React.ReactElement {
-    const { normal, qiState, setInputText } = useQuestionInput(
+    const { qiState, setInputText } = useQuestionInput({
         question,
         state,
         setState,
-    );
+        normal,
+        setNormal,
+    });
 
     return (
         <Box flexDirection="column" alignItems="center" width={50}>

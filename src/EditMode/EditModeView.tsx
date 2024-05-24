@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext, useRef } from "react";
+import React, { useState, useContext, createContext } from "react";
 import { Box, Text } from "ink";
 import { HorizontalLine } from "../shared/components/Lines.js";
 import { QuestionTypes, Quiz } from "../types.js";
@@ -8,7 +8,7 @@ import { InputBox } from "../shared/components/InputBox.js";
 import { FocusableBox } from "../shared/components/Focusable.js";
 import { TitleBox } from "../shared/components/TitleBox.js";
 import { ShowMode } from "../shared/components/ShowMode.js";
-import { QpvNode, QpvUtil } from "./QpvUtil.js";
+import { QpvNodeId, QpvUtil } from "./QpvUtil.js";
 import { QpvState, useQpv } from "./useQpv.js";
 import { useLpv } from "./useLpv.js";
 import { Icon } from "../shared/components/Icons.js";
@@ -33,7 +33,6 @@ export function EditModeView({
     const [pageStack, setPageStack] = useState<PageStack>(
         preStack ? preStack : new PageStack(quizzes),
     );
-    // new PageStack(quizzes),
 
     const page: Page = pageStack.top();
 
@@ -107,7 +106,6 @@ function ListPageView(): React.ReactNode {
                 items={mapItems(page.listItems!)}
                 window={window}
                 currIndex={state.currIndex}
-                scrollColor="#009293"
                 scrollBorder="round"
                 scrollMiddle={false}
                 scrollPosition="right"
@@ -241,7 +239,7 @@ function QuestionContents(): React.ReactNode {
 function QandABoxes(): React.ReactNode {
     const { state, setQuestionInput, setAnswerInput } = useContext(QpvContext)!;
 
-    function acceptsInput(targetNode: QpvNode): boolean {
+    function acceptsInput(targetNode: QpvNodeId): boolean {
         return state.currNode === targetNode && !state.normal;
     }
 
