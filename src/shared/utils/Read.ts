@@ -5,7 +5,12 @@ import fs from "fs/promises";
 
 export default class Read {
     static async makeDir(): Promise<void> {
-        const shareDir: string = path.join(os.homedir(), ".local", "share");
+        let shareDir: string;
+        if (os.platform() === "win32") {
+            shareDir = path.join(os.homedir(), "AppData", "Local");
+        } else {
+            shareDir = path.join(os.homedir(), ".local", "share");
+        }
         const directories: string[] = await fs.readdir(shareDir);
         if (directories.includes("quild")) {
             return;
@@ -16,13 +21,16 @@ export default class Read {
     }
 
     static getDir(): string {
+        if (os.platform() === "win32") {
+            return path.join(os.homedir(), "AppData", "Local", "quild");
+        }
         return path.join(os.homedir(), ".local", "share", "quild");
     }
 
     // need to pass in 'exit' function from useApp hook because if any error occurs
     // here, process.exit will not gaurantee that stdout is not obscured by the running
     // app, leaving no clues as to why something crashed.  ProcessArgs cannot access
-    // the useApp hook so 'exit' param defaults to null
+    // the useApp hook so 'exit' param defaults to null.
     static handleExit(
         exit: (() => void) | null,
         msg: string | null = null,
@@ -47,10 +55,11 @@ export default class Read {
                 const stat = await fs.stat(filePath);
                 if (stat.isDirectory() || file === ".git") continue;
 
-                const json = await fs.readFile(filePath, "utf-8");
+                const json: string = await fs.readFile(filePath, "utf-8");
                 if (!json.length) {
                     console.error(`Error: File '${file}' is empty`);
-                    Read.handleExit(exit, `Error: File '${file}' is empty`);
+                    console.error(`Not loading '${file}'`);
+                    continue;
                 }
 
                 const quiz = JSON.parse(json);

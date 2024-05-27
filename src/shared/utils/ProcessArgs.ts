@@ -88,7 +88,8 @@ abstract class Args {
 
     async pushSelectedFiles(target: Quiz[], selected: string[]): Promise<void> {
         for (const file of selected) {
-            const json: string = await Read.getDataFromFile(file);
+            // file.toString because yargs automatically converts numeric strings to numbers
+            const json: string = await Read.getDataFromFile(file.toString());
             const fileData: Quiz = JSON.parse(json) as Quiz;
             fileData.fileName = file;
             target.push(fileData);
@@ -199,10 +200,14 @@ class SelectionArgs extends Args {
     }
 
     pushSelectedSections(): void {
+        // argvSection.toString() because yargs automatically converts numeric
+        // strings to numbers
         for (const argvSection of this.argv.section) {
             const filteredQuestions = this.quizzes.flatMap((quiz) => {
                 return quiz.sections
-                    .filter((section) => section.name === argvSection)
+                    .filter(
+                        (section) => section.name === argvSection.toString(),
+                    )
                     .flatMap((section) => section.questions);
             });
 

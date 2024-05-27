@@ -1,6 +1,5 @@
 import { Quiz } from "../../types.js";
 import { MCPage, PageStack, QuizPage, SectionPage } from "./PageStack.js";
-import { cloneDeep } from "lodash";
 
 const inputData: Quiz[] = [
     {
@@ -33,7 +32,7 @@ const inputData: Quiz[] = [
 
 // SectionPage is top of the stack
 function getStack() {
-    const inputDataCopy = cloneDeep(inputData);
+    const inputDataCopy = JSON.parse(JSON.stringify(inputData));
     const pageStack: PageStack = new PageStack(inputDataCopy);
     pageStack.appendNextPage(0); // append first Question
     pageStack.appendNextPage(0); // append first Section

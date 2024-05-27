@@ -25,7 +25,7 @@ export type Command =
     | "NEXT_PAGE"
     | "PREV_PAGE"
     | "RETURN_KEY"
-    | "DELETE_KEY";
+    | "PREV_PAGE";
 
 abstract class KeyBinds {
     protected command: Command | null;
@@ -176,8 +176,8 @@ export class NormalKb extends KeyBinds {
             this.clearRegister();
         }
 
-        if (key.delete) {
-            this.setCommand("DELETE_KEY");
+        if (key.delete || key.backspace) {
+            this.setCommand("PREV_PAGE");
         }
 
         if (key.return) {

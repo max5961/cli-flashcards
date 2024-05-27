@@ -186,7 +186,7 @@ function handleNavKeyBinds(dep: Dep, command: Command | null): void {
         setState(stateCopy);
     }
 
-    if (command === "DELETE_KEY") {
+    if (command === "PREV_PAGE") {
         const pageStackCopy: PageStack = pageStack.getShallowClone();
         pageStackCopy.pop();
         setPageStack(pageStackCopy);

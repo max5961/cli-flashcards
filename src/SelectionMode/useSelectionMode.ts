@@ -104,7 +104,7 @@ export function useSelectionMode(quizzes: Quiz[]) {
             });
         }
 
-        if (command === "DELETE_KEY") {
+        if (command === "PREV_PAGE") {
             if (page.pageType === "QUIZZES") {
                 setMode("START");
             } else {

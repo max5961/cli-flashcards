@@ -87,7 +87,7 @@ export function useLpv() {
             handleReturnKey(stateCopy);
         }
 
-        if (command === "DELETE_KEY") {
+        if (command === "PREV_PAGE") {
             handlePrevPage(stateCopy);
         }
 

@@ -5,7 +5,7 @@ import { ProcessArgs, Config } from "./shared/utils/ProcessArgs.js";
 import { execFileSync } from "child_process";
 import Read from "./shared/utils/Read.js";
 
-function executeBeforeExit(command: string): void {
+async function executeBeforeExit(command: string): Promise<void> {
     process.on("beforeExit", (code) => {
         console.log(`Running Command: ${command}`);
         const fullCommand: string[] = command.split(" ");

@@ -1,12 +1,12 @@
-import os from "os";
 import path from "path";
 import fs from "fs/promises";
 import { PageStack } from "./PageStack.js";
 import { Quiz } from "../../types.js";
+import Read from "./Read.js";
 
 export class Write {
     static getDirectory(): string {
-        return path.join(os.homedir(), ".local", "share", "quild");
+        return Read.getDir();
     }
 
     static async clearDirectory(): Promise<void> {
