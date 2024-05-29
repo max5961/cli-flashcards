@@ -119,7 +119,11 @@ export function Window({
 
                 // handle edge cases where the currIndex starts outside the bounds
                 // of the window
-            } else if (end < currIndex || start > currIndex) {
+            } else if (
+                end < currIndex ||
+                start > currIndex ||
+                end > items.length
+            ) {
                 while (end > currIndex && start > 0) {
                     --start;
                     --end;
@@ -142,7 +146,7 @@ export function Window({
                 windowSize: windowState.windowSize,
             });
         }
-    }, [currIndex]);
+    }, [currIndex, items]);
 
     // use the start and end indexes to slice the input array
     const slicedComponents = items.slice(start, end);
