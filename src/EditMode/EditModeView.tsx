@@ -260,7 +260,7 @@ function QandABoxes(): React.ReactNode {
 
     const questionBox: React.ReactNode = (
         <FocusableBox
-            width="50%"
+            width="45%"
             flexDirection="column"
             alignItems="center"
             isFocus={state.currNode === "question"}
@@ -327,7 +327,7 @@ function QandABoxes(): React.ReactNode {
     }
 
     return (
-        <Box width="100%" justifyContent="space-around" gap={-1}>
+        <Box width="100%" justifyContent="space-around">
             {questionBox}
             {answerBox}
         </Box>
