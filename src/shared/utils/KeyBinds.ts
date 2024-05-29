@@ -8,6 +8,7 @@ export type Command =
     | "RIGHT"
     | "ENTER_INSERT"
     | "EXIT_INSERT"
+    | "TOGGLE_PREVIEW"
     | "GO_TO_START_MENU"
     | "GO_TO_SELECTION_VIEW"
     | "GO_TO_EDIT_VIEW"
@@ -124,6 +125,10 @@ export class NormalKb extends KeyBinds {
 
         if (this.register === "i" || this.register === "e") {
             this.setCommand("ENTER_INSERT");
+        }
+
+        if (this.register === "p") {
+            this.setCommand("TOGGLE_PREVIEW");
         }
 
         if (this.register === "1") {

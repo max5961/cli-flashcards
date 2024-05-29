@@ -6,6 +6,7 @@ import { AppContext, WhichMode } from "../App.js";
 import { useKeyBinds } from "../shared/hooks/useKeyBinds.js";
 import { Command } from "../shared/utils/KeyBinds.js";
 import { Write } from "../shared/utils/Write.js";
+import { usePreview } from "./usePreview.js";
 
 interface LpvState {
     normal: boolean;
@@ -18,7 +19,7 @@ interface LpvState {
 }
 
 export function useLpv() {
-    const { setMode } = useContext(AppContext)!;
+    const { setMode, previewQst, setPreviewQst } = useContext(AppContext)!;
     const { pageStack, setPageStack } = useContext(PageContext)!;
     const { window, currIndex } = useWindow(5);
     const [state, setState] = useState({
@@ -44,6 +45,18 @@ export function useLpv() {
         setState({ ...state, currIndex: page.lastIndex });
     }, [pageStack]);
 
+    useEffect(() => {
+        return () => {
+            setPreviewQst({
+                question: null,
+                isPage: false,
+                isShowing: previewQst.isShowing,
+            });
+        };
+    }, []);
+
+    usePreview(page, state.currIndex);
+
     const {
         handleMoveDown,
         handleMoveUp,
@@ -56,6 +69,13 @@ export function useLpv() {
     } = useLpvHandlers(page, setPageStack);
 
     function handleKeyBinds(command: Command | null): void {
+        if (command === "TOGGLE_PREVIEW") {
+            setPreviewQst({
+                ...previewQst,
+                isShowing: !previewQst.isShowing,
+            });
+        }
+
         if (!command && !state.message.length) return;
 
         let stateCopy: LpvState = { ...state };

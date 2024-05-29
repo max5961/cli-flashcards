@@ -116,9 +116,10 @@ export function Window({
                     --end;
                     modified = true;
                 }
+
+                // handle edge cases where the currIndex starts outside the bounds
+                // of the window
             } else if (end < currIndex || start > currIndex) {
-                // handle edge cases where the currIndex starts outside the bounds of
-                // the window
                 while (end > currIndex && start > 0) {
                     --start;
                     --end;

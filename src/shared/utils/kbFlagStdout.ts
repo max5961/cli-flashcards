@@ -13,6 +13,7 @@ Normal Mode (global):
     GO_TO_START_MENU:     1
     GO_TO_SELECTION_VIEW: 2
     GO_TO_EDIT_VIEW:      3
+    TOGGLE_PREVIEW        p (when applicable)
 
 Normal Mode (quiz):
     MARK_YES:             y, space_bar

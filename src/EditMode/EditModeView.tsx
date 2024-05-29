@@ -1,7 +1,7 @@
 import React, { useState, useContext, createContext } from "react";
 import { Box, Text } from "ink";
 import { HorizontalLine } from "../shared/components/Lines.js";
-import { QuestionTypes, Quiz } from "../types.js";
+import { Question, QuestionTypes, Quiz } from "../types.js";
 import { Window } from "../shared/hooks/useWindow.js";
 import { Page, PageStack } from "../shared/utils/PageStack.js";
 import { InputBox } from "../shared/components/InputBox.js";

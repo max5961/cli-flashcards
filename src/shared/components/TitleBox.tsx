@@ -5,15 +5,25 @@ import { HorizontalLine } from "./Lines.js";
 interface TitleBoxProps {
     title: string;
     children?: React.ReactNode;
+    justifyContent?:
+        | "space-between"
+        | "space-around"
+        | "center"
+        | "flex-start"
+        | "flex-end";
 }
 
-export function TitleBox({ title, children }: TitleBoxProps): React.ReactNode {
+export function TitleBox({
+    title,
+    justifyContent = "space-around",
+    children,
+}: TitleBoxProps): React.ReactNode {
     return (
         <>
             <Box flexDirection="column" justifyContent="space-around">
                 <Box
                     flexDirection="row"
-                    justifyContent="space-between"
+                    justifyContent={justifyContent}
                     alignItems="center"
                     width="100%"
                 >

@@ -12,6 +12,13 @@ import { HorizontalLine } from "./shared/components/Lines.js";
 import { KeyBindState } from "./shared/components/KeyBindState.js";
 import { EditModeView } from "./EditMode/EditModeView.js";
 import { PageStack } from "./shared/utils/PageStack.js";
+import { Preview } from "./EditMode/Preview.js";
+
+export interface PreviewQst {
+    question: Question | "ADD" | null;
+    isPage: boolean;
+    isShowing: boolean;
+}
 
 interface AppContext {
     setKbState: (k: KbState) => void;
@@ -21,6 +28,8 @@ interface AppContext {
     setQuestions: (q: Question[]) => void;
     newQuiz: (q: Question[]) => void;
     setPreStack: (s: PageStack) => void;
+    previewQst: PreviewQst;
+    setPreviewQst: (p: PreviewQst) => void;
 }
 
 export const AppContext = createContext<AppContext | null>(null);
@@ -47,6 +56,12 @@ export default function App({
     const [kbState, setKbState] = useState<KbState>({
         command: null,
         register: "",
+    });
+
+    const [previewQst, setPreviewQst] = useState<PreviewQst>({
+        question: null,
+        isPage: false,
+        isShowing: true,
     });
 
     function newQuiz(questions: Question[]): void {
@@ -104,21 +119,30 @@ export default function App({
                 setQuestions,
                 newQuiz,
                 setPreStack,
+                previewQst,
+                setPreviewQst,
             }}
         >
             <MainContainer config={config}>
-                <Box
-                    width={75}
-                    flexDirection="column"
-                    borderStyle="round"
-                    padding={2}
-                    paddingTop={1}
-                >
-                    {getContent()}
-                    {modeDesc === "" ? <></> : <HorizontalLine marginTop={1} />}
-                    <Box alignSelf="flex-start">
-                        <Text dimColor>{modeDesc}</Text>
+                <Box>
+                    <Box
+                        width={75}
+                        flexDirection="column"
+                        borderStyle="round"
+                        padding={2}
+                        paddingTop={1}
+                    >
+                        {getContent()}
+                        {modeDesc === "" ? (
+                            <></>
+                        ) : (
+                            <HorizontalLine marginTop={1} />
+                        )}
+                        <Box alignSelf="flex-start">
+                            <Text dimColor>{modeDesc}</Text>
+                        </Box>
                     </Box>
+                    <Preview previewQst={previewQst} />
                 </Box>
             </MainContainer>
             <Box
